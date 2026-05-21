@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import packageMeta from '../../package.json'
 import NavBar from '../components/NavBar'
 import type { AuthResponse, AuthUser } from '../types/auth'
@@ -42,6 +43,7 @@ declare global {
 }
 
 function Login() {
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -389,6 +391,23 @@ function Login() {
                    </Typography>
                  )}
                </Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  mb: 3,
+                  fontSize: 13,
+                }}
+              >
+                <MuiLink
+                  onClick={() => navigate('/register')}
+                  underline="hover"
+                  color="primary"
+                  sx={{ cursor: 'pointer', fontWeight: 600 }}
+                >
+                  ¿No tienes cuenta? Regístrate aquí
+                </MuiLink>
+              </Box>
               <Box
                 sx={{
                   display: 'flex',
