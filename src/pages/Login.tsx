@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import packageMeta from '../../package.json'
 import NavBar from '../components/NavBar'
-import type { AuthResponse, AuthUser } from '../types/auth'
+import type { AuthResponse } from '../types/auth'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
@@ -10,6 +10,7 @@ import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField'
 import Divider from '@mui/material/Divider'
 import MuiLink from '@mui/material/Link'
+import CircularProgress from '@mui/material/CircularProgress'
 
 interface GoogleAccountsId {
   initialize(config: {
@@ -48,14 +49,7 @@ function Login() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [user, setUser] = useState<AuthUser | null>(() => {
-    try {
-      const raw = localStorage.getItem('auth_user')
-      return raw ? (JSON.parse(raw) as AuthUser) : null
-    } catch {
-      return null
-    }
-  })
+
   const [token, setToken] = useState<string | null>(() => {
     try {
       return localStorage.getItem('auth_token')
@@ -82,17 +76,18 @@ function Login() {
 
   const saveAuth = useCallback((payload: AuthResponse) => {
     setToken(payload.token)
-    setUser(payload.user)
     localStorage.setItem('auth_token', payload.token)
     localStorage.setItem('auth_user', JSON.stringify(payload.user))
-  }, [])
+    navigate('/dashboard')
+  }, [navigate])
 
-  const clearAuth = useCallback(() => {
-    setToken(null)
-    setUser(null)
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('auth_user')
-  }, [])
+
+
+  useEffect(() => {
+    if (token) {
+      navigate('/dashboard')
+    }
+  }, [token, navigate])
 
   const handleGoogleLogin = useCallback(async (credential: string) => {
     setError(null)
@@ -253,6 +248,26 @@ function Login() {
     }
   }, [googleClientId, initializeGoogleCb])
 
+  if (token) {
+    return (
+      <Box
+        sx={{
+          minHeight: '100svh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          background: 'radial-gradient(circle at top left, #f7efe6 0%, #efe2d6 45%, #e7d7c8 100%)',
+        }}
+      >
+        <CircularProgress color="primary" />
+        <Typography variant="body2" sx={{ mt: 2, color: 'primary.dark', fontWeight: 600 }}>
+          Redirigiendo...
+        </Typography>
+      </Box>
+    )
+  }
+
   return (
     <Box
       className="auth-layout"
@@ -282,163 +297,125 @@ function Login() {
             p: { xs: 3, sm: 4 },
           }}
         >
-          {user ? (
-            <Box sx={{ display: 'grid', gap: 2 }}>
-              <Typography variant="overline" color="secondary">
-                Sesión iniciada
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="overline" color="secondary">
+              Bienvenido
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Ingresa con tus credenciales.
+            </Typography>
+          </Box>
+          <Box
+            component="form"
+            onSubmit={handleManualLogin}
+            sx={{ display: 'grid', gap: 2 }}
+          >
+            <TextField
+              label="Email"
+              type="email"
+              placeholder="tu@email.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+              fullWidth
+              size="small"
+            />
+            <TextField
+              label="Contraseña"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+              fullWidth
+              size="small"
+            />
+            {error ? (
+              <Typography
+                color="error"
+                sx={{ fontWeight: 600 }}
+              >
+                {error}
               </Typography>
-              <Typography variant="h5">Hola, {user.name}</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Tu token ya está listo para usar.
-              </Typography>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  p: 1,
-                  borderRadius: 2,
-                  border: '1px dashed',
-                  borderColor: 'divider',
-                  bgcolor: '#fff',
-                  fontSize: 13,
-                }}
-              >
-                <span>JWT</span>
-                <code>{token?.slice(0, 20)}...</code>
-              </Box>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={clearAuth}
-                sx={{ borderRadius: 999 }}
-              >
-                Cerrar sesión
-              </Button>
-            </Box>
-          ) : (
-            <>
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="overline" color="secondary">
-                  Bienvenido
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Ingresa con tus credenciales.
-                </Typography>
-              </Box>
-              <Box
-                component="form"
-                onSubmit={handleManualLogin}
-                sx={{ display: 'grid', gap: 2 }}
-              >
-                <TextField
-                  label="Email"
-                  type="email"
-                  placeholder="tu@email.com"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  required
-                  fullWidth
-                  size="small"
-                />
-                <TextField
-                  label="Contraseña"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  required
-                  fullWidth
-                  size="small"
-                />
-                {error ? (
-                  <Typography
-                    color="error"
-                    sx={{ fontWeight: 600 }}
-                  >
-                    {error}
+            ) : null}
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              disabled={loading}
+              sx={{ borderRadius: 999 }}
+            >
+              {loading ? 'Ingresando...' : 'Entrar'}
+            </Button>
+          </Box>
+          <Divider sx={{ my: 2 }}>o</Divider>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2, flexDirection: 'column', alignItems: 'center' }}>
+            {googleClientId ? (
+              <>
+                <Box ref={googleButtonRef} data-google-button="true" component="div" sx={{ width: 320, minHeight: 44 }} />
+                {!googleEnabled && !googleError ? (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+                    Cargando inicio de sesión con Google…
                   </Typography>
                 ) : null}
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  disabled={loading}
-                  sx={{ borderRadius: 999 }}
-                >
-                  {loading ? 'Ingresando...' : 'Entrar'}
-                </Button>
-              </Box>
-              <Divider sx={{ my: 2 }}>o</Divider>
-               <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2, flexDirection: 'column', alignItems: 'center' }}>
-                 {googleClientId ? (
-                   <>
-                              <Box ref={googleButtonRef} data-google-button="true" component="div" sx={{ width: 320, minHeight: 44 }} />
-                     {!googleEnabled && !googleError ? (
-                       <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-                         Cargando inicio de sesión con Google…
-                       </Typography>
-                     ) : null}
-                     {googleError ? (
-                       <Typography color="error" sx={{ mt: 1, fontWeight: 600 }}>
-                         {googleError}
-                       </Typography>
-                     ) : null}
-                   </>
-                 ) : (
-                   <Typography variant="caption" color="text.secondary">
-                     Google Sign-In no configurado. Establece <code>VITE_GOOGLE_CLIENT_ID</code> en tu archivo de entorno.
-                   </Typography>
-                 )}
-               </Box>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  mb: 3,
-                  fontSize: 13,
-                }}
-              >
-                <MuiLink
-                  onClick={() => navigate('/register')}
-                  underline="hover"
-                  color="primary"
-                  sx={{ cursor: 'pointer', fontWeight: 600 }}
-                >
-                  ¿No tienes cuenta? Regístrate aquí
-                </MuiLink>
-              </Box>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  gap: 2,
-                  fontSize: 13,
-                  color: 'text.secondary',
-                }}
-              >
-                 <MuiLink href="/" underline="hover" color="primary">
-                   Volver al inicio
-                 </MuiLink>
-                 <Box component="span" sx={{ color: 'divider' }}>•</Box>
-                 <Box component="span" sx={{ color: 'secondary.main' }}>Soporte</Box>
-              </Box>
-              <Box
-                component="footer"
-                className="footer"
-                sx={{
-                  mt: 3,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: 12,
-                  color: 'text.secondary',
-                }}
-              >
-                <span>{businessName}</span>
-                <span className="version">Version {appVersion}</span>
-              </Box>
-            </>
-          )}
+                {googleError ? (
+                  <Typography color="error" sx={{ mt: 1, fontWeight: 600 }}>
+                    {googleError}
+                  </Typography>
+                ) : null}
+              </>
+            ) : (
+              <Typography variant="caption" color="text.secondary">
+                Google Sign-In no configurado. Establece <code>VITE_GOOGLE_CLIENT_ID</code> en tu archivo de entorno.
+              </Typography>
+            )}
+          </Box>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              mb: 3,
+              fontSize: 13,
+            }}
+          >
+            <MuiLink
+              onClick={() => navigate('/register')}
+              underline="hover"
+              color="primary"
+              sx={{ cursor: 'pointer', fontWeight: 600 }}
+            >
+              ¿No tienes cuenta? Regístrate aquí
+            </MuiLink>
+          </Box>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: 2,
+              fontSize: 13,
+              color: 'text.secondary',
+            }}
+          >
+            <MuiLink href="/" underline="hover" color="primary">
+              Volver al inicio
+            </MuiLink>
+            <Box component="span" sx={{ color: 'divider' }}>•</Box>
+            <Box component="span" sx={{ color: 'secondary.main' }}>Soporte</Box>
+          </Box>
+          <Box
+            component="footer"
+            className="footer"
+            sx={{
+              mt: 3,
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontSize: 12,
+              color: 'text.secondary',
+            }}
+          >
+            <span>{businessName}</span>
+            <span className="version">Version {appVersion}</span>
+          </Box>
         </Box>
       </Container>
     </Box>

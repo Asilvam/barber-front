@@ -1,0 +1,62 @@
+/* Styles for BarberAvailability Page */
+
+.availability-bg {
+  min-height: 100svh;
+  background: radial-gradient(circle at top left, #f7efe6 0%, #efe2d6 45%, #e7d7c8 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+.availability-card {
+  border-radius: 16px !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  backdrop-filter: blur(12px);
+  background: rgba(251, 247, 242, 0.85) !important;
+  box-shadow: 0 8px 32px rgba(124, 76, 47, 0.06) !important;
+  padding: 24px !important;
+  margin-bottom: 32px !important;
+}
+
+@media (max-width: 600px) {
+  .availability-card {
+    padding: 16px !important;
+  }
+}
+
+.availability-header-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.date-picker-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.slots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.slot-button {
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+  text-transform: none !important;
+  padding: 12px 16px !important;
+  transition: all 0.2s ease-in-out !important;
+  box-shadow: 0 2px 8px rgba(178, 121, 76, 0.08) !important;
+}
+
+.slot-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(178, 121, 76, 0.15) !important;
+}

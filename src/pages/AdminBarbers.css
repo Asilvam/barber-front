@@ -1,0 +1,122 @@
+/* Styles for AdminBarbers Page */
+
+.admin-bg {
+  min-height: 100svh;
+  background: radial-gradient(circle at top left, #f7efe6 0%, #efe2d6 45%, #e7d7c8 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 40px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 600px) {
+  .admin-top-bar {
+    padding: 16px 16px;
+  }
+}
+
+.schedule-card {
+  border-radius: 12px !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  background-color: #ffffff !important;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+.schedule-card:hover {
+  box-shadow: 0 4px 20px rgba(178, 121, 76, 0.12) !important;
+}
+
+.schedule-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 600px) {
+  .schedule-card-header {
+    padding: 12px 16px;
+  }
+}
+
+.schedule-card-body {
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: row;
+  gap: 32px;
+}
+
+@media (max-width: 600px) {
+  .schedule-card-body {
+    padding: 16px 16px;
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+/* Barber Selection Layout */
+.barber-selection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+  margin-top: 16px;
+}
+
+@media (max-width: 600px) {
+  .barber-selection-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.barber-admin-card {
+  border-radius: 16px !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  background-color: #ffffff !important;
+  padding: 24px !important;
+  text-align: center;
+  transition: all 0.25s ease-in-out !important;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02) !important;
+}
+
+.barber-admin-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(178, 121, 76, 0.12) !important;
+  border-color: #b2794c !important;
+}
+
+.barber-admin-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: #f7efe6;
+  color: #b2794c;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 20px;
+  box-shadow: 0 4px 12px rgba(178, 121, 76, 0.1);
+  transition: all 0.2s;
+}
+
+.barber-admin-card:hover .barber-admin-avatar {
+  background-color: #b2794c;
+  color: #ffffff;
+}
+

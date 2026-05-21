@@ -1,0 +1,66 @@
+/* Styles for Dashboard Page */
+
+.dashboard-bg {
+  min-height: 100svh;
+  background: radial-gradient(circle at top left, #f7efe6 0%, #efe2d6 45%, #e7d7c8 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 40px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .dashboard-top-bar {
+    padding: 16px 16px;
+    gap: 8px;
+  }
+}
+
+.dashboard-container-card {
+  border-radius: 24px !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  background: rgba(251, 247, 242, 0.85) !important;
+  box-shadow: 0 8px 32px rgba(124, 76, 47, 0.04) !important;
+  margin-bottom: 32px !important;
+}
+
+.barbers-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+@media (max-width: 600px) {
+  .barbers-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.barber-card {
+  padding: 16px !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  background-color: #ffffff !important;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.barber-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(178, 121, 76, 0.1) !important;
+  border-color: #b2794c !important;
+}

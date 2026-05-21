@@ -1,14 +1,15 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import packageMeta from '../../package.json'
 import NavBar from '../components/NavBar'
-import type { AuthResponse, AuthUser } from '../types/auth'
+import type { AuthResponse } from '../types/auth'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
 import Button from '@mui/material/Button'
 import TextField from '@mui/material/TextField'
 import MuiLink from '@mui/material/Link'
+import CircularProgress from '@mui/material/CircularProgress'
 
 function Register() {
   const navigate = useNavigate()
@@ -19,14 +20,7 @@ function Register() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [user, setUser] = useState<AuthUser | null>(() => {
-    try {
-      const raw = localStorage.getItem('auth_user')
-      return raw ? (JSON.parse(raw) as AuthUser) : null
-    } catch {
-      return null
-    }
-  })
+
   const [token, setToken] = useState<string | null>(() => {
     try {
       return localStorage.getItem('auth_token')
@@ -45,17 +39,18 @@ function Register() {
 
   const saveAuth = useCallback((payload: AuthResponse) => {
     setToken(payload.token)
-    setUser(payload.user)
     localStorage.setItem('auth_token', payload.token)
     localStorage.setItem('auth_user', JSON.stringify(payload.user))
-  }, [])
+    navigate('/dashboard')
+  }, [navigate])
 
-  const clearAuth = useCallback(() => {
-    setToken(null)
-    setUser(null)
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('auth_user')
-  }, [])
+
+
+  useEffect(() => {
+    if (token) {
+      navigate('/dashboard')
+    }
+  }, [token, navigate])
 
   const handleRegister = useCallback(
     async (event: React.FormEvent) => {
@@ -89,7 +84,6 @@ function Register() {
 
         const payload = (await response.json()) as AuthResponse
         saveAuth(payload)
-        navigate('/')
       } catch (err) {
         setError(
           err instanceof Error
@@ -100,8 +94,28 @@ function Register() {
         setLoading(false)
       }
     },
-    [apiBaseUrl, name, email, password, confirmPassword, saveAuth, navigate],
+    [apiBaseUrl, name, email, password, confirmPassword, saveAuth],
   )
+
+  if (token) {
+    return (
+      <Box
+        sx={{
+          minHeight: '100svh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          background: 'radial-gradient(circle at top left, #f7efe6 0%, #efe2d6 45%, #e7d7c8 100%)',
+        }}
+      >
+        <CircularProgress color="primary" />
+        <Typography variant="body2" sx={{ mt: 2, color: 'primary.dark', fontWeight: 600 }}>
+          Redirigiendo...
+        </Typography>
+      </Box>
+    )
+  }
 
   return (
     <Box
@@ -132,145 +146,107 @@ function Register() {
             p: { xs: 3, sm: 4 },
           }}
         >
-          {user ? (
-            <Box sx={{ display: 'grid', gap: 2 }}>
-              <Typography variant="overline" color="secondary">
-                Sesión iniciada
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="overline" color="secondary">
+              Crea tu Cuenta
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Regístrate para comenzar a agendar tus citas.
+            </Typography>
+          </Box>
+          <Box
+            component="form"
+            onSubmit={handleRegister}
+            sx={{ display: 'grid', gap: 2 }}
+          >
+            <TextField
+              label="Nombre Completo"
+              type="text"
+              placeholder="Juan Pérez"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              required
+              fullWidth
+              size="small"
+            />
+            <TextField
+              label="Email"
+              type="email"
+              placeholder="tu@email.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+              fullWidth
+              size="small"
+            />
+            <TextField
+              label="Contraseña"
+              type="password"
+              placeholder="Mínimo 6 caracteres"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+              fullWidth
+              size="small"
+            />
+            <TextField
+              label="Confirmar Contraseña"
+              type="password"
+              placeholder="Repite tu contraseña"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              required
+              fullWidth
+              size="small"
+            />
+            {error ? (
+              <Typography color="error" sx={{ fontWeight: 600 }}>
+                {error}
               </Typography>
-              <Typography variant="h5">Hola, {user.name}</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Ya tienes una sesión activa en el sistema.
-              </Typography>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  p: 1,
-                  borderRadius: 2,
-                  border: '1px dashed',
-                  borderColor: 'divider',
-                  bgcolor: '#fff',
-                  fontSize: 13,
-                }}
-              >
-                <span>JWT</span>
-                <code>{token?.slice(0, 20)}...</code>
-              </Box>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={clearAuth}
-                sx={{ borderRadius: 999 }}
-              >
-                Cerrar sesión
-              </Button>
-            </Box>
-          ) : (
-            <>
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="overline" color="secondary">
-                  Crea tu Cuenta
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Regístrate para comenzar a agendar tus citas.
-                </Typography>
-              </Box>
-              <Box
-                component="form"
-                onSubmit={handleRegister}
-                sx={{ display: 'grid', gap: 2 }}
-              >
-                <TextField
-                  label="Nombre Completo"
-                  type="text"
-                  placeholder="Juan Pérez"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  required
-                  fullWidth
-                  size="small"
-                />
-                <TextField
-                  label="Email"
-                  type="email"
-                  placeholder="tu@email.com"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  required
-                  fullWidth
-                  size="small"
-                />
-                <TextField
-                  label="Contraseña"
-                  type="password"
-                  placeholder="Mínimo 6 caracteres"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  required
-                  fullWidth
-                  size="small"
-                />
-                <TextField
-                  label="Confirmar Contraseña"
-                  type="password"
-                  placeholder="Repite tu contraseña"
-                  value={confirmPassword}
-                  onChange={(event) => setConfirmPassword(event.target.value)}
-                  required
-                  fullWidth
-                  size="small"
-                />
-                {error ? (
-                  <Typography color="error" sx={{ fontWeight: 600 }}>
-                    {error}
-                  </Typography>
-                ) : null}
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  disabled={loading}
-                  sx={{ borderRadius: 999, mt: 1 }}
-                >
-                  {loading ? 'Creando cuenta...' : 'Registrarse'}
-                </Button>
-              </Box>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  gap: 2,
-                  fontSize: 13,
-                  color: 'text.secondary',
-                  mt: 3,
-                }}
-              >
-                <MuiLink
-                  onClick={() => navigate('/login')}
-                  underline="hover"
-                  color="primary"
-                  sx={{ cursor: 'pointer' }}
-                >
-                  ¿Ya tienes cuenta? Inicia sesión
-                </MuiLink>
-              </Box>
-              <Box
-                component="footer"
-                className="footer"
-                sx={{
-                  mt: 3,
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  fontSize: 12,
-                  color: 'text.secondary',
-                }}
-              >
-                <span>{businessName}</span>
-                <span className="version">Version {appVersion}</span>
-              </Box>
-            </>
-          )}
+            ) : null}
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              disabled={loading}
+              sx={{ borderRadius: 999, mt: 1 }}
+            >
+              {loading ? 'Creando cuenta...' : 'Registrarse'}
+            </Button>
+          </Box>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: 2,
+              fontSize: 13,
+              color: 'text.secondary',
+              mt: 3,
+            }}
+          >
+            <MuiLink
+              onClick={() => navigate('/login')}
+              underline="hover"
+              color="primary"
+              sx={{ cursor: 'pointer' }}
+            >
+              ¿Ya tienes cuenta? Inicia sesión
+            </MuiLink>
+          </Box>
+          <Box
+            component="footer"
+            className="footer"
+            sx={{
+              mt: 3,
+              display: 'flex',
+              justifyContent: 'space-between',
+              fontSize: 12,
+              color: 'text.secondary',
+            }}
+          >
+            <span>{businessName}</span>
+            <span className="version">Version {appVersion}</span>
+          </Box>
         </Box>
       </Container>
     </Box>

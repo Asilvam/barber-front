@@ -5,13 +5,22 @@ import Typography from '@mui/material/Typography'
 import Button from '@mui/material/Button'
 import { NavLink } from 'react-router-dom'
 
-const navItems = [
-  { label: 'Login', to: '/login' },
-]
+function getAuthUser(): { role?: string } | null {
+  try {
+    const raw = localStorage.getItem('auth_user')
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
 
 function NavBar() {
   const businessName =
     import.meta.env.VITE_BUSINESS_NAME?.trim() || 'Barber System'
+  const isLoggedIn = !!localStorage.getItem('auth_token')
+  const user = getAuthUser()
+  const isAdmin = user?.role === 'admin'
+
   return (
     <AppBar
       position="static"
@@ -59,9 +68,43 @@ function NavBar() {
             {businessName}
           </Typography>
         </Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          {navItems.map((item) => (
-            <NavLink key={item.to} to={item.to} style={{ textDecoration: 'none' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          {isLoggedIn ? (
+            <>
+              {isAdmin && (
+                <NavLink to="/admin/barbers" style={{ textDecoration: 'none' }}>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    sx={{
+                      borderRadius: 999,
+                      fontWeight: 600,
+                      px: 2,
+                      textTransform: 'none',
+                      fontSize: 13,
+                    }}
+                  >
+                    Admin
+                  </Button>
+                </NavLink>
+              )}
+              <NavLink to="/dashboard" style={{ textDecoration: 'none' }}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  sx={{
+                    borderRadius: 999,
+                    fontWeight: 600,
+                    px: 2,
+                    textTransform: 'none',
+                  }}
+                >
+                  Dashboard
+                </Button>
+              </NavLink>
+            </>
+          ) : (
+            <NavLink to="/login" style={{ textDecoration: 'none' }}>
               <Button
                 variant="outlined"
                 color="primary"
@@ -72,10 +115,10 @@ function NavBar() {
                   textTransform: 'none',
                 }}
               >
-                {item.label}
+                Login
               </Button>
             </NavLink>
-          ))}
+          )}
         </Box>
       </Toolbar>
     </AppBar>
