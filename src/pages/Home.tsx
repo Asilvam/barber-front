@@ -77,60 +77,51 @@ function Home() {
             </Box>
           </Box>
           {/* Carrusel de imágenes */}
-          <Box sx={{ position: 'relative', width: { xs: '100%', sm: 320, md: 360 }, height: { xs: 200, sm: 240, md: 320 }, borderRadius: 4, overflow: 'hidden', boxShadow: 3, flex: 1, zIndex: 1 }}>
-            {barberSlides.map((slide, index) => (
-              <Box
-                key={slide.src}
-                component="img"
-                src={slide.src}
-                alt={slide.alt}
-                sx={{
-                  position: 'absolute',
-                  inset: 0,
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  opacity: index === slideIndex ? 1 : 0,
-                  transition: 'opacity 0.8s ease',
-                  filter: 'saturate(0.7) contrast(1.05)',
-                }}
-                loading={index === 0 ? 'eager' : 'lazy'}
-              />
-            ))}
-            {/* Controles del carrusel */}
-            <Box sx={{ position: 'absolute', bottom: 12, left: 0, right: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, pointerEvents: 'none' }}>
-              <Box
-                component="button"
-                type="button"
-                aria-label="Imagen anterior"
-                onClick={() => setSlideIndex((prev) => (prev - 1 + barberSlides.length) % barberSlides.length)}
-                sx={{ pointerEvents: 'auto', border: 'none', bgcolor: 'rgba(31,27,26,0.55)', color: '#fff', width: 32, height: 32, borderRadius: '50%', fontSize: 20, display: 'grid', placeItems: 'center', cursor: 'pointer', mr: 1 }}
-              >
-                ‹
-              </Box>
-              <Box sx={{ display: 'flex', gap: 1, pointerEvents: 'auto' }}>
-                {barberSlides.map((slide, index) => (
-                  <Box
-                    key={slide.src}
-                    component="button"
-                    type="button"
-                    aria-label={`Ir a la imagen ${index + 1}`}
-                    aria-pressed={index === slideIndex}
-                    onClick={() => setSlideIndex(index)}
-                    sx={{ width: 8, height: 8, borderRadius: '50%', border: '1px solid #fff', bgcolor: index === slideIndex ? '#fff' : 'transparent', p: 0, cursor: 'pointer' }}
-                  />
-                ))}
-              </Box>
-              <Box
-                component="button"
-                type="button"
-                aria-label="Imagen siguiente"
-                onClick={() => setSlideIndex((prev) => (prev + 1) % barberSlides.length)}
-                sx={{ pointerEvents: 'auto', border: 'none', bgcolor: 'rgba(31,27,26,0.55)', color: '#fff', width: 32, height: 32, borderRadius: '50%', fontSize: 20, display: 'grid', placeItems: 'center', cursor: 'pointer', ml: 1 }}
-              >
-                ›
-              </Box>
-            </Box>
+          <Box className="brand-visual" sx={{ position: 'relative', width: { xs: '100%', sm: 320, md: 360 }, height: { xs: 200, sm: 240, md: 320 }, borderRadius: 4, overflow: 'hidden', boxShadow: 3, flex: 1, zIndex: 1 }}>
+            <div className="carousel">
+              {barberSlides.map((slide, index) => (
+                <img
+                  key={slide.src}
+                  src={slide.src}
+                  alt={slide.alt}
+                  className={index === slideIndex ? 'active' : ''}
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                />
+              ))}
+
+              <div className="carousel-controls">
+                <button
+                  type="button"
+                  aria-label="Imagen anterior"
+                  onClick={() => setSlideIndex((prev) => (prev - 1 + barberSlides.length) % barberSlides.length)}
+                  className="carousel-btn"
+                >
+                  ‹
+                </button>
+
+                <div className="carousel-dots">
+                  {barberSlides.map((slide, index) => (
+                    <button
+                      key={slide.src}
+                      type="button"
+                      aria-label={`Ir a la imagen ${index + 1}`}
+                      aria-pressed={index === slideIndex}
+                      onClick={() => setSlideIndex(index)}
+                      className={`dot ${index === slideIndex ? 'active' : ''}`}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  aria-label="Imagen siguiente"
+                  onClick={() => setSlideIndex((prev) => (prev + 1) % barberSlides.length)}
+                  className="carousel-btn"
+                >
+                  ›
+                </button>
+              </div>
+            </div>
           </Box>
         </Box>
       </Container>

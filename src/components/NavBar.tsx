@@ -61,22 +61,20 @@ function NavBar() {
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           {navItems.map((item) => (
-            <Button
-              key={item.to}
-              component={NavLink}
-              to={item.to}
-              variant="outlined"
-              color="primary"
-              sx={{
-                borderRadius: 999,
-                fontWeight: 600,
-                px: 2,
-                textTransform: 'none',
-              }}
-              activeClassName="active"
-            >
-              {item.label}
-            </Button>
+            <NavLink key={item.to} to={item.to} style={{ textDecoration: 'none' }}>
+              <Button
+                variant="outlined"
+                color="primary"
+                sx={{
+                  borderRadius: 999,
+                  fontWeight: 600,
+                  px: 2,
+                  textTransform: 'none',
+                }}
+              >
+                {item.label}
+              </Button>
+            </NavLink>
           ))}
         </Box>
       </Toolbar>
