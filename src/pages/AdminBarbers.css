@@ -120,3 +120,320 @@
   color: #ffffff;
 }
 
+/* ==========================================
+   Interactive Calendar & Details Panel Styles
+   ========================================== */
+
+/* Layout administrativo con calendario y panel de detalle */
+.calendar-admin-layout {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: start;
+  gap: 32px;
+  margin: 20px auto 0 auto;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .calendar-admin-layout {
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+}
+
+/* Contenedor del Calendario */
+.calendar-card-container {
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.015);
+  max-width: 400px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Cabecera del Calendario */
+.calendar-nav-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.calendar-month-title {
+  font-weight: 700 !important;
+  color: #2b1c11;
+  font-size: 1rem !important;
+  min-width: 130px;
+  text-align: center;
+}
+
+.calendar-nav-btn {
+  background-color: rgba(178, 121, 76, 0.04) !important;
+  color: #b2794c !important;
+  transition: all 0.2s ease !important;
+  padding: 4px !important;
+}
+
+.calendar-nav-btn:hover {
+  background-color: #b2794c !important;
+  color: #ffffff !important;
+}
+
+/* Días de la semana */
+.calendar-weekdays-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  margin-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+  padding-bottom: 6px;
+}
+
+.calendar-weekday-label {
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  color: #8c7d70 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Cuadrícula de días */
+.calendar-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+
+/* Celda individual de día */
+.calendar-day-cell {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  padding: 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  position: relative;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.calendar-day-cell .day-number {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #2b1c11;
+  line-height: 1;
+}
+
+/* Celda fuera del mes actual */
+.calendar-day-cell.outside-month {
+  opacity: 0.3;
+}
+
+.calendar-day-cell.outside-month .day-number {
+  font-weight: 500;
+}
+
+/* Celda de hoy */
+.calendar-day-cell.today {
+  border: 1px solid #b2794c !important;
+}
+
+.calendar-day-cell.today .day-number {
+  color: #b2794c;
+}
+
+/* Celda seleccionada */
+.calendar-day-cell.selected {
+  outline: 2px solid #b2794c;
+  outline-offset: -1px;
+  background-color: rgba(178, 121, 76, 0.04) !important;
+}
+
+/* Celda con trabajo configurado */
+.calendar-day-cell.is-working {
+  background-color: rgba(46, 125, 50, 0.03) !important;
+  border: 1px solid rgba(46, 125, 50, 0.08) !important;
+}
+
+.calendar-day-cell.is-working:hover {
+  background-color: rgba(46, 125, 50, 0.06) !important;
+  transform: translateY(-1px);
+}
+
+/* Celda con Día Libre (Day Off) */
+.calendar-day-cell.is-day-off {
+  background-color: rgba(255, 152, 0, 0.03) !important;
+  border: 1px solid rgba(255, 152, 0, 0.08) !important;
+}
+
+.calendar-day-cell.is-day-off:hover {
+  background-color: rgba(255, 152, 0, 0.06) !important;
+  transform: translateY(-1px);
+}
+
+/* Celda sin configurar */
+.calendar-day-cell.is-empty {
+  background-color: rgba(0, 0, 0, 0.008);
+  border: 1px dashed rgba(0, 0, 0, 0.05);
+}
+
+.calendar-day-cell.is-empty .day-number {
+  color: #9c8e82;
+}
+
+.calendar-day-cell.is-empty:hover {
+  background-color: rgba(178, 121, 76, 0.03);
+  border: 1px dashed rgba(178, 121, 76, 0.25);
+  transform: translateY(-1px);
+}
+
+/* Indicadores de celda */
+.day-off-indicator-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.day-off-dot {
+  display: none;
+  width: 5px;
+  height: 5px;
+  background-color: #e65100;
+  border-radius: 50%;
+}
+
+.day-off-text {
+  font-size: 0.58rem;
+  font-weight: 800;
+  color: #e65100;
+  background-color: rgba(255, 152, 0, 0.08);
+  padding: 1px 3px;
+  border-radius: 3px;
+  letter-spacing: 0.1px;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.working-indicator-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.working-dot {
+  display: none;
+  width: 5px;
+  height: 5px;
+  background-color: #2e7d32;
+  border-radius: 50%;
+}
+
+.working-hours-summary {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: #2e7d32;
+  background-color: rgba(46, 125, 50, 0.06);
+  padding: 1px 3px;
+  border-radius: 3px;
+  letter-spacing: 0.1px;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Responsive dot-only fallbacks for very narrow screens */
+@media (max-width: 440px) {
+  .day-off-text, .working-hours-summary {
+    display: none !important;
+  }
+  .day-off-dot, .working-dot {
+    display: block !important;
+  }
+  .calendar-day-cell {
+    gap: 3px;
+  }
+}
+
+/* Botón rápido de "+" en hover */
+.add-quick-btn {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #b2794c;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  line-height: 1;
+}
+
+.calendar-day-cell.is-empty:hover .add-quick-btn {
+  opacity: 0.8;
+}
+
+/* Panel de Detalle Derecho / Inferior */
+.details-panel-container {
+  max-width: 400px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.details-panel-card {
+  background-color: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  border-radius: 16px !important;
+  padding: 18px !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.015) !important;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.details-date-header {
+  font-weight: 700 !important;
+  color: #b2794c !important;
+  text-align: center;
+  font-size: 1rem !important;
+  letter-spacing: 0.1px;
+}
+
+/* Estado vacío del panel */
+.details-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  text-align: center;
+  gap: 8px;
+  padding: 12px 0;
+}
+
+.details-empty-icon {
+  font-size: 36px !important;
+  color: rgba(178, 121, 76, 0.15);
+  animation: pulse-slow 3s infinite ease-in-out;
+}
+
+@keyframes pulse-slow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 0.9;
+  }
+}

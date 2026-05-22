@@ -9,7 +9,6 @@ import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
 import Alert from '@mui/material/Alert'
 import Snackbar from '@mui/material/Snackbar'
-import Fade from '@mui/material/Fade'
 import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
@@ -22,13 +21,24 @@ import Select from '@mui/material/Select'
 import InputLabel from '@mui/material/InputLabel'
 import FormControl from '@mui/material/FormControl'
 import Divider from '@mui/material/Divider'
+import Table from '@mui/material/Table'
+import TableBody from '@mui/material/TableBody'
+import TableCell from '@mui/material/TableCell'
+import TableContainer from '@mui/material/TableContainer'
+import TableHead from '@mui/material/TableHead'
+import TableRow from '@mui/material/TableRow'
+import Tooltip from '@mui/material/Tooltip'
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
+import EditIcon from '@mui/icons-material/Edit'
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import ScheduleIcon from '@mui/icons-material/Schedule'
 import EventBusyIcon from '@mui/icons-material/EventBusy'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
@@ -41,6 +51,8 @@ import {
   fetchBarberSchedules,
   createBarberSchedule,
   deleteBarberSchedule,
+  updateBarber,
+  createBarber,
   type Barber,
   type BarberSchedule,
   type TimeSlot,
@@ -112,6 +124,25 @@ export default function AdminBarbers() {
   // delete dialog target
   const [deleteTarget, setDeleteTarget] = useState<BarberSchedule | null>(null)
 
+  // calendar states
+  const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs())
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<Dayjs | null>(dayjs())
+
+  // Barber edit dialog states
+  const [barberEditOpen, setBarberEditOpen] = useState(false)
+  const [editingBarber, setEditingBarber] = useState<Barber | null>(null)
+  const [editPhone, setEditPhone] = useState('')
+  const [editIsActive, setEditIsActive] = useState(true)
+  const [savingBarber, setSavingBarber] = useState(false)
+
+  // Barber create dialog states
+  const [barberCreateOpen, setBarberCreateOpen] = useState(false)
+  const [createName, setCreateName] = useState('')
+  const [createEmail, setCreateEmail] = useState('')
+  const [createPhone, setCreatePhone] = useState('')
+  const [createIsActive, setCreateIsActive] = useState(true)
+  const [creatingBarber, setCreatingBarber] = useState(false)
+
   // ── redirect if not admin ──
   useEffect(() => {
     if (!localStorage.getItem('auth_token')) {
@@ -128,7 +159,7 @@ export default function AdminBarbers() {
     setLoading(true)
     Promise.all([fetchBarbers(), fetchBarberSchedules()])
       .then(([b, s]) => {
-        setBarbers(b.filter((x) => x.isActive))
+        setBarbers(b)
         setSchedules(s)
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Error cargando datos'))
@@ -140,7 +171,7 @@ export default function AdminBarbers() {
     Promise.all([fetchBarbers(), fetchBarberSchedules()])
       .then(([b, s]) => {
         if (!ac.signal.aborted) {
-          setBarbers(b.filter((x) => x.isActive))
+          setBarbers(b)
           setSchedules(s)
         }
       })
@@ -153,32 +184,98 @@ export default function AdminBarbers() {
     return () => ac.abort()
   }, [])
 
-  // ── default preset templates ──
-  const applyPresetA = useCallback(() => {
-    setFormWorkingHours([
-      { start: '09:00', end: '13:00' },
-      { start: '14:00', end: '19:00' },
-    ])
-    setFormBreakTimes([
-      { start: '13:00', end: '14:00' },
-    ])
-  }, [])
 
-  const applyPresetB = useCallback(() => {
-    setFormWorkingHours([
-      { start: '09:00', end: '14:00' },
-      { start: '15:00', end: '19:00' },
-    ])
-    setFormBreakTimes([
-      { start: '14:00', end: '15:00' },
-    ])
-  }, [])
+  // Helper to count schedules for a barber
+  const getScheduleCountForBarber = useCallback((barberId: string) => {
+    return schedules.filter((s) => {
+      const bid = typeof s.barberId === 'object' && s.barberId !== null ? s.barberId._id : s.barberId
+      return bid === barberId
+    }).length
+  }, [schedules])
+
+  // Barber edit handlers
+  const handleOpenEditBarber = (barber: Barber) => {
+    setEditingBarber(barber)
+    setEditPhone(barber.phone || '')
+    setEditIsActive(barber.isActive)
+    setBarberEditOpen(true)
+  }
+
+  const handleSaveBarber = async () => {
+    if (!editingBarber) return
+    setSavingBarber(true)
+    try {
+      await updateBarber(editingBarber._id, {
+        phone: editPhone,
+        isActive: editIsActive,
+      })
+      setToast({ message: 'Barbero actualizado correctamente', severity: 'success' })
+      setBarberEditOpen(false)
+      loadData()
+    } catch (err) {
+      setToast({
+        message: err instanceof Error ? err.message : 'Error al actualizar el barbero',
+        severity: 'error',
+      })
+    } finally {
+      setSavingBarber(false)
+    }
+  }
+
+  // Barber create handlers
+  const handleOpenCreateBarber = () => {
+    setCreateName('')
+    setCreateEmail('')
+    setCreatePhone('')
+    setCreateIsActive(true)
+    setBarberCreateOpen(true)
+  }
+  const handleSaveCreateBarber = async () => {
+    if (!createName.trim()) {
+      setToast({ message: 'El nombre es obligatorio', severity: 'error' })
+      return
+    }
+    if (!createEmail.trim()) {
+      setToast({ message: 'El correo electrónico es obligatorio', severity: 'error' })
+      return
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(createEmail.trim())) {
+      setToast({ message: 'El formato del correo electrónico no es válido', severity: 'error' })
+      return
+    }
+    if (!createPhone.trim()) {
+      setToast({ message: 'El teléfono es obligatorio', severity: 'error' })
+      return
+    }
+
+    setCreatingBarber(true)
+    try {
+      await createBarber({
+        name: createName.trim(),
+        email: createEmail.trim(),
+        phone: createPhone.trim(),
+        isActive: createIsActive,
+      })
+      setToast({ message: 'Barbero creado correctamente', severity: 'success' })
+      setBarberCreateOpen(false)
+      loadData()
+    } catch (err) {
+      setToast({
+        message: err instanceof Error ? err.message : 'Error al crear el barbero',
+        severity: 'error',
+      })
+    } finally {
+      setCreatingBarber(false)
+    }
+  }
 
   // ── form helpers ──
-  const openNewSchedule = () => {
-    setFormBarberId(selectedBarberId || (barbers[0]?._id ?? ''))
-    setFormStartDate(dayjs())
-    setFormEndDate(dayjs())
+  const openNewSchedule = (prefilledDate?: Dayjs, barberId?: string) => {
+    setFormBarberId(barberId || selectedBarberId || (barbers[0]?._id ?? ''))
+    const initialDate = prefilledDate || dayjs()
+    setFormStartDate(initialDate)
+    setFormEndDate(initialDate)
     setFormIsDayOff(false)
     setFormWorkingHours([{ start: '09:00', end: '13:00' }, { start: '14:00', end: '19:00' }])
     setFormBreakTimes([{ start: '13:00', end: '14:00' }])
@@ -281,13 +378,30 @@ export default function AdminBarbers() {
     })
   }, [sortedSchedules, selectedBarberId])
 
-  // Helper to count schedules for each barber
-  const getScheduleCountForBarber = useCallback((barberId: string) => {
-    return schedules.filter((s) => {
-      const bid = typeof s.barberId === 'object' && s.barberId !== null ? s.barberId._id : s.barberId
-      return bid === barberId
-    }).length
-  }, [schedules])
+  // Memoized cache mapping date string (YYYY-MM-DD) to BarberSchedule for O(1) rendering lookups
+  const scheduleMap = useMemo(() => {
+    const map: Record<string, BarberSchedule> = {}
+    filteredSchedules.forEach((s) => {
+      const dateStr = dayjs(s.date).format('YYYY-MM-DD')
+      map[dateStr] = s
+    })
+    return map
+  }, [filteredSchedules])
+
+  // Lógica de cuadrícula mensual de fechas completas (con días de relleno, lunes a domingo)
+  const calendarDays = useMemo(() => {
+    const startOfMonth = currentMonth.startOf('month')
+    const startOfWeek = startOfMonth.startOf('week')
+    
+    const days: Dayjs[] = []
+    let curr = startOfWeek.clone()
+    // 42 days (6 weeks) guarantees a complete rectangular grid for any month
+    for (let i = 0; i < 42; i++) {
+      days.push(curr)
+      curr = curr.add(1, 'day')
+    }
+    return days
+  }, [currentMonth])
 
   /* ── render ── */
   return (
@@ -300,22 +414,35 @@ export default function AdminBarbers() {
             variant="h6"
             sx={{ fontWeight: 700, color: 'primary.dark', fontSize: { xs: 16, sm: 20 } }}
           >
-            Admin — Horarios
+            Admin - Barberos
           </Typography>
         </Box>
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/dashboard')}
-          sx={{ borderRadius: 999, textTransform: 'none', fontWeight: 600 }}
-        >
-          Dashboard
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+          {!selectedBarberId && (
+            <Button
+              size="small"
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleOpenCreateBarber}
+              sx={{ borderRadius: 999, textTransform: 'none', fontWeight: 700 }}
+            >
+              Agregar Barbero
+            </Button>
+          )}
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<ArrowBackIcon />}
+            onClick={() => navigate('/dashboard')}
+            sx={{ borderRadius: 999, textTransform: 'none', fontWeight: 600 }}
+          >
+            Dashboard
+          </Button>
+        </Box>
       </Box>
 
       {/* ── Content ── */}
-      <Container maxWidth="md" sx={{ flex: 1, py: { xs: 1, sm: 3 }, px: { xs: 2, sm: 3 } }}>
+      <Container maxWidth="md" sx={{ flex: 1, py: { xs: 1, sm: 3 }, px: { xs: 1, sm: 3 } }}>
         {error && (
           <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
             {error}
@@ -324,26 +451,6 @@ export default function AdminBarbers() {
 
         {!selectedBarberId ? (
           <Box>
-            {/* Title / Info card */}
-            <Paper
-              elevation={0}
-              sx={{
-                p: 3,
-                mb: 3,
-                borderRadius: 4,
-                border: '1px solid',
-                borderColor: 'divider',
-                bgcolor: 'rgba(251,247,242,0.85)',
-                backdropFilter: 'blur(12px)',
-              }}
-            >
-              <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'primary.dark', mb: 0.5 }}>
-                Administración Individual de Horarios
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Selecciona un barbero para visualizar, programar y gestionar sus horarios de trabajo de forma independiente.
-              </Typography>
-            </Paper>
 
             {loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
@@ -354,55 +461,107 @@ export default function AdminBarbers() {
                 <Typography variant="body2">No hay barberos registrados o activos.</Typography>
               </Box>
             ) : (
-              <Box className="barber-selection-grid">
-                {barbers.map((barber) => {
-                  const sCount = getScheduleCountForBarber(barber._id)
-                  return (
-                    <Paper
-                      key={barber._id}
-                      elevation={0}
-                      className="barber-admin-card"
-                      onClick={() => setSelectedBarberId(barber._id)}
-                    >
-                      <Box className="barber-admin-avatar">
-                        {barber.name.charAt(0).toUpperCase()}
-                      </Box>
-                      <Box sx={{ minWidth: 0 }}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'text.primary', mb: 0.5 }} noWrap>
-                          {barber.name}
-                        </Typography>
-                        <Chip
-                          label={sCount === 1 ? '1 día configurado' : `${sCount} días configurados`}
-                          size="small"
+              <TableContainer
+                component={Paper}
+                elevation={0}
+                sx={{
+                  borderRadius: '4px',
+                  border: '1px solid #dcdcdc',
+                  overflowX: 'auto',
+                  bgcolor: '#ffffff',
+                  boxShadow: 'none',
+                }}
+              >
+                <Table sx={{ minWidth: '100%', tableLayout: 'fixed' }} size="small">
+                  <TableHead sx={{ bgcolor: '#f5f5f5' }}>
+                    <TableRow>
+                      <TableCell sx={{ width: { xs: '50%', sm: '55%' }, fontWeight: 600, color: '#333333', borderRight: '1px solid #dcdcdc', borderBottom: '2px solid #c0c0c0', py: 1, px: { xs: 1, sm: 1.5 } }}>Barbero</TableCell>
+                      <TableCell sx={{ width: { xs: '25%', sm: '25%' }, fontWeight: 600, color: '#333333', borderRight: '1px solid #dcdcdc', borderBottom: '2px solid #c0c0c0', py: 1, px: { xs: 1, sm: 1.5 } }}>Estado</TableCell>
+                      <TableCell align="center" sx={{ width: { xs: '25%', sm: '20%' }, fontWeight: 600, color: '#333333', borderBottom: '2px solid #c0c0c0', py: 1, px: { xs: 1, sm: 1.5 } }}>Acciones</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {barbers.map((barber) => {
+                      return (
+                        <TableRow
+                          key={barber._id}
+                          hover
                           sx={{
-                            bgcolor: sCount > 0 ? 'primary.light' : 'rgba(0,0,0,0.06)',
-                            color: sCount > 0 ? 'primary.dark' : 'text.secondary',
-                            fontWeight: 600,
+                            transition: 'background-color 0.15s ease',
+                            '&:hover': {
+                              bgcolor: '#fafafa !important',
+                            },
                           }}
-                        />
-                      </Box>
-                      <Button
-                        variant="outlined"
-                        color="primary"
-                        size="small"
-                        fullWidth
-                        sx={{
-                          borderRadius: 999,
-                          textTransform: 'none',
-                          fontWeight: 700,
-                          mt: 1,
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setSelectedBarberId(barber._id)
-                        }}
-                      >
-                        Gestionar Horarios
-                      </Button>
-                    </Paper>
-                  )
-                })}
-              </Box>
+                        >
+                          <TableCell sx={{ py: 1, px: { xs: 1, sm: 1.5 }, borderRight: '1px solid #e0e0e0', borderBottom: '1px solid #e0e0e0', overflow: 'hidden' }}>
+                            <Box sx={{ minWidth: 0 }}>
+                              <Typography sx={{ fontWeight: 600, color: '#1a1a1a', fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {barber.name}
+                              </Typography>
+                              <Typography
+                                sx={{
+                                  fontSize: '0.75rem',
+                                  color: '#666666',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {barber.email}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell sx={{ py: 1, px: { xs: 1, sm: 1.5 }, borderRight: '1px solid #e0e0e0', borderBottom: '1px solid #e0e0e0', overflow: 'hidden' }}>
+                            <Typography
+                              sx={{
+                                fontSize: '0.85rem',
+                                fontWeight: 600,
+                                color: barber.isActive ? '#2e7d32' : '#757575',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {barber.isActive ? 'Activo' : 'Inactivo'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="center" sx={{ py: 0.5, px: { xs: 0.5, sm: 1 }, borderBottom: '1px solid #e0e0e0' }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'center', gap: { xs: 0.5, sm: 1 } }}>
+                              <Tooltip title="Ver Calendario y Horarios" arrow>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => setSelectedBarberId(barber._id)}
+                                  sx={{
+                                    color: 'primary.main',
+                                    p: 0.5,
+                                    '&:hover': { bgcolor: 'rgba(178, 121, 76, 0.08)' },
+                                  }}
+                                >
+                                  <CalendarMonthIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              
+                              <Tooltip title="Editar Información del Barbero" arrow>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleOpenEditBarber(barber)}
+                                  sx={{
+                                    color: '#2e7d32',
+                                    p: 0.5,
+                                    '&:hover': { bgcolor: 'rgba(46, 125, 50, 0.08)' },
+                                  }}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             )}
           </Box>
         ) : (
@@ -463,7 +622,7 @@ export default function AdminBarbers() {
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
-                onClick={openNewSchedule}
+                onClick={() => openNewSchedule()}
                 size="small"
                 sx={{ borderRadius: 999, textTransform: 'none', fontWeight: 700, px: 2 }}
               >
@@ -472,185 +631,388 @@ export default function AdminBarbers() {
             </Box>
 
             {/* ── Loading ── */}
-            {loading && (
+            {loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
                 <CircularProgress size={32} />
               </Box>
-            )}
+            ) : (
+              <Box className="calendar-admin-layout">
+                {/* Calendario (Lado Izquierdo) */}
+                <Box className="calendar-card-container">
+                  {/* Cabecera del Calendario */}
+                  <Box className="calendar-nav-header">
+                    <IconButton
+                      onClick={() => setCurrentMonth((prev) => prev.subtract(1, 'month'))}
+                      className="calendar-nav-btn"
+                      size="small"
+                    >
+                      <ChevronLeftIcon />
+                    </IconButton>
+                    <Typography className="calendar-month-title" variant="h6">
+                      {currentMonth.format('MMMM YYYY').replace(/^\w/, (c) => c.toUpperCase())}
+                    </Typography>
+                    <IconButton
+                      onClick={() => setCurrentMonth((prev) => prev.add(1, 'month'))}
+                      className="calendar-nav-btn"
+                      size="small"
+                    >
+                      <ChevronRightIcon />
+                    </IconButton>
+                  </Box>
 
-            {/* ── Empty State ── */}
-            {!loading && filteredSchedules.length === 0 && (
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 5,
-                  borderRadius: 3,
-                  textAlign: 'center',
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  bgcolor: 'background.paper',
-                }}
-              >
-                <ScheduleIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
-                <Typography variant="body1" color="text.secondary" sx={{ fontWeight: 600 }}>
-                  Sin horarios configurados
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Este barbero aún no cuenta con días de trabajo configurados.
-                </Typography>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={openNewSchedule}
-                  sx={{ borderRadius: 999, textTransform: 'none', fontWeight: 600 }}
-                >
-                  Configurar primer horario
-                </Button>
-              </Paper>
-            )}
+                  {/* Días de la semana */}
+                  <Box className="calendar-weekdays-grid">
+                    {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((d) => (
+                      <Typography key={d} className="calendar-weekday-label">
+                        {d}
+                      </Typography>
+                    ))}
+                  </Box>
 
-            {/* ── Schedule Cards ── */}
-            {!loading && filteredSchedules.length > 0 && (
-              <Box sx={{ display: 'grid', gap: 2 }}>
-                {filteredSchedules.map((schedule, index) => (
-                  <Fade in timeout={300 + index * 80} key={schedule._id}>
-                    <Paper elevation={0} className="schedule-card">
-                      {/* Card Header */}
-                      <Box className="schedule-card-header">
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
-                          <Box
-                            sx={{
-                              width: 36,
-                              height: 36,
-                              borderRadius: '50%',
-                              bgcolor: 'primary.light',
-                              color: 'primary.dark',
-                              display: 'grid',
-                              placeItems: 'center',
-                              fontWeight: 700,
-                              fontSize: 14,
-                              flexShrink: 0,
-                            }}
-                          >
-                            {getBarberName(schedule.barberId).charAt(0).toUpperCase()}
-                          </Box>
-                          <Box sx={{ minWidth: 0 }}>
-                            <Typography
-                              variant="body2"
-                              sx={{ fontWeight: 700, color: 'text.primary', lineHeight: 1.2 }}
-                              noWrap
-                            >
-                              {getBarberName(schedule.barberId)}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {dayjs(schedule.date).format('ddd D [de] MMM, YYYY')}
-                            </Typography>
-                          </Box>
-                        </Box>
+                  {/* Cuadrícula de días */}
+                  <Box className="calendar-days-grid">
+                    {calendarDays.map((day) => {
+                      const dateStr = day.format('YYYY-MM-DD')
+                      const schedule = scheduleMap[dateStr]
+                      const isTodayVal = day.isSame(dayjs(), 'day')
+                      const isSelected = selectedCalendarDate ? day.isSame(selectedCalendarDate, 'day') : false
+                      const isOutside = !day.isSame(currentMonth, 'month')
 
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {schedule.isDayOff ? (
-                            <Chip
-                              icon={<EventBusyIcon sx={{ fontSize: '16px !important' }} />}
-                              label="Día Libre"
-                              size="small"
-                              sx={{
-                                bgcolor: 'rgba(255,152,0,0.1)',
-                                color: '#e65100',
-                                fontWeight: 600,
-                                fontSize: 12,
-                              }}
-                            />
+                      let cellClass = 'calendar-day-cell'
+                      if (isOutside) cellClass += ' outside-month'
+                      if (isTodayVal) cellClass += ' today'
+                      if (isSelected) cellClass += ' selected'
+
+                      if (schedule) {
+                        if (schedule.isDayOff) {
+                          cellClass += ' is-day-off'
+                        } else {
+                          cellClass += ' is-working'
+                        }
+                      } else {
+                        cellClass += ' is-empty'
+                      }
+
+                      return (
+                        <Box
+                          key={dateStr}
+                          className={cellClass}
+                          onClick={() => setSelectedCalendarDate(day)}
+                        >
+                          <span className="day-number">{day.date()}</span>
+
+                          {schedule ? (
+                            schedule.isDayOff ? (
+                              <Box className="day-off-indicator-wrapper">
+                                <span className="day-off-dot" />
+                                <span className="day-off-text">Libre</span>
+                              </Box>
+                            ) : (
+                              <Box className="working-indicator-wrapper">
+                                <span className="working-dot" />
+                                <span className="working-hours-summary">
+                                  {schedule.workingHours[0]?.start || ''}
+                                </span>
+                              </Box>
+                            )
                           ) : (
-                            <Chip
-                              icon={<CheckCircleIcon sx={{ fontSize: '16px !important' }} />}
-                              label="Activo"
-                              size="small"
-                              sx={{
-                                bgcolor: 'rgba(76,175,80,0.1)',
-                                color: '#2e7d32',
-                                fontWeight: 600,
-                                fontSize: 12,
+                            <span
+                              className="add-quick-btn"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                openNewSchedule(day)
                               }}
-                            />
+                            >
+                              +
+                            </span>
                           )}
-                          <IconButton
-                            size="small"
-                            onClick={() => setDeleteTarget(schedule)}
-                            sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
                         </Box>
-                      </Box>
+                      )
+                    })}
+                  </Box>
+                </Box>
 
-                      {/* Card Body */}
-                      {!schedule.isDayOff && (
-                        <Box className="schedule-card-body">
-                          {/* Working hours */}
-                          <Box sx={{ flex: 1 }}>
-                            <Typography
-                              variant="caption"
-                              sx={{ fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}
-                            >
-                              Horario de Trabajo
-                            </Typography>
-                            <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
-                              {schedule.workingHours.length > 0 ? (
-                                schedule.workingHours.map((wh, i) => (
-                                  <Chip
-                                    key={i}
-                                    label={`${wh.start} – ${wh.end}`}
-                                    size="small"
-                                    variant="outlined"
-                                    sx={{
-                                      borderColor: 'rgba(178,121,76,0.3)',
-                                      color: 'primary.dark',
-                                      fontWeight: 600,
-                                      fontSize: 13,
-                                    }}
-                                  />
-                                ))
-                              ) : (
-                                <Typography variant="caption" color="text.secondary">Sin horario</Typography>
-                              )}
+                {/* Panel de Detalle Derecho */}
+                <Box className="details-panel-container">
+                  <Paper elevation={0} className="details-panel-card">
+                    {selectedCalendarDate ? (
+                      (() => {
+                        const selectedDateStr = selectedCalendarDate.format('YYYY-MM-DD')
+                        const selectedSchedule = scheduleMap[selectedDateStr]
+
+                        if (!selectedSchedule) {
+                          return (
+                            <Box className="details-empty-state">
+                              <Typography
+                                variant="subtitle1"
+                                sx={{ fontWeight: 700, color: 'primary.dark', mb: 0.5 }}
+                              >
+                                {selectedCalendarDate.format('dddd, D [de] MMMM')}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                No hay horario configurado para este día.
+                              </Typography>
+                              <Button
+                                variant="contained"
+                                size="small"
+                                startIcon={<AddIcon />}
+                                onClick={() => openNewSchedule(selectedCalendarDate)}
+                                sx={{ borderRadius: 999, textTransform: 'none', fontWeight: 600 }}
+                              >
+                                Configurar Día
+                              </Button>
                             </Box>
-                          </Box>
+                          )
+                        }
 
-                          {/* Breaks */}
-                          <Box sx={{ flex: 1 }}>
-                            <Typography
-                              variant="caption"
-                              sx={{ fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}
+                        // Helper function to calculate net working hours
+                        const getNetHours = (sch: BarberSchedule) => {
+                          if (sch.isDayOff) return 0
+                          let totalMinutes = 0
+                          sch.workingHours.forEach((wh) => {
+                            const start = dayjs(`2000-01-01T${wh.start}`)
+                            const end = dayjs(`2000-01-01T${wh.end}`)
+                            totalMinutes += end.diff(start, 'minute')
+                          })
+                          sch.breakTimes.forEach((bt) => {
+                            const start = dayjs(`2000-01-01T${bt.start}`)
+                            const end = dayjs(`2000-01-01T${bt.end}`)
+                            totalMinutes -= end.diff(start, 'minute')
+                          })
+                          return Math.max(0, totalMinutes / 60)
+                        }
+
+                        return (
+                          <Box>
+                            {/* Fila 1 (Título): Cabecera con la fecha seleccionada y el icono de eliminación sutil a la derecha */}
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                              <Typography className="details-date-header" sx={{ textTransform: 'capitalize' }}>
+                                {selectedCalendarDate.format('dddd, D [de] MMMM')}
+                              </Typography>
+                              <IconButton
+                                size="small"
+                                onClick={() => setDeleteTarget(selectedSchedule)}
+                                sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </Box>
+
+                            <Divider sx={{ mb: 2 }} />
+
+                            {/* Estructura bajo el título: Exactamente 2 columnas y 3 filas lógicas */}
+                            <Box
+                              sx={{
+                                display: 'grid',
+                                gridTemplateColumns: '1fr 1fr',
+                                gridTemplateRows: 'auto auto auto',
+                                rowGap: 2.5,
+                                columnGap: 2,
+                              }}
                             >
-                              Descansos
-                            </Typography>
-                            <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
-                              {schedule.breakTimes.length > 0 ? (
-                                schedule.breakTimes.map((bt, i) => (
+                              {/* Fila 1 - Columna 1: Estado del Día */}
+                              <Box>
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    fontWeight: 700,
+                                    color: 'text.secondary',
+                                    textTransform: 'uppercase',
+                                    display: 'block',
+                                    mb: 0.5,
+                                    letterSpacing: 0.5,
+                                  }}
+                                >
+                                  Estado
+                                </Typography>
+                                {selectedSchedule.isDayOff ? (
                                   <Chip
-                                    key={i}
-                                    label={`${bt.start} – ${bt.end}`}
+                                    icon={<EventBusyIcon sx={{ fontSize: '14px !important' }} />}
+                                    label="Día Libre"
                                     size="small"
-                                    variant="outlined"
                                     sx={{
-                                      borderColor: 'rgba(255,152,0,0.3)',
+                                      bgcolor: 'rgba(255,152,0,0.08)',
                                       color: '#e65100',
                                       fontWeight: 600,
-                                      fontSize: 13,
+                                      fontSize: 11,
                                     }}
                                   />
-                                ))
-                              ) : (
-                                <Typography variant="caption" color="text.secondary">Sin descansos</Typography>
-                              )}
+                                ) : (
+                                  <Chip
+                                    icon={<CheckCircleIcon sx={{ fontSize: '14px !important' }} />}
+                                    label="Activo"
+                                    size="small"
+                                    sx={{
+                                      bgcolor: 'rgba(76,175,80,0.08)',
+                                      color: '#2e7d32',
+                                      fontWeight: 600,
+                                      fontSize: 11,
+                                    }}
+                                  />
+                                )}
+                              </Box>
+
+                              {/* Fila 1 - Columna 2: Disponibilidad */}
+                              <Box>
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    fontWeight: 700,
+                                    color: 'text.secondary',
+                                    textTransform: 'uppercase',
+                                    display: 'block',
+                                    mb: 0.5,
+                                    letterSpacing: 0.5,
+                                  }}
+                                >
+                                  Operatividad
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    fontWeight: 600,
+                                    color: selectedSchedule.isDayOff ? '#e65100' : '#2e7d32',
+                                  }}
+                                >
+                                  {selectedSchedule.isDayOff ? 'No disponible' : 'Habilitado'}
+                                </Typography>
+                              </Box>
+
+                              {/* Fila 2 - Columna 1: Horario de Trabajo */}
+                              <Box>
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    fontWeight: 700,
+                                    color: 'text.secondary',
+                                    textTransform: 'uppercase',
+                                    display: 'block',
+                                    mb: 0.5,
+                                    letterSpacing: 0.5,
+                                  }}
+                                >
+                                  Horario
+                                </Typography>
+                                <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                                  {!selectedSchedule.isDayOff && selectedSchedule.workingHours.length > 0 ? (
+                                    selectedSchedule.workingHours.map((wh, idx) => (
+                                      <Chip
+                                        key={idx}
+                                        label={`${wh.start} – ${wh.end}`}
+                                        size="small"
+                                        variant="outlined"
+                                        sx={{
+                                          borderColor: 'rgba(178,121,76,0.25)',
+                                          color: 'primary.dark',
+                                          fontWeight: 600,
+                                          fontSize: 11,
+                                          height: 22,
+                                        }}
+                                      />
+                                    ))
+                                  ) : (
+                                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+                                      —
+                                    </Typography>
+                                  )}
+                                </Box>
+                              </Box>
+
+                              {/* Fila 2 - Columna 2: Descansos */}
+                              <Box>
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    fontWeight: 700,
+                                    color: 'text.secondary',
+                                    textTransform: 'uppercase',
+                                    display: 'block',
+                                    mb: 0.5,
+                                    letterSpacing: 0.5,
+                                  }}
+                                >
+                                  Descansos
+                                </Typography>
+                                <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                                  {!selectedSchedule.isDayOff && selectedSchedule.breakTimes.length > 0 ? (
+                                    selectedSchedule.breakTimes.map((bt, idx) => (
+                                      <Chip
+                                        key={idx}
+                                        label={`${bt.start} – ${bt.end}`}
+                                        size="small"
+                                        variant="outlined"
+                                        sx={{
+                                          borderColor: 'rgba(255,152,0,0.25)',
+                                          color: '#e65100',
+                                          fontWeight: 600,
+                                          fontSize: 11,
+                                          height: 22,
+                                        }}
+                                      />
+                                    ))
+                                  ) : (
+                                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+                                      —
+                                    </Typography>
+                                  )}
+                                </Box>
+                              </Box>
+
+                              {/* Fila 3 - Columna 1: Horas Netas de Trabajo */}
+                              <Box>
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    fontWeight: 700,
+                                    color: 'text.secondary',
+                                    textTransform: 'uppercase',
+                                    display: 'block',
+                                    mb: 0.5,
+                                    letterSpacing: 0.5,
+                                  }}
+                                >
+                                  Jornada Neta
+                                </Typography>
+                                <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                                  {selectedSchedule.isDayOff ? '0 hrs' : `${getNetHours(selectedSchedule)} hrs`}
+                                </Typography>
+                              </Box>
+
+                              {/* Fila 3 - Columna 2: Notas/Información */}
+                              <Box>
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    fontWeight: 700,
+                                    color: 'text.secondary',
+                                    textTransform: 'uppercase',
+                                    display: 'block',
+                                    mb: 0.5,
+                                    letterSpacing: 0.5,
+                                  }}
+                                >
+                                  Información
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontStyle: 'italic', fontSize: '0.78rem', color: 'text.secondary' }}
+                                >
+                                  {selectedSchedule.isDayOff ? 'Día de descanso' : 'Reservas activas'}
+                                </Typography>
+                              </Box>
                             </Box>
                           </Box>
-                        </Box>
-                      )}
-                    </Paper>
-                  </Fade>
-                ))}
+                        )
+                      })()
+                    ) : (
+                      <Box className="details-empty-state">
+                        <Typography variant="body2" color="text.secondary">
+                          Selecciona un día en el calendario para ver y gestionar sus detalles.
+                        </Typography>
+                      </Box>
+                    )}
+                  </Paper>
+                </Box>
               </Box>
             )}
           </Box>
@@ -691,13 +1053,27 @@ export default function AdminBarbers() {
               <DatePicker
                 label="Desde"
                 value={formStartDate}
-                onChange={(v) => v && setFormStartDate(v)}
+                onChange={(v) => {
+                  if (v) {
+                    setFormStartDate(v)
+                    if (formEndDate && v.isAfter(formEndDate, 'day')) {
+                      setFormEndDate(v)
+                    }
+                  }
+                }}
                 slotProps={{ textField: { size: 'small', fullWidth: true } }}
               />
               <DatePicker
                 label="Hasta"
                 value={formEndDate}
-                onChange={(v) => v && setFormEndDate(v)}
+                onChange={(v) => {
+                  if (v) {
+                    setFormEndDate(v)
+                    if (formStartDate && v.isBefore(formStartDate, 'day')) {
+                      setFormStartDate(v)
+                    }
+                  }
+                }}
                 slotProps={{ textField: { size: 'small', fullWidth: true } }}
               />
             </LocalizationProvider>
@@ -718,41 +1094,6 @@ export default function AdminBarbers() {
           {!formIsDayOff && (
             <>
               <Divider />
-              
-              {/* Presets / Default templates */}
-              <Box sx={{ mb: 0.5 }}>
-                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700, display: 'block', mb: 1 }}>
-                  Horarios Predeterminados (Plantillas):
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    onClick={applyPresetA}
-                    sx={{ textTransform: 'none', borderRadius: 2, fontSize: 11.5 }}
-                  >
-                    Turno A: 9-13 y 14-19 (Colación 13-14)
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    onClick={applyPresetB}
-                    sx={{
-                      textTransform: 'none',
-                      borderRadius: 2,
-                      fontSize: 11.5,
-                      borderColor: 'rgba(230,81,0,0.5)',
-                      color: '#e65100',
-                      '&:hover': {
-                        borderColor: '#e65100',
-                        bgcolor: 'rgba(230,81,0,0.04)',
-                      }
-                    }}
-                  >
-                    Turno B: 9-14 y 15-19 (Colación 14-15)
-                  </Button>
-                </Box>
-              </Box>
 
               {/* Working Hours */}
               <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'primary.dark', mt: 1 }}>
@@ -907,6 +1248,246 @@ export default function AdminBarbers() {
             sx={{ borderRadius: 999, textTransform: 'none', fontWeight: 700 }}
           >
             Eliminar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Edit Barber Modal ── */}
+      <Dialog
+        open={barberEditOpen}
+        onClose={() => setBarberEditOpen(false)}
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 4,
+              width: '100%',
+              maxWidth: 400,
+              m: { xs: 2, sm: 4 },
+            },
+          },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, borderBottom: '1px solid', borderColor: 'divider', pb: 1.5 }}>
+          Editar Información
+        </DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: '20px !important' }}>
+          {editingBarber && (
+            <>
+              {/* Nombre (Sólo lectura) */}
+              <Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mb: 0.5 }}>
+                  Nombre (Sólo Lectura)
+                </Typography>
+                <Typography variant="body1" sx={{ fontWeight: 600, color: 'text.primary', bgcolor: '#f5f5f5', px: 1.5, py: 1, borderRadius: 1.5 }}>
+                  {editingBarber.name}
+                </Typography>
+              </Box>
+
+              {/* Correo Electrónico (Sólo lectura) */}
+              <Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mb: 0.5 }}>
+                  Correo Electrónico (Sólo Lectura)
+                </Typography>
+                <Typography variant="body1" sx={{ fontWeight: 500, color: 'text.primary', bgcolor: '#f5f5f5', px: 1.5, py: 1, borderRadius: 1.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {editingBarber.email}
+                </Typography>
+              </Box>
+
+              {/* Días Programados (Sólo lectura) */}
+              <Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mb: 0.5 }}>
+                  Días Programados (Sólo Lectura)
+                </Typography>
+                <Typography variant="body1" sx={{ fontWeight: 600, color: 'primary.dark', bgcolor: 'rgba(178, 121, 76, 0.05)', px: 1.5, py: 1, borderRadius: 1.5 }}>
+                  {getScheduleCountForBarber(editingBarber._id)} {getScheduleCountForBarber(editingBarber._id) === 1 ? 'día' : 'días'}
+                </Typography>
+              </Box>
+
+              {/* Teléfono (Editable) */}
+              <Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mb: 0.5 }}>
+                  Teléfono
+                </Typography>
+                <input
+                  type="text"
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  placeholder="Ingrese el teléfono"
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    padding: '10px 14px',
+                    fontSize: '0.9rem',
+                    border: '1px solid #dcdcdc',
+                    borderRadius: '8px',
+                    outline: 'none',
+                    fontFamily: 'inherit',
+                  }}
+                />
+              </Box>
+
+              {/* Estado (Editable) */}
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid #dcdcdc', p: 1.5, borderRadius: 2 }}>
+                <Box>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                    Estado del Barbero
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {editIsActive ? 'Activo y disponible' : 'Inactivo'}
+                  </Typography>
+                </Box>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={editIsActive}
+                      onChange={(e) => setEditIsActive(e.target.checked)}
+                      color="success"
+                    />
+                  }
+                  label=""
+                  sx={{ mr: 0 }}
+                />
+              </Box>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, borderTop: '1px solid', borderColor: 'divider', pt: 1.5 }}>
+          <Button onClick={() => setBarberEditOpen(false)} disabled={savingBarber} sx={{ textTransform: 'none', fontWeight: 600 }}>
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveBarber}
+            disabled={savingBarber}
+            sx={{ borderRadius: 999, textTransform: 'none', minWidth: 120, fontWeight: 700 }}
+          >
+            {savingBarber ? <CircularProgress size={20} color="inherit" /> : 'Guardar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Registrar Nuevo Barbero Modal ── */}
+      <Dialog
+        open={barberCreateOpen}
+        onClose={() => setBarberCreateOpen(false)}
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 4,
+              width: '100%',
+              maxWidth: 400,
+              m: { xs: 2, sm: 4 },
+            },
+          },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, borderBottom: '1px solid', borderColor: 'divider', pb: 1.5 }}>
+          Registrar Nuevo Barbero
+        </DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: '20px !important' }}>
+          {/* Nombre (Editable) */}
+          <Box>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mb: 0.5 }}>
+              Nombre Completo *
+            </Typography>
+            <input
+              type="text"
+              value={createName}
+              onChange={(e) => setCreateName(e.target.value)}
+              placeholder="Ingrese el nombre completo"
+              style={{
+                width: '100%',
+                boxSizing: 'border-box',
+                padding: '10px 14px',
+                fontSize: '0.9rem',
+                border: '1px solid #dcdcdc',
+                borderRadius: '8px',
+                outline: 'none',
+                fontFamily: 'inherit',
+              }}
+            />
+          </Box>
+
+          {/* Correo Electrónico (Editable) */}
+          <Box>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mb: 0.5 }}>
+              Correo Electrónico *
+            </Typography>
+            <input
+              type="email"
+              value={createEmail}
+              onChange={(e) => setCreateEmail(e.target.value)}
+              placeholder="correo@ejemplo.com"
+              style={{
+                width: '100%',
+                boxSizing: 'border-box',
+                padding: '10px 14px',
+                fontSize: '0.9rem',
+                border: '1px solid #dcdcdc',
+                borderRadius: '8px',
+                outline: 'none',
+                fontFamily: 'inherit',
+              }}
+            />
+          </Box>
+
+          {/* Teléfono (Editable) */}
+          <Box>
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mb: 0.5 }}>
+              Teléfono *
+            </Typography>
+            <input
+              type="text"
+              value={createPhone}
+              onChange={(e) => setCreatePhone(e.target.value)}
+              placeholder="Ingrese el teléfono (ej. +569...)"
+              style={{
+                width: '100%',
+                boxSizing: 'border-box',
+                padding: '10px 14px',
+                fontSize: '0.9rem',
+                border: '1px solid #dcdcdc',
+                borderRadius: '8px',
+                outline: 'none',
+                fontFamily: 'inherit',
+              }}
+            />
+          </Box>
+
+          {/* Estado (Editable) */}
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid #dcdcdc', p: 1.5, borderRadius: 2 }}>
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                Estado Inicial
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {createIsActive ? 'Activo y disponible' : 'Inactivo'}
+              </Typography>
+            </Box>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={createIsActive}
+                  onChange={(e) => setCreateIsActive(e.target.checked)}
+                  color="success"
+                />
+              }
+              label=""
+              sx={{ mr: 0 }}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, borderTop: '1px solid', borderColor: 'divider', pt: 1.5 }}>
+          <Button onClick={() => setBarberCreateOpen(false)} disabled={creatingBarber} sx={{ textTransform: 'none', fontWeight: 600 }}>
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveCreateBarber}
+            disabled={creatingBarber}
+            sx={{ borderRadius: 999, textTransform: 'none', minWidth: 120, fontWeight: 700 }}
+          >
+            {creatingBarber ? <CircularProgress size={20} color="inherit" /> : 'Registrar'}
           </Button>
         </DialogActions>
       </Dialog>

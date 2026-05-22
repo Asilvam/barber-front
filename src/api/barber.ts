@@ -134,3 +134,30 @@ export async function deleteBarberSchedule(id: string): Promise<void> {
     headers: authHeaders(),
   })
 }
+
+/** Update a barber (e.g. phone, isActive status) */
+export async function updateBarber(
+  id: string,
+  payload: Partial<Barber>,
+): Promise<Barber> {
+  const { data } = await axios.patch<Barber>(
+    `${API}/barbers/${id}`,
+    payload,
+    { headers: authHeaders() },
+  )
+  return data
+}
+
+/** Create a new barber */
+export async function createBarber(
+  payload: Omit<Barber, '_id'>,
+): Promise<Barber> {
+  const { data } = await axios.post<Barber>(
+    `${API}/barbers`,
+    payload,
+    { headers: authHeaders() },
+  )
+  return data
+}
+
+

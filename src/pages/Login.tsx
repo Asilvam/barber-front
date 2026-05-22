@@ -269,35 +269,11 @@ function Login() {
   }
 
   return (
-    <Box
-      className="auth-layout"
-      sx={{
-        minHeight: '100svh',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
+    <Box className="auth-layout">
       <NavBar />
-      <Container
-        maxWidth="xs"
-        sx={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          py: { xs: 4, sm: 8 },
-        }}
-      >
-        <Box
-          sx={{
-            width: '100%',
-            bgcolor: 'background.paper',
-            borderRadius: 3,
-            boxShadow: 3,
-            p: { xs: 3, sm: 4 },
-          }}
-        >
-          <Box sx={{ mb: 2 }}>
+      <Container maxWidth="xs" className="auth-container">
+        <Box className="auth-card">
+          <Box className="auth-header">
             <Typography variant="overline" color="secondary">
               Bienvenido
             </Typography>
@@ -308,7 +284,7 @@ function Login() {
           <Box
             component="form"
             onSubmit={handleManualLogin}
-            sx={{ display: 'grid', gap: 2 }}
+            className="auth-form"
           >
             <TextField
               label="Email"
@@ -343,13 +319,13 @@ function Login() {
               variant="contained"
               color="primary"
               disabled={loading}
-              sx={{ borderRadius: 999 }}
+              className="auth-submit-btn"
             >
               {loading ? 'Ingresando...' : 'Entrar'}
             </Button>
           </Box>
-          <Divider sx={{ my: 2 }}>o</Divider>
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2, flexDirection: 'column', alignItems: 'center' }}>
+          <Divider className="auth-divider">o</Divider>
+          <Box className="auth-google-container">
             {googleClientId ? (
               <>
                 <Box ref={googleButtonRef} data-google-button="true" component="div" sx={{ width: 320, minHeight: 44 }} />
@@ -370,48 +346,26 @@ function Login() {
               </Typography>
             )}
           </Box>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              mb: 3,
-              fontSize: 13,
-            }}
-          >
+          <Box className="auth-footer-link">
             <MuiLink
               onClick={() => navigate('/register')}
               underline="hover"
               color="primary"
-              sx={{ cursor: 'pointer', fontWeight: 600 }}
+              className="auth-link"
             >
               ¿No tienes cuenta? Regístrate aquí
             </MuiLink>
           </Box>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              gap: 2,
-              fontSize: 13,
-              color: 'text.secondary',
-            }}
-          >
+          <Box className="auth-extra-links">
             <MuiLink href="/" underline="hover" color="primary">
               Volver al inicio
             </MuiLink>
-            <Box component="span" sx={{ color: 'divider' }}>•</Box>
-            <Box component="span" sx={{ color: 'secondary.main' }}>Soporte</Box>
+            <Box component="span" className="auth-divider-dot">•</Box>
+            <Box component="span" className="auth-support-text">Soporte</Box>
           </Box>
           <Box
             component="footer"
-            className="footer"
-            sx={{
-              mt: 3,
-              display: 'flex',
-              justifyContent: 'space-between',
-              fontSize: 12,
-              color: 'text.secondary',
-            }}
+            className="auth-footer"
           >
             <span>{businessName}</span>
             <span className="version">Version {appVersion}</span>

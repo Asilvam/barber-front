@@ -5,30 +5,32 @@ import Typography from '@mui/material/Typography'
 import NavBar from '../components/NavBar'
 import packageMeta from '../../package.json'
 
+import img from '../assets/img.png'
+import img1 from '../assets/img_1.png'
+import img2 from '../assets/img_2.png'
+import img3 from '../assets/img_3.png'
+import img4 from '../assets/img_4.png'
+
 const barberSlides = [
   {
-    src: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1400&q=80',
+    src: img,
     alt: 'Barberia moderna con estilo premium',
   },
   {
-    src: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1400&q=80',
+    src: img1,
     alt: 'Corte masculino moderno con acabado limpio',
   },
   {
-    src: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=1400&q=80',
+    src: img2,
     alt: 'Estilo moderno con degradado preciso',
   },
   {
-    src: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=1400&q=80',
+    src: img3,
     alt: 'Look masculino con corte prolijo',
   },
   {
-    src: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1400&q=80',
+    src: img4,
     alt: 'Corte premium con textura y peinado moderno',
-  },
-  {
-    src: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=1400&q=80',
-    alt: 'Estilo masculino contemporaneo',
   },
 ]
 
@@ -46,17 +48,20 @@ function Home() {
   }, [])
 
   return (
-    <Box className="auth-layout home-layout" sx={{ minHeight: '100svh', display: 'flex', flexDirection: 'column' }}>
+    <Box className="auth-layout home-layout">
       <NavBar />
-      <Container maxWidth="md" sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', py: { xs: 4, sm: 8 } }}>
-        <Box sx={{ width: '100%', display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: { xs: 4, md: 8 }, alignItems: 'center', justifyContent: 'center' }}>
+      <Container
+        maxWidth="md"
+        className="home-container"
+      >
+        <Box className="home-content-row">
           {/* Brand Card */}
-          <Box sx={{ maxWidth: 420, flex: 1, display: 'grid', gap: 2, zIndex: 2 }}>
+          <Box className="home-brand-card">
             <Typography variant="overline" color="secondary" sx={{ textTransform: 'uppercase', letterSpacing: 2.4 }}>
               {businessName}
             </Typography>
             <Typography variant="h1" sx={{ fontSize: { xs: 32, sm: 44 }, mb: 1 }}>
-              Reservas Barberos {businessName}
+              Sistema de Reservas
             </Typography>
             <Typography variant="subtitle1" sx={{ color: 'text.secondary', mb: 2 }}>
               Reserva con tu barbero favorito.
@@ -77,7 +82,7 @@ function Home() {
             </Box>
           </Box>
           {/* Carrusel de imágenes */}
-          <Box className="brand-visual" sx={{ position: 'relative', width: { xs: '100%', sm: 320, md: 360 }, height: { xs: 200, sm: 240, md: 320 }, borderRadius: 4, overflow: 'hidden', boxShadow: 3, flex: 1, zIndex: 1 }}>
+          <Box className="brand-visual">
             <div className="carousel">
               {barberSlides.map((slide, index) => (
                 <img

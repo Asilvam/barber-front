@@ -118,35 +118,11 @@ function Register() {
   }
 
   return (
-    <Box
-      className="auth-layout"
-      sx={{
-        minHeight: '100svh',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
+    <Box className="auth-layout">
       <NavBar />
-      <Container
-        maxWidth="xs"
-        sx={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          py: { xs: 4, sm: 8 },
-        }}
-      >
-        <Box
-          sx={{
-            width: '100%',
-            bgcolor: 'background.paper',
-            borderRadius: 3,
-            boxShadow: 3,
-            p: { xs: 3, sm: 4 },
-          }}
-        >
-          <Box sx={{ mb: 2 }}>
+      <Container maxWidth="xs" className="auth-container">
+        <Box className="auth-card">
+          <Box className="auth-header">
             <Typography variant="overline" color="secondary">
               Crea tu Cuenta
             </Typography>
@@ -157,7 +133,7 @@ function Register() {
           <Box
             component="form"
             onSubmit={handleRegister}
-            sx={{ display: 'grid', gap: 2 }}
+            className="auth-form"
           >
             <TextField
               label="Nombre Completo"
@@ -209,40 +185,24 @@ function Register() {
               variant="contained"
               color="primary"
               disabled={loading}
-              sx={{ borderRadius: 999, mt: 1 }}
+              className="auth-submit-btn"
             >
               {loading ? 'Creando cuenta...' : 'Registrarse'}
             </Button>
           </Box>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              gap: 2,
-              fontSize: 13,
-              color: 'text.secondary',
-              mt: 3,
-            }}
-          >
+          <Box className="auth-footer-link">
             <MuiLink
               onClick={() => navigate('/login')}
               underline="hover"
               color="primary"
-              sx={{ cursor: 'pointer' }}
+              className="auth-link"
             >
               ¿Ya tienes cuenta? Inicia sesión
             </MuiLink>
           </Box>
           <Box
             component="footer"
-            className="footer"
-            sx={{
-              mt: 3,
-              display: 'flex',
-              justifyContent: 'space-between',
-              fontSize: 12,
-              color: 'text.secondary',
-            }}
+            className="auth-footer"
           >
             <span>{businessName}</span>
             <span className="version">Version {appVersion}</span>
