@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import Container from '@mui/material/Container'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import NavBar from '../components/NavBar'
 import packageMeta from '../../package.json'
 
 import img from '../assets/img.png'
@@ -49,7 +48,6 @@ function Home() {
 
   return (
     <Box className="auth-layout home-layout">
-      <NavBar />
       <Container
         maxWidth="md"
         className="home-container"

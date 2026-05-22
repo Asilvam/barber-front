@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import packageMeta from '../../package.json'
-import NavBar from '../components/NavBar'
 import type { AuthResponse } from '../types/auth'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
@@ -270,7 +269,6 @@ function Login() {
 
   return (
     <Box className="auth-layout">
-      <NavBar />
       <Container maxWidth="xs" className="auth-container">
         <Box className="auth-card">
           <Box className="auth-header">

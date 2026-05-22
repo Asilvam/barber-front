@@ -203,10 +203,10 @@ export default function BarberAvailability() {
         
         {/* Back Button */}
         <Button
+          size="small"
+          variant="outlined"
           startIcon={<ArrowBackIcon />}
           onClick={() => navigate('/dashboard')}
-          variant="outlined"
-          color="primary"
           sx={{
             mb: 4,
             alignSelf: 'flex-start',
@@ -220,7 +220,7 @@ export default function BarberAvailability() {
             }
           }}
         >
-          Volver al Dashboard
+          Volver a Reserva
         </Button>
 
         {error && (

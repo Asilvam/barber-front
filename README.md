@@ -13,6 +13,14 @@ Este cliente web interactúa de forma ágil y segura con una API REST externa, o
   - Integración nativa de inicio de sesión con **Google Sign-In**.
   - Control de acceso y redirección basada en roles (`user`, `admin`, `barber`).
 
+* **🧭 Navegación Unificada & Estética Premium**:
+  - **NavBar Global**: Implementado de manera centralizada en el cascarón de la SPA (`App.tsx`), garantizando su visualización en todas las secciones.
+  - **Menú Hamburguesa Global**: Se eliminó el menú clásico de escritorio a favor de una hamburguesa universal minimalista. Al abrirse, despliega un menú lateral (Drawer) diseñado como tarjeta flotante, translúcida (`backdrop-filter`) y de bordes redondeados.
+  - **Estructura Compacta**: Altura de menú acortada y optimizada con paddings reducidos y un layout sumamente estilizado.
+  - **Log Out Integrado**: Botón "Cerrar Sesión" integrado directamente en el menú lateral, el cual borra el almacenamiento local y redirige al usuario automáticamente a la página de **Inicio (Home `/`)**.
+  - **Optimización de Identidad Visual (Logos)**: Estilos segregados para el logotipo de cabecera (`img_5` en cover completo redondo con borde dorado) y del menú flotante (`img_6` en contain flotando concéntricamente), asegurando que ambos luzcan nítidos y sin deformaciones.
+  - **Vocabulario Empático ("Reserva")**: Renombre global de "Dashboard" por **"Reserva"** en todas las vistas y flujos visibles al usuario, humanizando la interfaz.
+
 * **📅 Agendamiento de Citas en Tiempo Real**:
   - Visualización y selección interactiva de barberos activos.
   - Calendario adaptativo utilizando `@mui/x-date-pickers` para la selección de fechas.
@@ -20,8 +28,8 @@ Este cliente web interactúa de forma ágil y segura con una API REST externa, o
   - Alertas interactivas premium mediante **SweetAlert2** para la confirmación de la cita.
 
 * **⚙️ Panel Administrativo (Gestión de Horarios)**:
-  - **Administración Individual**: Panel dedicado a configurar la disponibilidad de cada barbero de manera independiente.
-  - **Programación por Rango de Fechas**: Capacidad para replicar la planificación horaria de un rango específico de forma masiva (máximo 62 días para protección de red).
+  - **Admin Barberos**: Panel dedicado a configurar la disponibilidad y perfiles de cada barbero de manera independiente, accesible desde el menú hamburguesa para el rol administrador.
+  - **Programación por Rango de Fechas**: Capacidad para replicar la programación horaria de un rango específico de forma masiva (máximo 62 días para protección de red).
   - **Plantillas Predefinidas (Presets de Turnos)**:
     - *Turno A*: Horario continuo de 9:00 a 19:00 con colación de 13:00 a 14:00.
     - *Turno B*: Horario de 9:00 a 19:00 con colación diferida de 14:00 a 15:00.

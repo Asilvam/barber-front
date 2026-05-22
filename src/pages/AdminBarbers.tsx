@@ -436,7 +436,7 @@ export default function AdminBarbers() {
             onClick={() => navigate('/dashboard')}
             sx={{ borderRadius: 999, textTransform: 'none', fontWeight: 600 }}
           >
-            Dashboard
+            Reserva
           </Button>
         </Box>
       </Box>

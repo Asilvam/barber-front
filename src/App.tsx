@@ -6,10 +6,12 @@ import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import AdminBarbers from './pages/AdminBarbers'
 import BarberAvailability from './pages/BarberAvailability'
+import NavBar from './components/NavBar'
 
 function App() {
   return (
     <div className="app-shell">
+      <NavBar />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />

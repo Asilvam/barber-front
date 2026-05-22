@@ -3,7 +3,6 @@ import AppBar from '@mui/material/AppBar'
 import Box from '@mui/material/Box'
 import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
-import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Drawer from '@mui/material/Drawer'
 import List from '@mui/material/List'
@@ -12,7 +11,7 @@ import ListItemButton from '@mui/material/ListItemButton'
 import ListItemIcon from '@mui/material/ListItemIcon'
 import ListItemText from '@mui/material/ListItemText'
 import Divider from '@mui/material/Divider'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 
 import img5 from '../assets/img_5.png'
 import img6 from '../assets/img_6.png'
@@ -24,6 +23,7 @@ import HomeIcon from '@mui/icons-material/Home'
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
 import LoginIcon from '@mui/icons-material/Login'
+import LogoutIcon from '@mui/icons-material/Logout'
 
 function getAuthUser(): { role?: string } | null {
   try {
@@ -35,6 +35,7 @@ function getAuthUser(): { role?: string } | null {
 }
 
 function NavBar() {
+  const navigate = useNavigate()
   const businessName =
     import.meta.env.VITE_BUSINESS_NAME?.trim() || 'Barber System'
   const isLoggedIn = !!localStorage.getItem('auth_token')
@@ -42,6 +43,13 @@ function NavBar() {
   const isAdmin = user?.role === 'admin'
 
   const [mobileOpen, setMobileOpen] = useState(false)
+
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('auth_user')
+    setMobileOpen(false)
+    navigate('/')
+  }
 
   return (
     <AppBar
@@ -52,7 +60,7 @@ function NavBar() {
       <Toolbar className="navbar-toolbar">
         {/* Branding */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Box className="navbar-logo-monogram">
+          <Box className="navbar-logo-monogram navbar-header-logo">
             <img src={img5} alt="Logo" className="navbar-logo-icon" />
           </Box>
           <Typography
@@ -62,51 +70,6 @@ function NavBar() {
           >
             {businessName}
           </Typography>
-        </Box>
-
-        {/* Desktop Menu */}
-        <Box className="navbar-desktop-menu">
-          <NavLink to="/" className="nav-hover-link">
-            Inicio
-          </NavLink>
-
-          {isLoggedIn ? (
-            <>
-              {isAdmin && (
-                <NavLink to="/admin/barbers" className="nav-btn-link">
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    startIcon={<AdminPanelSettingsIcon sx={{ fontSize: '18px !important' }} />}
-                    className="navbar-btn-admin"
-                  >
-                    Admin
-                  </Button>
-                </NavLink>
-              )}
-              <NavLink to="/dashboard" className="nav-btn-link">
-                <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={<DashboardIcon sx={{ fontSize: '18px !important' }} />}
-                  className="navbar-btn-dashboard"
-                >
-                  Dashboard
-                </Button>
-              </NavLink>
-            </>
-          ) : (
-            <NavLink to="/login" className="nav-btn-link">
-              <Button
-                variant="outlined"
-                color="primary"
-                startIcon={<LoginIcon sx={{ fontSize: '18px !important' }} />}
-                className="navbar-btn-login"
-              >
-                Login
-              </Button>
-            </NavLink>
-          )}
         </Box>
 
         {/* Mobile Burger Icon */}
@@ -133,7 +96,7 @@ function NavBar() {
       >
         <Box className="navbar-drawer-header">
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Box className="navbar-logo-monogram" sx={{ width: 32, height: 32, fontSize: '0.8rem' }}>
+            <Box className="navbar-logo-monogram navbar-drawer-logo" sx={{ width: 32, height: 32, fontSize: '0.8rem' }}>
               <img src={img6} alt="Logo" className="navbar-logo-icon" />
             </Box>
             <Typography
@@ -151,7 +114,7 @@ function NavBar() {
 
         <Divider sx={{ borderColor: 'rgba(178, 121, 76, 0.12)' }} />
 
-        <List sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, p: 0 }}>
+        <List sx={{ display: 'flex', flexDirection: 'column', gap: 1, p: 0 }}>
           <ListItem disablePadding>
             <ListItemButton
               component={NavLink}
@@ -182,7 +145,7 @@ function NavBar() {
                     <DashboardIcon sx={{ fontSize: 20 }} />
                   </ListItemIcon>
                   <ListItemText
-                    primary="Dashboard"
+                    primary="Reserva"
                     sx={{ '& .MuiListItemText-primary': { fontWeight: 600, fontSize: '0.9rem' } }}
                   />
                 </ListItemButton>
@@ -200,12 +163,28 @@ function NavBar() {
                       <AdminPanelSettingsIcon sx={{ fontSize: 20 }} />
                     </ListItemIcon>
                     <ListItemText
-                      primary="Admin Horarios"
+                      primary="Admin Barberos"
                       sx={{ '& .MuiListItemText-primary': { fontWeight: 600, fontSize: '0.9rem' } }}
                     />
                   </ListItemButton>
                 </ListItem>
               )}
+
+              <ListItem disablePadding>
+                <ListItemButton
+                  onClick={handleLogout}
+                  className="navbar-drawer-list-item-btn"
+                  sx={{ color: 'error.main' }}
+                >
+                  <ListItemIcon sx={{ minWidth: 35, color: 'inherit' }}>
+                    <LogoutIcon sx={{ fontSize: 20 }} />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Cerrar Sesión"
+                    sx={{ '& .MuiListItemText-primary': { fontWeight: 600, fontSize: '0.9rem' } }}
+                  />
+                </ListItemButton>
+              </ListItem>
             </>
           ) : (
             <ListItem disablePadding>

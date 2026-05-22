@@ -13,7 +13,6 @@ import RefreshIcon from '@mui/icons-material/Refresh'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import PersonIcon from '@mui/icons-material/Person'
 import LogoutIcon from '@mui/icons-material/Logout'
-import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
 import PhoneIcon from '@mui/icons-material/Phone'
 import EmailIcon from '@mui/icons-material/Email'
 import type { AuthUser } from '../types/auth'
@@ -107,29 +106,29 @@ export default function Dashboard() {
             variant="h6"
             sx={{ fontWeight: 700, color: 'primary.dark', fontSize: { xs: 18, sm: 20 } }}
           >
-            Dashboard
+            Reserva
           </Typography>
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-          {user && user.role === 'admin' && (
-            <Button
-              size="small"
-              variant="contained"
-              color="primary"
-              startIcon={<AdminPanelSettingsIcon />}
-              onClick={() => navigate('/admin/barbers')}
-              sx={{
-                borderRadius: 999,
-                textTransform: 'none',
-                fontWeight: 700,
-                fontSize: { xs: 11, sm: 13 },
-                boxShadow: '0 4px 14px rgba(178,121,76,0.25)',
-              }}
-            >
-              Admin Horarios
-            </Button>
-          )}
+          {/*{user && user.role === 'admin' && (*/}
+          {/*  <Button*/}
+          {/*    size="small"*/}
+          {/*    variant="contained"*/}
+          {/*    color="primary"*/}
+          {/*    startIcon={<AdminPanelSettingsIcon />}*/}
+          {/*    onClick={() => navigate('/admin/barbers')}*/}
+          {/*    sx={{*/}
+          {/*      borderRadius: 999,*/}
+          {/*      textTransform: 'none',*/}
+          {/*      fontWeight: 700,*/}
+          {/*      fontSize: { xs: 11, sm: 13 },*/}
+          {/*      boxShadow: '0 4px 14px rgba(178,121,76,0.25)',*/}
+          {/*    }}*/}
+          {/*  >*/}
+          {/*    Admin Barberos*/}
+          {/*  </Button>*/}
+          {/*)}*/}
           {user && (
             <Chip
               icon={<PersonIcon sx={{ fontSize: '16px !important' }} />}
