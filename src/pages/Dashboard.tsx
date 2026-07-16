@@ -15,13 +15,19 @@ import PersonIcon from '@mui/icons-material/Person'
 import LogoutIcon from '@mui/icons-material/Logout'
 import PhoneIcon from '@mui/icons-material/Phone'
 import EmailIcon from '@mui/icons-material/Email'
+import dayjs from 'dayjs'
+import 'dayjs/locale/es'
 import type { AuthUser } from '../types/auth'
 import './Dashboard.css'
 
 import {
   fetchBarbers,
+  fetchMyActiveAppointment,
+  type Appointment,
   type Barber,
 } from '../api/barber'
+
+dayjs.locale('es')
 
 /* ──────────────────── helpers ──────────────────── */
 
@@ -36,15 +42,31 @@ function getAuthUser(): AuthUser | null {
   }
 }
 
+const appointmentStatusLabel: Record<Appointment['status'], string> = {
+  pending: 'Pendiente',
+  confirmed: 'Confirmada',
+  cancelled: 'Cancelada',
+  completed: 'Completada',
+}
+
+function getAppointmentBarberName(appointment: Appointment) {
+  return typeof appointment.barberId === 'object' && appointment.barberId !== null
+    ? appointment.barberId.name
+    : 'Barbero asignado'
+}
+
 /* ──────────────────── component ──────────────────── */
 
 export default function Dashboard() {
   const navigate = useNavigate()
   const user = getAuthUser()
+  const isAdmin = user?.role === 'admin'
 
   // ── state ──
   const [barbers, setBarbers] = useState<Barber[]>([])
   const [loadingBarbers, setLoadingBarbers] = useState(false)
+  const [activeAppointment, setActiveAppointment] = useState<Appointment | null>(null)
+  const [loadingActiveAppointment, setLoadingActiveAppointment] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // ── redirect if not logged in ──
@@ -85,6 +107,36 @@ export default function Dashboard() {
     return () => controller.abort()
   }, [])
 
+  useEffect(() => {
+    let active = true
+
+    if (isAdmin || !localStorage.getItem('auth_token')) {
+      return () => {
+        active = false
+      }
+    }
+
+    const timer = setTimeout(() => {
+      setLoadingActiveAppointment(true)
+      fetchMyActiveAppointment()
+        .then((appointment) => {
+          if (active) setActiveAppointment(appointment)
+        })
+        .catch((err) => {
+          console.error('Error cargando cita activa:', err)
+          if (active) setActiveAppointment(null)
+        })
+        .finally(() => {
+          if (active) setLoadingActiveAppointment(false)
+        })
+    }, 0)
+
+    return () => {
+      active = false
+      clearTimeout(timer)
+    }
+  }, [isAdmin])
+
   const handleSelectBarber = useCallback((barber: Barber) => {
     navigate(`/barbers/${barber._id}/availability`)
   }, [navigate])
@@ -111,24 +163,6 @@ export default function Dashboard() {
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-          {/*{user && user.role === 'admin' && (*/}
-          {/*  <Button*/}
-          {/*    size="small"*/}
-          {/*    variant="contained"*/}
-          {/*    color="primary"*/}
-          {/*    startIcon={<AdminPanelSettingsIcon />}*/}
-          {/*    onClick={() => navigate('/admin/barbers')}*/}
-          {/*    sx={{*/}
-          {/*      borderRadius: 999,*/}
-          {/*      textTransform: 'none',*/}
-          {/*      fontWeight: 700,*/}
-          {/*      fontSize: { xs: 11, sm: 13 },*/}
-          {/*      boxShadow: '0 4px 14px rgba(178,121,76,0.25)',*/}
-          {/*    }}*/}
-          {/*  >*/}
-          {/*    Admin Barberos*/}
-          {/*  </Button>*/}
-          {/*)}*/}
           {user && (
             <Chip
               icon={<PersonIcon sx={{ fontSize: '16px !important' }} />}
@@ -150,7 +184,7 @@ export default function Dashboard() {
             startIcon={<LogoutIcon sx={{ fontSize: '16px !important' }} />}
             onClick={handleLogout}
             sx={{
-              borderRadius: 999,
+              borderRadius: 1,
               textTransform: 'none',
               fontSize: { xs: 11, sm: 13 },
               height: 28,
@@ -165,9 +199,62 @@ export default function Dashboard() {
       {/* ── Main Content ── */}
       <Container maxWidth="md" sx={{ flex: 1, py: { xs: 2, sm: 4 } }}>
         {error && (
-          <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
+          <Alert severity="error" sx={{ mb: 2, borderRadius: 1 }}>
             {error}
           </Alert>
+        )}
+
+        {!isAdmin && (loadingActiveAppointment || activeAppointment) && (
+          <Paper elevation={0} className="active-appointment-card">
+            {loadingActiveAppointment ? (
+              <>
+                <Skeleton width="35%" height={22} />
+                <Skeleton width="70%" height={18} />
+              </>
+            ) : activeAppointment ? (
+              <>
+                <Box className="active-appointment-main">
+                  <Box className="active-appointment-heading">
+                    <Box className="active-appointment-icon">
+                      <CalendarMonthIcon fontSize="small" />
+                    </Box>
+                    <Box>
+                      <Typography variant="overline" className="active-appointment-kicker">
+                        Cita vigente
+                      </Typography>
+                      <Typography variant="subtitle1" className="active-appointment-title">
+                        Ya tienes una reserva activa
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Typography variant="body2" className="active-appointment-copy">
+                    Para tomar una nueva hora, primero cancela o completa esta reserva.
+                  </Typography>
+                </Box>
+
+                <Box className="active-appointment-details">
+                  <Box className="active-appointment-detail">
+                    <span>Barbero</span>
+                    <strong>{getAppointmentBarberName(activeAppointment)}</strong>
+                  </Box>
+                  <Box className="active-appointment-detail">
+                    <span>Fecha</span>
+                    <strong>{dayjs(activeAppointment.date).format('dddd D [de] MMMM')}</strong>
+                  </Box>
+                  <Box className="active-appointment-detail">
+                    <span>Hora</span>
+                    <strong>{activeAppointment.timeSlot}</strong>
+                  </Box>
+                  <Chip
+                    label={appointmentStatusLabel[activeAppointment.status]}
+                    size="small"
+                    color={activeAppointment.status === 'confirmed' ? 'success' : 'warning'}
+                    className="active-appointment-status"
+                  />
+                </Box>
+              </>
+            ) : null}
+          </Paper>
         )}
 
         {/* ── Barbers Grid ── */}
@@ -209,19 +296,18 @@ export default function Dashboard() {
                       elevation={0}
                       sx={{
                         p: 2,
-                        borderRadius: 3,
+                        borderRadius: 1,
                         border: '1px solid',
                         borderColor: 'divider',
                         display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexDirection: 'column',
                         gap: 2,
                       }}
                     >
-                      <Skeleton variant="circular" width={40} height={40} />
-                      <Box sx={{ flex: 1 }}>
-                        <Skeleton width="60%" height={20} sx={{ mb: 1 }} />
-                        <Skeleton width="80%" height={16} sx={{ mb: 0.5 }} />
-                        <Skeleton width="40%" height={16} />
-                      </Box>
+                      <Skeleton variant="circular" width={58} height={58} />
+                      <Skeleton width="55%" height={24} />
                     </Paper>
                   ))}
                 </Box>
@@ -230,57 +316,60 @@ export default function Dashboard() {
                   <Typography variant="body2">No hay barberos registrados</Typography>
                 </Box>
               ) : (
-                <Box className="barbers-grid">
+                <Box className={`barbers-grid ${isAdmin ? 'barbers-grid-admin' : 'barbers-grid-client'}`}>
                   {barbers.map((barber) => {
                     return (
                       <Paper
                         key={barber._id}
                         elevation={0}
                         onClick={() => handleSelectBarber(barber)}
-                        className="barber-card"
+                        className={`barber-card ${isAdmin ? 'barber-card-admin' : 'barber-card-client'}`}
                       >
-                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-                          <Box
-                            sx={{
-                              width: 44,
-                              height: 44,
-                              borderRadius: '50%',
-                              bgcolor: 'primary.light',
-                              color: 'primary.dark',
-                              display: 'grid',
-                              placeItems: 'center',
-                              fontWeight: 700,
-                              fontSize: 16,
-                              flexShrink: 0,
-                              transition: 'all 0.2s',
-                            }}
-                          >
-                            {barber.name.charAt(0).toUpperCase()}
+                        {isAdmin ? (
+                          <Box className="barber-admin-content">
+                            <Box className="barber-avatar barber-avatar-compact">
+                              {barber.name.charAt(0).toUpperCase()}
+                            </Box>
+                            <Box className="barber-admin-rows">
+                              <Box className="barber-admin-row barber-admin-row-name">
+                                <PersonIcon sx={{ fontSize: 15, color: 'primary.main' }} />
+                                <Typography
+                                  variant="subtitle2"
+                                  className="barber-admin-name"
+                                >
+                                  {barber.name}
+                                </Typography>
+                              </Box>
+
+                              <Box className="barber-admin-row">
+                                <EmailIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                                <Typography variant="caption" color="text.secondary" className="barber-admin-detail-text">
+                                  {barber.email}
+                                </Typography>
+                              </Box>
+
+                              <Box className="barber-admin-row">
+                                <PhoneIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                                <Typography variant="caption" color="text.secondary" className="barber-admin-detail-text">
+                                  {barber.phone}
+                                </Typography>
+                              </Box>
+                            </Box>
                           </Box>
-                          <Box sx={{ minWidth: 0, flex: 1 }}>
+                        ) : (
+                          <Box className="barber-client-card-content">
+                            <Box className="barber-avatar">
+                              {barber.name.charAt(0).toUpperCase()}
+                            </Box>
                             <Typography
-                              variant="subtitle2"
-                              sx={{ fontWeight: 700, color: 'text.primary', mb: 0.5 }}
-                              noWrap
+                              variant="subtitle1"
+                              className="barber-client-name"
+                              title={barber.name}
                             >
                               {barber.name}
                             </Typography>
-                            
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8, mb: 0.5 }}>
-                              <EmailIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
-                              <Typography variant="caption" color="text.secondary" noWrap>
-                                {barber.email}
-                              </Typography>
-                            </Box>
-
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
-                              <PhoneIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
-                              <Typography variant="caption" color="text.secondary" noWrap>
-                                {barber.phone}
-                              </Typography>
-                            </Box>
                           </Box>
-                        </Box>
+                        )}
                       </Paper>
                     )
                   })}

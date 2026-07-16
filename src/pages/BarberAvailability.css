@@ -8,7 +8,7 @@
 }
 
 .availability-card {
-  border-radius: 16px !important;
+  border-radius: 8px !important;
   border: 1px solid rgba(0, 0, 0, 0.08) !important;
   backdrop-filter: blur(12px);
   background: rgba(251, 247, 242, 0.85) !important;
@@ -18,8 +18,15 @@
 }
 
 @media (max-width: 600px) {
+  .availability-container {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
   .availability-card {
-    padding: 16px !important;
+    border-radius: 8px !important;
+    padding: 14px !important;
+    margin-bottom: 20px !important;
   }
 }
 
@@ -31,6 +38,417 @@
   padding-bottom: 16px;
   margin-bottom: 24px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 600px) {
+  .availability-header-label {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    padding-bottom: 12px;
+    margin-bottom: 18px;
+  }
+
+  .availability-header-label > .MuiTypography-root {
+    grid-column: 1 / -1;
+    font-size: 0.72rem;
+  }
+
+  .availability-header-label .MuiChip-root {
+    max-width: 100%;
+  }
+
+  .availability-header-label .MuiChip-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.availability-calendar-section {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 32px;
+}
+
+.availability-active-appointment-card {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(320px, 0.95fr);
+  align-items: stretch;
+  gap: 18px;
+  padding: 16px;
+  margin-bottom: 24px;
+  border-radius: 8px;
+  border: 1px solid rgba(178, 121, 76, 0.18);
+  background:
+    linear-gradient(90deg, rgba(178, 121, 76, 0.14), transparent 4px),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(250, 241, 233, 0.78));
+}
+
+.availability-active-main {
+  display: grid;
+  align-content: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.availability-active-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.availability-active-icon {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(178, 121, 76, 0.12);
+  color: #7c4c2f;
+}
+
+.availability-active-kicker {
+  color: #9a653f;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  line-height: 1.1 !important;
+}
+
+.availability-active-title {
+  color: #1f1b1a;
+  font-weight: 800 !important;
+  line-height: 1.22 !important;
+}
+
+.availability-active-copy {
+  color: #6f625b !important;
+  line-height: 1.45 !important;
+  max-width: 420px;
+}
+
+.availability-active-details {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 8px;
+}
+
+.availability-active-detail {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(178, 121, 76, 0.12);
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.availability-active-detail span {
+  color: #8a7a70;
+  font-size: 0.67rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.availability-active-detail strong {
+  min-width: 0;
+  color: #2b1c11;
+  font-size: 0.84rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.availability-active-status {
+  align-self: center;
+  justify-self: flex-start;
+  font-weight: 800 !important;
+  border-radius: 8px !important;
+}
+
+.availability-booking-locked {
+  text-align: center;
+  padding: 28px 18px;
+  border-radius: 8px;
+  border: 1px dashed rgba(178, 121, 76, 0.24);
+  background: rgba(178, 121, 76, 0.055);
+}
+
+@media (max-width: 600px) {
+  .availability-calendar-section {
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .availability-calendar-header {
+    gap: 6px;
+  }
+
+  .availability-calendar-header .MuiTypography-body2 {
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
+
+  .availability-active-appointment-card {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 14px;
+    margin-bottom: 18px;
+    border-radius: 8px;
+  }
+
+  .availability-active-details {
+    grid-template-columns: 1fr;
+    gap: 7px;
+  }
+
+  .availability-active-copy {
+    max-width: none;
+  }
+}
+
+.availability-calendar-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.availability-calendar-card {
+  max-width: 430px;
+  margin: 0 auto;
+  border-radius: 8px;
+  border: 1px solid rgba(178, 121, 76, 0.14);
+  background: rgba(255, 255, 255, 0.58);
+  padding: 12px 14px 16px;
+}
+
+.availability-calendar-card .MuiDateCalendar-root {
+  max-height: none;
+  width: 360px !important;
+  max-width: 100% !important;
+  margin: 0 auto;
+}
+
+.availability-calendar-card .MuiDayCalendar-monthContainer,
+.availability-calendar-card .MuiDayCalendar-weekContainer {
+  width: 100%;
+}
+
+.availability-calendar-card .MuiDayCalendar-header,
+.availability-calendar-card .MuiDayCalendar-weekContainer {
+  display: grid !important;
+  grid-template-columns: repeat(7, 40px);
+  justify-content: center;
+  gap: 6px;
+}
+
+.availability-calendar-card .MuiPickersDay-root {
+  width: 40px;
+  height: 40px;
+  margin: 0;
+}
+
+.availability-calendar-card .MuiPickersCalendarHeader-root {
+  padding-left: 14px;
+  padding-right: 10px;
+}
+
+.availability-calendar-card .MuiDayCalendar-weekDayLabel {
+  width: 40px;
+  height: 32px;
+  margin: 0;
+  color: #7c6a60;
+  font-weight: 700;
+}
+
+@media (max-width: 600px) {
+  .availability-calendar-card {
+    border-radius: 8px;
+    padding: 8px 4px 12px;
+    max-width: 100%;
+  }
+
+  .availability-calendar-card .MuiDateCalendar-root {
+    width: min(100%, 320px) !important;
+  }
+
+  .availability-calendar-card .MuiDayCalendar-header,
+  .availability-calendar-card .MuiDayCalendar-weekContainer {
+    grid-template-columns: repeat(7, 38px);
+    gap: 3px;
+  }
+
+  .availability-calendar-card .MuiPickersDay-root {
+    width: 38px;
+    height: 38px;
+  }
+
+  .availability-calendar-card .MuiDayCalendar-weekDayLabel {
+    width: 38px;
+  }
+}
+
+.availability-day-available:not(.Mui-disabled) {
+  background: rgba(46, 125, 50, 0.12) !important;
+  color: #1f6b34 !important;
+  border: 1px solid rgba(46, 125, 50, 0.32) !important;
+  font-weight: 800 !important;
+}
+
+.availability-day-full:not(.Mui-disabled) {
+  background: rgba(198, 40, 40, 0.1) !important;
+  color: #a52727 !important;
+  border: 1px solid rgba(198, 40, 40, 0.26) !important;
+  font-weight: 800 !important;
+}
+
+.availability-day-available.Mui-selected,
+.availability-day-full.Mui-selected {
+  color: #fff !important;
+  background: #b2794c !important;
+  border-color: #b2794c !important;
+}
+
+.availability-calendar-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 0 8px;
+  color: #6b5d58;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.availability-calendar-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.legend-dot-available {
+  background: #2e7d32;
+}
+
+.legend-dot-full {
+  background: #c62828;
+}
+
+.calendar-loading-label {
+  color: #7c4c2f;
+}
+
+@media (max-width: 600px) {
+  .availability-calendar-legend {
+    justify-content: flex-start;
+    gap: 8px 12px;
+    padding: 0 10px;
+    font-size: 0.72rem;
+  }
+}
+
+.availability-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.availability-slot-button {
+  min-height: 54px !important;
+  display: grid !important;
+  gap: 3px;
+  justify-items: center;
+  align-content: center;
+}
+
+.availability-slot-button .slot-time-label {
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.availability-slot-button .slot-status-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.availability-slot-available .slot-status-label {
+  color: #2e7d32;
+}
+
+.availability-slot-occupied.Mui-disabled,
+.availability-slot-expired.Mui-disabled {
+  opacity: 1 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.availability-slot-occupied.Mui-disabled {
+  color: #9a2f2f !important;
+  border-color: rgba(198, 40, 40, 0.26) !important;
+  background: rgba(198, 40, 40, 0.08) !important;
+}
+
+.availability-slot-expired.Mui-disabled {
+  color: #76695f !important;
+  border-color: rgba(124, 105, 90, 0.2) !important;
+  background: rgba(124, 105, 90, 0.08) !important;
+}
+
+.availability-slot-occupied .slot-status-label {
+  color: #b32626;
+}
+
+.availability-slot-expired .slot-status-label {
+  color: #76695f;
+}
+
+@media (max-width: 600px) {
+  .availability-slots-section {
+    margin-top: 0 !important;
+  }
+
+  .availability-slots-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .availability-slot-button {
+    min-height: 56px !important;
+    justify-content: center !important;
+    font-size: 0.82rem !important;
+    padding: 10px 6px !important;
+    gap: 4px;
+  }
+
+  .availability-slot-button .slot-time-label {
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .availability-slot-button .slot-status-label {
+    font-size: 0.62rem;
+    letter-spacing: 0.03em;
+  }
+
 }
 
 .date-picker-wrapper {
@@ -48,7 +466,7 @@
 }
 
 .slot-button {
-  border-radius: 12px !important;
+  border-radius: 8px !important;
   font-weight: 700 !important;
   text-transform: none !important;
   padding: 12px 16px !important;

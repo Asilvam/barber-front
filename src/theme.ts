@@ -45,13 +45,13 @@ const theme = createTheme({
     },
   },
   shape: {
-    borderRadius: 12,
+    borderRadius: 8,
   },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 999,
+          borderRadius: 8,
           textTransform: 'none',
         },
         contained: {
@@ -81,7 +81,7 @@ const theme = createTheme({
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
-          borderRadius: 12,
+          borderRadius: 8,
           backgroundColor: '#fff',
         },
       },
@@ -90,4 +90,3 @@ const theme = createTheme({
 } as ThemeOptions);
 
 export default theme;
-

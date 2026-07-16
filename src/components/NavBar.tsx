@@ -72,6 +72,42 @@ function NavBar() {
           </Typography>
         </Box>
 
+        <Box component="nav" aria-label="Navegacion principal" className="navbar-desktop-menu">
+          <NavLink to="/" className="nav-hover-link">
+            Inicio
+          </NavLink>
+
+          {isLoggedIn ? (
+            <>
+              <NavLink to="/dashboard" className="nav-hover-link">
+                Reserva
+              </NavLink>
+
+              {isAdmin && (
+                <NavLink to="/admin/barbers" className="nav-hover-link">
+                  Barberos
+                </NavLink>
+              )}
+
+              {isAdmin && (
+                <NavLink to="/admin/reserves" className="nav-hover-link">
+                  Reservas
+                </NavLink>
+              )}
+
+              <button type="button" onClick={handleLogout} className="navbar-ghost-button">
+                <LogoutIcon sx={{ fontSize: 17 }} />
+                Salir
+              </button>
+            </>
+          ) : (
+            <NavLink to="/login" className="navbar-cta-link">
+              <LoginIcon sx={{ fontSize: 17 }} />
+              Login
+            </NavLink>
+          )}
+        </Box>
+
         {/* Mobile Burger Icon */}
         <IconButton
           color="primary"
@@ -152,22 +188,40 @@ function NavBar() {
               </ListItem>
 
               {isAdmin && (
-                <ListItem disablePadding>
-                  <ListItemButton
-                    component={NavLink}
-                    to="/admin/barbers"
-                    onClick={() => setMobileOpen(false)}
-                    className="navbar-drawer-list-item-btn"
-                  >
-                    <ListItemIcon sx={{ minWidth: 35, color: 'inherit' }}>
-                      <AdminPanelSettingsIcon sx={{ fontSize: 20 }} />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="Admin Barberos"
-                      sx={{ '& .MuiListItemText-primary': { fontWeight: 600, fontSize: '0.9rem' } }}
-                    />
-                  </ListItemButton>
-                </ListItem>
+                <>
+                  <ListItem disablePadding>
+                    <ListItemButton
+                      component={NavLink}
+                      to="/admin/barbers"
+                      onClick={() => setMobileOpen(false)}
+                      className="navbar-drawer-list-item-btn"
+                    >
+                      <ListItemIcon sx={{ minWidth: 35, color: 'inherit' }}>
+                        <AdminPanelSettingsIcon sx={{ fontSize: 20 }} />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary="Admin Barberos"
+                        sx={{ '& .MuiListItemText-primary': { fontWeight: 600, fontSize: '0.9rem' } }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                  <ListItem disablePadding>
+                    <ListItemButton
+                      component={NavLink}
+                      to="/admin/reserves"
+                      onClick={() => setMobileOpen(false)}
+                      className="navbar-drawer-list-item-btn"
+                    >
+                      <ListItemIcon sx={{ minWidth: 35, color: 'inherit' }}>
+                        <DashboardIcon sx={{ fontSize: 20 }} />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary="Admin Reservas"
+                        sx={{ '& .MuiListItemText-primary': { fontWeight: 600, fontSize: '0.9rem' } }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                </>
               )}
 
               <ListItem disablePadding>

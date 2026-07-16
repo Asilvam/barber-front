@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
@@ -13,7 +13,8 @@ import Chip from '@mui/material/Chip'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
-import { DatePicker } from '@mui/x-date-pickers/DatePicker'
+import { DateCalendar } from '@mui/x-date-pickers/DateCalendar'
+import { PickerDay, type PickerDayProps } from '@mui/x-date-pickers/PickerDay'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import dayjs, { type Dayjs } from 'dayjs'
@@ -24,15 +25,88 @@ import './BarberAvailability.css'
 import {
   fetchBarbers,
   fetchAvailableSlots,
+  fetchBarberSchedules,
+  fetchMyActiveAppointment,
   createAppointment,
+  type Appointment,
+  type AvailabilitySlot,
   type Barber,
 } from '../api/barber'
+import { getAuthUser } from '../auth/session'
 
 dayjs.locale('es')
+
+type CalendarDayStatus = 'available' | 'full'
+
+const appointmentStatusLabel: Record<Appointment['status'], string> = {
+  pending: 'Pendiente',
+  confirmed: 'Confirmada',
+  cancelled: 'Cancelada',
+  completed: 'Completada',
+}
+
+function getAppointmentBarberName(appointment: Appointment) {
+  return typeof appointment.barberId === 'object' && appointment.barberId !== null
+    ? appointment.barberId.name
+    : 'Barbero asignado'
+}
+
+type BookingErrorInfo = {
+  title: string
+  message: string
+  shouldRefreshAvailability: boolean
+}
+
+function getBookingErrorInfo(error: unknown): BookingErrorInfo {
+  const response = (error as { response?: { status?: number; data?: { message?: string } } })?.response
+  const backendMessage = response?.data?.message
+
+  if (response?.status === 409) {
+    if (backendMessage?.startsWith('Ya tienes una reserva activa')) {
+      return {
+        title: 'Ya tienes una reserva activa',
+        message: backendMessage,
+        shouldRefreshAvailability: false,
+      }
+    }
+
+    if (backendMessage === 'This time slot is already occupied') {
+      return {
+        title: 'Horario no disponible',
+        message: 'Este horario acaba de ser tomado. Actualizamos la disponibilidad para que elijas otro bloque.',
+        shouldRefreshAvailability: true,
+      }
+    }
+
+    if (backendMessage?.startsWith('Barber with ID') || backendMessage?.startsWith('Time slot')) {
+      return {
+        title: 'Bloque no disponible',
+        message: 'Este bloque ya no está disponible para la fecha seleccionada. Revisa los horarios actualizados.',
+        shouldRefreshAvailability: true,
+      }
+    }
+  }
+
+  return {
+    title: 'No se pudo agendar',
+    message: backendMessage ?? (error instanceof Error ? error.message : 'Error inesperado al agendar.'),
+    shouldRefreshAvailability: false,
+  }
+}
 
 export default function BarberAvailability() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const user = getAuthUser()
+  const isAdmin = user?.role === 'admin'
+  const today = useMemo(() => dayjs().startOf('day'), [])
+  const currentMonthStart = useMemo(() => today.startOf('month'), [today])
+  const currentMonthEnd = useMemo(() => today.endOf('month'), [today])
+  const clientMaxDate = useMemo(() => {
+    const oneWeekAhead = today.add(7, 'day')
+    return oneWeekAhead.isBefore(currentMonthEnd) ? oneWeekAhead : currentMonthEnd
+  }, [currentMonthEnd, today])
+  const maxSelectableDate = isAdmin ? currentMonthEnd : clientMaxDate
 
   // ── states ──
   const [barber, setBarber] = useState<Barber | null>(null)
@@ -40,8 +114,12 @@ export default function BarberAvailability() {
   const [error, setError] = useState<string | null>(null)
 
   const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs())
-  const [slots, setSlots] = useState<string[]>([])
+  const [slots, setSlots] = useState<AvailabilitySlot[]>([])
   const [loadingSlots, setLoadingSlots] = useState(false)
+  const [loadingCalendar, setLoadingCalendar] = useState(false)
+  const [activeAppointment, setActiveAppointment] = useState<Appointment | null>(null)
+  const [loadingActiveAppointment, setLoadingActiveAppointment] = useState(false)
+  const [calendarStatuses, setCalendarStatuses] = useState<Record<string, CalendarDayStatus>>({})
 
   // ── session protection ──
   useEffect(() => {
@@ -49,6 +127,36 @@ export default function BarberAvailability() {
       navigate('/login')
     }
   }, [navigate])
+
+  useEffect(() => {
+    let active = true
+
+    if (isAdmin || !localStorage.getItem('auth_token')) {
+      return () => {
+        active = false
+      }
+    }
+
+    const timer = setTimeout(() => {
+      setLoadingActiveAppointment(true)
+      fetchMyActiveAppointment()
+        .then((appointment) => {
+          if (active) setActiveAppointment(appointment)
+        })
+        .catch((err) => {
+          console.error('Error cargando cita activa:', err)
+          if (active) setActiveAppointment(null)
+        })
+        .finally(() => {
+          if (active) setLoadingActiveAppointment(false)
+        })
+    }, 0)
+
+    return () => {
+      active = false
+      clearTimeout(timer)
+    }
+  }, [isAdmin])
 
   // ── load barber info ──
   useEffect(() => {
@@ -86,7 +194,7 @@ export default function BarberAvailability() {
     setLoadingSlots(true)
     try {
       const resp = await fetchAvailableSlots(id, date.format('YYYY-MM-DD'))
-      setSlots(resp.availableSlots)
+      setSlots(resp.slots ?? resp.availableSlots.map((time) => ({ time, status: 'available' })))
     } catch (err) {
       console.error('Error fetching availability:', err)
       setSlots([])
@@ -94,6 +202,48 @@ export default function BarberAvailability() {
       setLoadingSlots(false)
     }
   }, [id])
+
+  const loadCalendarOverview = useCallback(async () => {
+    if (!id) return
+
+    setLoadingCalendar(true)
+    try {
+      const schedules = await fetchBarberSchedules()
+      const lookupStart = today.isAfter(currentMonthStart) ? today : currentMonthStart
+      const scheduledDates = schedules
+        .filter((schedule) => {
+          const scheduleBarberId =
+            typeof schedule.barberId === 'object' && schedule.barberId !== null
+              ? schedule.barberId._id
+              : schedule.barberId
+          const scheduleDate = dayjs(schedule.date).startOf('day')
+
+          return (
+            scheduleBarberId === id &&
+            !schedule.isDayOff &&
+            !scheduleDate.isBefore(lookupStart, 'day') &&
+            !scheduleDate.isAfter(maxSelectableDate, 'day')
+          )
+        })
+        .map((schedule) => dayjs(schedule.date).format('YYYY-MM-DD'))
+
+      const uniqueDates = Array.from(new Set(scheduledDates))
+      const availabilityEntries = await Promise.all(
+        uniqueDates.map(async (date) => {
+          const response = await fetchAvailableSlots(id, date)
+          const status: CalendarDayStatus = response.availableSlots.length > 0 ? 'available' : 'full'
+          return [date, status] as const
+        }),
+      )
+
+      setCalendarStatuses(Object.fromEntries(availabilityEntries))
+    } catch (err) {
+      console.error('Error loading calendar overview:', err)
+      setCalendarStatuses({})
+    } finally {
+      setLoadingCalendar(false)
+    }
+  }, [currentMonthStart, id, maxSelectableDate, today])
 
   // ── fetch current day availability by default on mount, and automatically on selectedDate changes ──
   useEffect(() => {
@@ -105,11 +255,35 @@ export default function BarberAvailability() {
     }
   }, [id, selectedDate, loadSlotsForDate])
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadCalendarOverview()
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [loadCalendarOverview])
+
   const handleDateChange = useCallback((date: Dayjs | null) => {
     if (date) {
       setSelectedDate(date)
     }
   }, [])
+
+  const shouldDisableDate = useCallback((date: Dayjs) => {
+    return (
+      date.isBefore(today, 'day') ||
+      date.isAfter(maxSelectableDate, 'day') ||
+      !date.isSame(today, 'month')
+    )
+  }, [maxSelectableDate, today])
+
+  const AvailabilityPickerDay = useCallback((dayProps: PickerDayProps) => {
+    const dateKey = dayjs(dayProps.day).format('YYYY-MM-DD')
+    const status = calendarStatuses[dateKey]
+    const statusClass = status ? `availability-day-${status}` : ''
+    const className = [dayProps.className, statusClass].filter(Boolean).join(' ')
+
+    return <PickerDay {...dayProps} className={className} />
+  }, [calendarStatuses])
 
   // ── 1-hour block formatter ──
   const getBlockTimeRange = useCallback((slot: string) => {
@@ -123,22 +297,39 @@ export default function BarberAvailability() {
     }
   }, [])
 
+  const getSlotStatusLabel = useCallback((status: AvailabilitySlot['status']) => {
+    if (status === 'occupied') return 'Ocupado'
+    if (status === 'expired') return 'Vencido'
+    return 'Disponible'
+  }, [])
+
   // ── book appointment with SweetAlert2 ──
   const handleBookSlot = async (slot: string, timeRangeDisplay: string) => {
     if (!barber || !id) return
 
+    if (!isAdmin && activeAppointment) {
+      await Swal.fire({
+        title: 'Ya tienes una reserva activa',
+        text: 'Debes completar o cancelar tu cita actual antes de programar una nueva.',
+        icon: 'info',
+        confirmButtonColor: '#b2794c',
+        background: '#fbf7f2',
+        color: '#1f1b1a',
+      })
+      return
+    }
+
     const dateFormatted = selectedDate.format('dddd D [de] MMMM, YYYY')
+    const summary = [
+      `Barbero: ${barber.name}`,
+      `Fecha: ${dateFormatted}`,
+      `Bloque de Hora: ${timeRangeDisplay}`,
+    ].join('\n')
 
     // 1. Confirm dialog
     const confirmResult = await Swal.fire({
       title: '¿Confirmar tu Cita?',
-      html: `
-        <div style="text-align: left; padding: 5px 15px; font-size: 15px;">
-          <p style="margin: 6px 0;"><strong>Barbero:</strong> ${barber.name}</p>
-          <p style="margin: 6px 0;"><strong>Fecha:</strong> ${dateFormatted}</p>
-          <p style="margin: 6px 0;"><strong>Bloque de Hora:</strong> ${timeRangeDisplay}</p>
-        </div>
-      `,
+      text: summary,
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#b2794c',
@@ -177,17 +368,25 @@ export default function BarberAvailability() {
       })
 
       // Reload available slots so the booked slot is immediately removed from the interface
-      loadSlotsForDate(selectedDate)
+      await loadSlotsForDate(selectedDate)
+      loadCalendarOverview()
+      if (!isAdmin) {
+        const appointment = await fetchMyActiveAppointment()
+        setActiveAppointment(appointment)
+      }
 
     } catch (err) {
-      const msg =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        (err instanceof Error ? err.message : 'Error inesperado al agendar.')
+      const bookingError = getBookingErrorInfo(err)
+
+      if (bookingError.shouldRefreshAvailability) {
+        await loadSlotsForDate(selectedDate)
+        loadCalendarOverview()
+      }
 
       // 4. Error dialog
       await Swal.fire({
-        title: 'No se pudo agendar',
-        text: msg,
+        title: bookingError.title,
+        text: bookingError.message,
         icon: 'error',
         confirmButtonColor: '#b2794c',
         background: '#fbf7f2',
@@ -199,7 +398,7 @@ export default function BarberAvailability() {
   // ── render ──
   return (
     <Box className="availability-bg">
-      <Container maxWidth="md" sx={{ py: { xs: 4, sm: 6 }, flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <Container maxWidth="md" className="availability-container" sx={{ py: { xs: 2, sm: 6 }, flex: 1, display: 'flex', flexDirection: 'column' }}>
         
         {/* Back Button */}
         <Button
@@ -208,7 +407,7 @@ export default function BarberAvailability() {
           startIcon={<ArrowBackIcon />}
           onClick={() => navigate('/dashboard')}
           sx={{
-            mb: 4,
+            mb: { xs: 2, sm: 4 },
             alignSelf: 'flex-start',
             borderColor: 'rgba(178,121,76,0.35)',
             color: 'primary.dark',
@@ -224,7 +423,7 @@ export default function BarberAvailability() {
         </Button>
 
         {error && (
-          <Alert severity="error" sx={{ mb: 4, borderRadius: 2 }}>
+          <Alert severity="error" sx={{ mb: 4, borderRadius: 1 }}>
             {error}
           </Alert>
         )}
@@ -234,7 +433,7 @@ export default function BarberAvailability() {
             elevation={0}
             sx={{
               p: 3,
-              borderRadius: 3,
+              borderRadius: 1,
               border: '1px solid',
               borderColor: 'divider',
               backdropFilter: 'blur(12px)',
@@ -265,7 +464,7 @@ export default function BarberAvailability() {
                     fontWeight: 700,
                     fontSize: '1.05rem',
                     height: 36,
-                    borderRadius: 2,
+                    borderRadius: 1,
                     boxShadow: '0 4px 12px rgba(178, 121, 76, 0.18)',
                   }}
                 />
@@ -278,49 +477,106 @@ export default function BarberAvailability() {
                 />
               </Box>
 
-              {/* Date Selection Section (Compact) */}
-              <Box sx={{ mb: 4 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'primary.dark', mb: 1.8, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <CalendarMonthIcon color="primary" />
-                  Fecha de la Cita:
-                </Typography>
-                <Box sx={{ maxWidth: { xs: '100%', sm: 320 } }}>
+              {!isAdmin && (loadingActiveAppointment || activeAppointment) && (
+                <Box className="availability-active-appointment-card">
+                  {loadingActiveAppointment ? (
+                    <>
+                      <Skeleton width="42%" height={22} />
+                      <Skeleton width="78%" height={18} />
+                    </>
+                  ) : activeAppointment ? (
+                    <>
+                      <Box className="availability-active-main">
+                        <Box className="availability-active-heading">
+                          <Box className="availability-active-icon">
+                            <CalendarMonthIcon fontSize="small" />
+                          </Box>
+                          <Box>
+                            <Typography variant="overline" className="availability-active-kicker">
+                              Cita vigente
+                            </Typography>
+                            <Typography variant="subtitle1" className="availability-active-title">
+                              Reserva activa
+                            </Typography>
+                          </Box>
+                        </Box>
+                        <Typography variant="body2" className="availability-active-copy">
+                          Completa o cancela tu cita actual antes de tomar otra hora.
+                        </Typography>
+                      </Box>
+
+                      <Box className="availability-active-details">
+                        <Box className="availability-active-detail">
+                          <span>Barbero</span>
+                          <strong>{getAppointmentBarberName(activeAppointment)}</strong>
+                        </Box>
+                        <Box className="availability-active-detail">
+                          <span>Fecha</span>
+                          <strong>{dayjs(activeAppointment.date).format('dddd D [de] MMMM')}</strong>
+                        </Box>
+                        <Box className="availability-active-detail">
+                          <span>Hora</span>
+                          <strong>{activeAppointment.timeSlot}</strong>
+                        </Box>
+                        <Chip
+                          label={appointmentStatusLabel[activeAppointment.status]}
+                          size="small"
+                          color={activeAppointment.status === 'confirmed' ? 'success' : 'warning'}
+                          className="availability-active-status"
+                        />
+                      </Box>
+                    </>
+                  ) : null}
+                </Box>
+              )}
+
+              {/* Date Selection Section */}
+              <Box className="availability-calendar-section">
+                <Box className="availability-calendar-header">
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'primary.dark', display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CalendarMonthIcon color="primary" />
+                    Fecha de cita
+                  </Typography>
+                </Box>
+
+                <Box className="availability-calendar-card">
                   <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
-                    <DatePicker
+                    <DateCalendar
                       value={selectedDate}
                       onChange={handleDateChange}
+                      referenceDate={today}
+                      minDate={today}
+                      maxDate={maxSelectableDate}
                       disablePast
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                          size: 'small',
-                          sx: {
-                            '& .MuiOutlinedInput-root': {
-                              borderRadius: 2.5,
-                              bgcolor: '#fff',
-                              '&:hover fieldset': {
-                                borderColor: 'primary.main',
-                              },
-                              '&.Mui-focused fieldset': {
-                                borderColor: 'primary.main',
-                              }
-                            }
-                          }
-                        }
-                      }}
+                      fixedWeekNumber={6}
+                      showDaysOutsideCurrentMonth
+                      shouldDisableDate={shouldDisableDate}
+                      slots={{ day: AvailabilityPickerDay }}
+                      sx={{ width: '100%', maxWidth: 380, mx: 'auto' }}
                     />
                   </LocalizationProvider>
+
+                  <Box className="availability-calendar-legend">
+                    <span><i className="legend-dot legend-dot-available" />Con agenda disponible</span>
+                    <span><i className="legend-dot legend-dot-full" />Agenda llena</span>
+                    {loadingCalendar && (
+                      <span className="calendar-loading-label">
+                        <CircularProgress size={12} />
+                        Actualizando
+                      </span>
+                    )}
+                  </Box>
                 </Box>
               </Box>
 
               {/* Available Slots Section (Rendered inline on the same page) */}
-              <Box sx={{ mt: 2 }}>
+              <Box className="availability-slots-section" sx={{ mt: 2 }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'primary.dark', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                   <AccessTimeIcon color="primary" />
-                  Bloques Horarios Disponibles:
+                  Horarios
                 </Typography>
 
-                {loadingSlots ? (
+                {loadingSlots || loadingActiveAppointment ? (
                   <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 5, gap: 2 }}>
                     <CircularProgress size={40} />
                     <Typography variant="body2" color="text.secondary">
@@ -328,35 +584,34 @@ export default function BarberAvailability() {
                     </Typography>
                   </Box>
                 ) : slots.length === 0 ? (
-                  <Box sx={{ textAlign: 'center', py: 5, px: 2, bgcolor: 'rgba(178,121,76,0.04)', borderRadius: 3, border: '1px dashed rgba(178,121,76,0.2)' }}>
+                  <Box sx={{ textAlign: 'center', py: 5, px: 2, bgcolor: 'rgba(178,121,76,0.04)', borderRadius: 1, border: '1px dashed rgba(178,121,76,0.2)' }}>
                     <Typography variant="body1" sx={{ color: 'text.primary', fontWeight: 600, mb: 0.8 }}>
-                      Sin turnos libres para esta fecha
+                      Sin bloques configurados para esta fecha
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      El barbero no cuenta con bloques disponibles para el {selectedDate.format('dddd D [de] MMMM')}. Por favor, elige otro día en el selector superior.
+                      El barbero no cuenta con bloques de agenda para el {selectedDate.format('dddd D [de] MMMM')}. Por favor, elige otro día en el selector superior.
                     </Typography>
                   </Box>
                 ) : (
                   <Box>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-                      Contamos con <strong>{slots.length} bloques libres</strong> para el {selectedDate.format('dddd D [de] MMMM')}. Presiona un horario para reservar al instante:
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-                        gap: 2,
-                      }}
-                    >
+                    <Box className="availability-slots-grid">
                       {slots.map((slot) => {
-                        const blockInfo = getBlockTimeRange(slot)
+                        const blockInfo = getBlockTimeRange(slot.time)
+                        const isAvailable = slot.status === 'available'
+                        const isBookingDisabled = !isAvailable || (!isAdmin && !!activeAppointment)
                         return (
                           <Button
-                            key={slot}
+                            key={slot.time}
                             variant="outlined"
-                            onClick={() => handleBookSlot(blockInfo.start, blockInfo.display)}
+                            className={`availability-slot-button availability-slot-${slot.status}`}
+                            disabled={isBookingDisabled}
+                            onClick={() => {
+                              if (!isBookingDisabled) {
+                                handleBookSlot(blockInfo.start, blockInfo.display)
+                              }
+                            }}
                             sx={{
-                              borderRadius: 2.5,
+                              borderRadius: 1,
                               fontWeight: 600,
                               fontSize: 14,
                               py: 1.8,
@@ -373,7 +628,10 @@ export default function BarberAvailability() {
                               },
                             }}
                           >
-                            {blockInfo.display}
+                            <span className="slot-time-label">{blockInfo.display}</span>
+                            <span className="slot-status-label">
+                              {getSlotStatusLabel(slot.status)}
+                            </span>
                           </Button>
                         )
                       })}

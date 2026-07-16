@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import packageMeta from '../../package.json'
 import type { AuthResponse } from '../types/auth'
+import { login, loginWithGoogle } from '../api/auth'
+import { getAuthToken, saveAuthSession } from '../auth/session'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
@@ -49,21 +51,12 @@ function Login() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [token, setToken] = useState<string | null>(() => {
-    try {
-      return localStorage.getItem('auth_token')
-    } catch {
-      return null
-    }
-  })
+  const [token, setToken] = useState<string | null>(() => getAuthToken())
   const businessName =
     import.meta.env.VITE_BUSINESS_NAME?.trim() || 'Barber System'
   const googleButtonRef = useRef<HTMLDivElement | null>(null)
   const googleRenderedRef = useRef(false)
 
-  const apiBaseUrl = useMemo(() => {
-    return import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ?? ''
-  }, [])
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
   const [googleEnabled, setGoogleEnabled] = useState(false)
   const [googleError, setGoogleError] = useState<string | null>(() => {
@@ -75,8 +68,7 @@ function Login() {
 
   const saveAuth = useCallback((payload: AuthResponse) => {
     setToken(payload.token)
-    localStorage.setItem('auth_token', payload.token)
-    localStorage.setItem('auth_user', JSON.stringify(payload.user))
+    saveAuthSession(payload)
     navigate('/dashboard')
   }, [navigate])
 
@@ -92,56 +84,38 @@ function Login() {
     setError(null)
     setLoading(true)
     try {
-      const response = await fetch(`${apiBaseUrl}/auth/google`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ credential }),
-      })
-      if (!response.ok) {
-        throw new Error('No se pudo autenticar con Google')
-      }
-      const payload = (await response.json()) as AuthResponse
+      const payload = await loginWithGoogle(credential)
       saveAuth(payload)
     } catch (err) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
       setError(
-        err instanceof Error
+        msg ?? (err instanceof Error
           ? err.message
-          : 'No se pudo validar Google. Intenta nuevamente.',
+          : 'No se pudo validar Google. Intenta nuevamente.'),
       )
     } finally {
       setLoading(false)
     }
-  }, [apiBaseUrl, saveAuth])
+  }, [saveAuth])
 
   const handleManualLogin = useCallback(async (event: React.FormEvent) => {
     event.preventDefault()
     setError(null)
     setLoading(true)
     try {
-      const response = await fetch(`${apiBaseUrl}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      })
-      if (!response.ok) {
-        throw new Error('Credenciales invalidas')
-      }
-      const payload = (await response.json()) as AuthResponse
+      const payload = await login(email, password)
       saveAuth(payload)
     } catch (err) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
       setError(
-        err instanceof Error
+        msg ?? (err instanceof Error
           ? err.message
-          : 'No se pudo iniciar sesion. Revisa tus datos.',
+          : 'No se pudo iniciar sesion. Revisa tus datos.'),
       )
     } finally {
       setLoading(false)
     }
-  }, [apiBaseUrl, email, password, saveAuth])
+  }, [email, password, saveAuth])
 
   const initializeGoogle = useCallback(async (): Promise<void> => {
     if (!googleClientId || !googleButtonRef.current) {

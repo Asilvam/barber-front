@@ -1,7 +1,9 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import packageMeta from '../../package.json'
 import type { AuthResponse } from '../types/auth'
+import { register } from '../api/auth'
+import { getAuthToken, saveAuthSession } from '../auth/session'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
@@ -20,26 +22,15 @@ function Register() {
   const [error, setError] = useState<string | null>(null)
 
 
-  const [token, setToken] = useState<string | null>(() => {
-    try {
-      return localStorage.getItem('auth_token')
-    } catch {
-      return null
-    }
-  })
+  const [token, setToken] = useState<string | null>(() => getAuthToken())
 
   const businessName =
     import.meta.env.VITE_BUSINESS_NAME?.trim() || 'Barber System'
   const appVersion = packageMeta.version
 
-  const apiBaseUrl = useMemo(() => {
-    return import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ?? ''
-  }, [])
-
   const saveAuth = useCallback((payload: AuthResponse) => {
     setToken(payload.token)
-    localStorage.setItem('auth_token', payload.token)
-    localStorage.setItem('auth_user', JSON.stringify(payload.user))
+    saveAuthSession(payload)
     navigate('/dashboard')
   }, [navigate])
 
@@ -68,32 +59,21 @@ function Register() {
 
       setLoading(true)
       try {
-        const response = await fetch(`${apiBaseUrl}/auth/register`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ name, email, password }),
-        })
-
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}))
-          throw new Error(errData.message || 'Error al registrar el usuario. Revisa tus datos.')
-        }
-
-        const payload = (await response.json()) as AuthResponse
+        const payload = await register(name, email, password)
         saveAuth(payload)
       } catch (err) {
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
         setError(
-          err instanceof Error
-            ? err.message
-            : 'Ocurrió un error inesperado al intentar registrarte.',
+          msg ??
+            (err instanceof Error
+              ? err.message
+              : 'Ocurrió un error inesperado al intentar registrarte.'),
         )
       } finally {
         setLoading(false)
       }
     },
-    [apiBaseUrl, name, email, password, confirmPassword, saveAuth],
+    [name, email, password, confirmPassword, saveAuth],
   )
 
   if (token) {

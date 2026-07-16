@@ -48,11 +48,13 @@ import './AdminBarbers.css'
 
 import {
   fetchBarbers,
+  fetchAppointments,
   fetchBarberSchedules,
   createBarberSchedule,
   deleteBarberSchedule,
   updateBarber,
   createBarber,
+  type Appointment,
   type Barber,
   type BarberSchedule,
   type TimeSlot,
@@ -91,6 +93,33 @@ const HOUR_OPTIONS = Array.from({ length: 24 }).map((_, h) => {
   return `${hr}:00`
 })
 
+const appointmentStatusLabel: Record<Appointment['status'], string> = {
+  pending: 'Pendiente',
+  confirmed: 'Confirmada',
+  cancelled: 'Cancelada',
+  completed: 'Completada',
+}
+
+function getAppointmentBarberId(appointment: Appointment) {
+  return typeof appointment.barberId === 'object' && appointment.barberId !== null
+    ? appointment.barberId._id
+    : appointment.barberId
+}
+
+function getAppointmentClientLabel(appointment: Appointment) {
+  if (typeof appointment.clientId === 'object' && appointment.clientId !== null) {
+    return appointment.clientId.name || appointment.clientId.email || 'Cliente'
+  }
+
+  return 'Cliente'
+}
+
+function getAppointmentClientEmail(appointment: Appointment) {
+  return typeof appointment.clientId === 'object' && appointment.clientId !== null
+    ? appointment.clientId.email
+    : ''
+}
+
 /* ── component ── */
 
 export default function AdminBarbers() {
@@ -99,6 +128,7 @@ export default function AdminBarbers() {
 
   const [barbers, setBarbers] = useState<Barber[]>([])
   const [schedules, setSchedules] = useState<BarberSchedule[]>([])
+  const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<{ message: string; severity: 'success' | 'error' } | null>(null)
@@ -157,10 +187,11 @@ export default function AdminBarbers() {
   // ── load data ──
   const loadData = useCallback(() => {
     setLoading(true)
-    Promise.all([fetchBarbers(), fetchBarberSchedules()])
-      .then(([b, s]) => {
+    Promise.all([fetchBarbers(), fetchBarberSchedules(), fetchAppointments()])
+      .then(([b, s, a]) => {
         setBarbers(b)
         setSchedules(s)
+        setAppointments(a)
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Error cargando datos'))
       .finally(() => setLoading(false))
@@ -168,11 +199,12 @@ export default function AdminBarbers() {
 
   useEffect(() => {
     const ac = new AbortController()
-    Promise.all([fetchBarbers(), fetchBarberSchedules()])
-      .then(([b, s]) => {
+    Promise.all([fetchBarbers(), fetchBarberSchedules(), fetchAppointments()])
+      .then(([b, s, a]) => {
         if (!ac.signal.aborted) {
           setBarbers(b)
           setSchedules(s)
+          setAppointments(a)
         }
       })
       .catch((err) => {
@@ -378,6 +410,29 @@ export default function AdminBarbers() {
     })
   }, [sortedSchedules, selectedBarberId])
 
+  const filteredAppointments = useMemo(() => {
+    if (!selectedBarberId) return []
+
+    return appointments
+      .filter((appointment) => getAppointmentBarberId(appointment) === selectedBarberId)
+      .sort((a, b) => {
+        const dateDiff = dayjs(a.date).diff(dayjs(b.date))
+        if (dateDiff !== 0) return dateDiff
+        return a.timeSlot.localeCompare(b.timeSlot)
+      })
+  }, [appointments, selectedBarberId])
+
+  const appointmentsByDate = useMemo(() => {
+    const map: Record<string, Appointment[]> = {}
+
+    filteredAppointments.forEach((appointment) => {
+      const dateStr = dayjs(appointment.date).format('YYYY-MM-DD')
+      map[dateStr] = [...(map[dateStr] ?? []), appointment]
+    })
+
+    return map
+  }, [filteredAppointments])
+
   // Memoized cache mapping date string (YYYY-MM-DD) to BarberSchedule for O(1) rendering lookups
   const scheduleMap = useMemo(() => {
     const map: Record<string, BarberSchedule> = {}
@@ -424,7 +479,7 @@ export default function AdminBarbers() {
               variant="contained"
               startIcon={<AddIcon />}
               onClick={handleOpenCreateBarber}
-              sx={{ borderRadius: 999, textTransform: 'none', fontWeight: 700 }}
+              sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 700 }}
             >
               Agregar Barbero
             </Button>
@@ -434,7 +489,7 @@ export default function AdminBarbers() {
             variant="outlined"
             startIcon={<ArrowBackIcon />}
             onClick={() => navigate('/dashboard')}
-            sx={{ borderRadius: 999, textTransform: 'none', fontWeight: 600 }}
+            sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600 }}
           >
             Reserva
           </Button>
@@ -444,7 +499,7 @@ export default function AdminBarbers() {
       {/* ── Content ── */}
       <Container maxWidth="md" sx={{ flex: 1, py: { xs: 1, sm: 3 }, px: { xs: 1, sm: 3 } }}>
         {error && (
-          <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
+          <Alert severity="error" sx={{ mb: 2, borderRadius: 1 }}>
             {error}
           </Alert>
         )}
@@ -576,7 +631,7 @@ export default function AdminBarbers() {
                 flexWrap: 'wrap',
                 gap: 2,
                 p: 2.5,
-                borderRadius: 4,
+                borderRadius: 1,
                 border: '1px solid',
                 borderColor: 'divider',
                 bgcolor: 'rgba(251,247,242,0.85)',
@@ -589,7 +644,7 @@ export default function AdminBarbers() {
                   onClick={() => setSelectedBarberId('')}
                   variant="outlined"
                   size="small"
-                  sx={{ borderRadius: 999, textTransform: 'none', fontWeight: 600 }}
+                  sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600 }}
                 >
                   Volver
                 </Button>
@@ -624,7 +679,7 @@ export default function AdminBarbers() {
                 startIcon={<AddIcon />}
                 onClick={() => openNewSchedule()}
                 size="small"
-                sx={{ borderRadius: 999, textTransform: 'none', fontWeight: 700, px: 2 }}
+                sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 700, px: 2 }}
               >
                 Nuevo Horario
               </Button>
@@ -671,12 +726,12 @@ export default function AdminBarbers() {
 
                   {/* Cuadrícula de días */}
                   <Box className="calendar-days-grid">
-                    {calendarDays.map((day) => {
-                      const dateStr = day.format('YYYY-MM-DD')
-                      const schedule = scheduleMap[dateStr]
-                      const isTodayVal = day.isSame(dayjs(), 'day')
-                      const isSelected = selectedCalendarDate ? day.isSame(selectedCalendarDate, 'day') : false
-                      const isOutside = !day.isSame(currentMonth, 'month')
+	                    {calendarDays.map((day) => {
+	                      const dateStr = day.format('YYYY-MM-DD')
+	                      const schedule = scheduleMap[dateStr]
+	                      const isTodayVal = day.isSame(dayjs(), 'day')
+	                      const isSelected = selectedCalendarDate ? day.isSame(selectedCalendarDate, 'day') : false
+	                      const isOutside = !day.isSame(currentMonth, 'month')
 
                       let cellClass = 'calendar-day-cell'
                       if (isOutside) cellClass += ' outside-month'
@@ -689,11 +744,11 @@ export default function AdminBarbers() {
                         } else {
                           cellClass += ' is-working'
                         }
-                      } else {
-                        cellClass += ' is-empty'
-                      }
+	                      } else {
+	                        cellClass += ' is-empty'
+	                      }
 
-                      return (
+	                      return (
                         <Box
                           key={dateStr}
                           className={cellClass}
@@ -711,7 +766,7 @@ export default function AdminBarbers() {
                               <Box className="working-indicator-wrapper">
                                 <span className="working-dot" />
                                 <span className="working-hours-summary">
-                                  {schedule.workingHours[0]?.start || ''}
+                                  Activo
                                 </span>
                               </Box>
                             )
@@ -726,47 +781,30 @@ export default function AdminBarbers() {
                               +
                             </span>
                           )}
-                        </Box>
-                      )
-                    })}
+
+	                        </Box>
+	                      )
+	                    })}
                   </Box>
+
+	                  <Box className="calendar-admin-legend">
+	                    <span><i className="legend-working" />Horario activo</span>
+	                    <span><i className="legend-day-off" />Día libre</span>
+	                    <span><i className="legend-empty" />Sin configurar</span>
+	                  </Box>
                 </Box>
 
                 {/* Panel de Detalle Derecho */}
                 <Box className="details-panel-container">
                   <Paper elevation={0} className="details-panel-card">
-                    {selectedCalendarDate ? (
-                      (() => {
-                        const selectedDateStr = selectedCalendarDate.format('YYYY-MM-DD')
-                        const selectedSchedule = scheduleMap[selectedDateStr]
+	                    {selectedCalendarDate ? (
+	                      (() => {
+	                        const selectedDateStr = selectedCalendarDate.format('YYYY-MM-DD')
+	                        const selectedSchedule = scheduleMap[selectedDateStr]
+	                        const selectedDateAppointments = appointmentsByDate[selectedDateStr] ?? []
 
-                        if (!selectedSchedule) {
-                          return (
-                            <Box className="details-empty-state">
-                              <Typography
-                                variant="subtitle1"
-                                sx={{ fontWeight: 700, color: 'primary.dark', mb: 0.5 }}
-                              >
-                                {selectedCalendarDate.format('dddd, D [de] MMMM')}
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                No hay horario configurado para este día.
-                              </Typography>
-                              <Button
-                                variant="contained"
-                                size="small"
-                                startIcon={<AddIcon />}
-                                onClick={() => openNewSchedule(selectedCalendarDate)}
-                                sx={{ borderRadius: 999, textTransform: 'none', fontWeight: 600 }}
-                              >
-                                Configurar Día
-                              </Button>
-                            </Box>
-                          )
-                        }
-
-                        // Helper function to calculate net working hours
-                        const getNetHours = (sch: BarberSchedule) => {
+	                        // Helper function to calculate net working hours
+	                        const getNetHours = (sch: BarberSchedule) => {
                           if (sch.isDayOff) return 0
                           let totalMinutes = 0
                           sch.workingHours.forEach((wh) => {
@@ -785,31 +823,37 @@ export default function AdminBarbers() {
                         return (
                           <Box>
                             {/* Fila 1 (Título): Cabecera con la fecha seleccionada y el icono de eliminación sutil a la derecha */}
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                              <Typography className="details-date-header" sx={{ textTransform: 'capitalize' }}>
-                                {selectedCalendarDate.format('dddd, D [de] MMMM')}
-                              </Typography>
-                              <IconButton
-                                size="small"
-                                onClick={() => setDeleteTarget(selectedSchedule)}
-                                sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}
-                              >
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
-                            </Box>
+	                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+	                              <Typography className="details-date-header" sx={{ textTransform: 'capitalize' }}>
+	                                {selectedCalendarDate.format('dddd, D [de] MMMM')}
+	                              </Typography>
+	                              {selectedSchedule && (
+	                                <IconButton
+	                                  size="small"
+	                                  onClick={() => setDeleteTarget(selectedSchedule)}
+	                                  sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}
+	                                >
+	                                  <DeleteIcon fontSize="small" />
+	                                </IconButton>
+	                              )}
+	                            </Box>
 
-                            <Divider sx={{ mb: 2 }} />
+	                            <Divider sx={{ mb: 2 }} />
 
-                            {/* Estructura bajo el título: Exactamente 2 columnas y 3 filas lógicas */}
-                            <Box
-                              sx={{
-                                display: 'grid',
-                                gridTemplateColumns: '1fr 1fr',
-                                gridTemplateRows: 'auto auto auto',
-                                rowGap: 2.5,
-                                columnGap: 2,
-                              }}
-                            >
+	                            <Typography variant="caption" className="details-section-title">
+	                              Disponibilidad del barbero
+	                            </Typography>
+
+	                            {selectedSchedule ? (
+	                              <Box
+	                                sx={{
+	                                  display: 'grid',
+	                                  gridTemplateColumns: '1fr 1fr',
+	                                  gridTemplateRows: 'auto auto auto',
+	                                  rowGap: 2.5,
+	                                  columnGap: 2,
+	                                }}
+	                              >
                               {/* Fila 1 - Columna 1: Estado del Día */}
                               <Box>
                                 <Typography
@@ -978,8 +1022,8 @@ export default function AdminBarbers() {
                                 </Typography>
                               </Box>
 
-                              {/* Fila 3 - Columna 2: Notas/Información */}
-                              <Box>
+	                              {/* Fila 3 - Columna 2: Notas/Información */}
+	                              <Box>
                                 <Typography
                                   variant="caption"
                                   sx={{
@@ -993,16 +1037,79 @@ export default function AdminBarbers() {
                                 >
                                   Información
                                 </Typography>
-                                <Typography
-                                  variant="body2"
-                                  sx={{ fontStyle: 'italic', fontSize: '0.78rem', color: 'text.secondary' }}
-                                >
-                                  {selectedSchedule.isDayOff ? 'Día de descanso' : 'Reservas activas'}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </Box>
-                        )
+	                                <Typography
+	                                  variant="body2"
+	                                  sx={{ fontStyle: 'italic', fontSize: '0.78rem', color: 'text.secondary' }}
+	                                >
+	                                  {selectedSchedule.isDayOff ? 'Día de descanso' : 'Horario disponible para recibir citas'}
+	                                </Typography>
+	                              </Box>
+	                              </Box>
+	                            ) : (
+	                              <Box className="availability-config-empty">
+	                                <Typography variant="body2" color="text.secondary">
+	                                  No hay horario configurado para este día.
+	                                </Typography>
+	                                <Button
+	                                  variant="contained"
+	                                  size="small"
+	                                  startIcon={<AddIcon />}
+	                                  onClick={() => openNewSchedule(selectedCalendarDate)}
+	                                  sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600, mt: 1.5 }}
+	                                >
+	                                  Configurar Día
+	                                </Button>
+	                              </Box>
+	                            )}
+
+	                            <Divider sx={{ my: 2 }} />
+
+	                            <Box className="appointments-day-section">
+	                              <Box className="appointments-day-header">
+	                                <Typography variant="caption" className="details-section-title">
+	                                  Citas de ese día
+	                                </Typography>
+	                                <Chip
+	                                  label={`${selectedDateAppointments.length} cita${selectedDateAppointments.length === 1 ? '' : 's'}`}
+	                                  size="small"
+	                                  variant="outlined"
+	                                  className="appointments-count-chip"
+	                                />
+	                              </Box>
+
+	                              {selectedDateAppointments.length === 0 ? (
+	                                <Box className="appointments-empty-state">
+	                                  <Typography variant="body2" color="text.secondary">
+	                                    No hay citas agendadas para esta fecha.
+	                                  </Typography>
+	                                </Box>
+	                              ) : (
+	                                <Box className="appointments-list">
+	                                  {selectedDateAppointments.map((appointment) => (
+	                                    <Box key={appointment._id} className={`appointment-row appointment-row-${appointment.status}`}>
+	                                      <Box className="appointment-time-pill">{appointment.timeSlot}</Box>
+	                                      <Box className="appointment-client-info">
+	                                        <Typography variant="body2" className="appointment-client-name">
+	                                          {getAppointmentClientLabel(appointment)}
+	                                        </Typography>
+	                                        {getAppointmentClientEmail(appointment) && (
+	                                          <Typography variant="caption" className="appointment-client-email">
+	                                            {getAppointmentClientEmail(appointment)}
+	                                          </Typography>
+	                                        )}
+	                                      </Box>
+	                                      <Chip
+	                                        label={appointmentStatusLabel[appointment.status]}
+	                                        size="small"
+	                                        className={`appointment-status-chip appointment-status-${appointment.status}`}
+	                                      />
+	                                    </Box>
+	                                  ))}
+	                                </Box>
+	                              )}
+	                            </Box>
+	                          </Box>
+	                        )
                       })()
                     ) : (
                       <Box className="details-empty-state">
@@ -1025,7 +1132,7 @@ export default function AdminBarbers() {
         onClose={() => !submitting && setDialogOpen(false)}
         maxWidth="sm"
         fullWidth
-        slotProps={{ paper: { sx: { borderRadius: 3, m: { xs: 2, sm: 4 } } } }}
+        slotProps={{ paper: { sx: { borderRadius: 1, m: { xs: 2, sm: 4 } } } }}
       >
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 700 }}>
           <ScheduleIcon color="primary" />
@@ -1217,7 +1324,7 @@ export default function AdminBarbers() {
             variant="contained"
             onClick={handleSubmit}
             disabled={submitting || !formBarberId}
-            sx={{ borderRadius: 999, textTransform: 'none', minWidth: 140, fontWeight: 700 }}
+            sx={{ borderRadius: 1, textTransform: 'none', minWidth: 140, fontWeight: 700 }}
           >
             {submitting ? <CircularProgress size={20} color="inherit" /> : 'Guardar Horario'}
           </Button>
@@ -1228,7 +1335,7 @@ export default function AdminBarbers() {
       <Dialog
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        slotProps={{ paper: { sx: { borderRadius: 3, m: { xs: 2, sm: 4 } } } }}
+        slotProps={{ paper: { sx: { borderRadius: 1, m: { xs: 2, sm: 4 } } } }}
       >
         <DialogTitle sx={{ fontWeight: 700 }}>¿Eliminar horario?</DialogTitle>
         <DialogContent>
@@ -1245,7 +1352,7 @@ export default function AdminBarbers() {
             variant="contained"
             color="error"
             onClick={handleDelete}
-            sx={{ borderRadius: 999, textTransform: 'none', fontWeight: 700 }}
+            sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 700 }}
           >
             Eliminar
           </Button>
@@ -1259,7 +1366,7 @@ export default function AdminBarbers() {
         slotProps={{
           paper: {
             sx: {
-              borderRadius: 4,
+              borderRadius: 1,
               width: '100%',
               maxWidth: 400,
               m: { xs: 2, sm: 4 },
@@ -1278,7 +1385,7 @@ export default function AdminBarbers() {
                 <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mb: 0.5 }}>
                   Nombre (Sólo Lectura)
                 </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600, color: 'text.primary', bgcolor: '#f5f5f5', px: 1.5, py: 1, borderRadius: 1.5 }}>
+                <Typography variant="body1" sx={{ fontWeight: 600, color: 'text.primary', bgcolor: '#f5f5f5', px: 1.5, py: 1, borderRadius: 1 }}>
                   {editingBarber.name}
                 </Typography>
               </Box>
@@ -1288,7 +1395,7 @@ export default function AdminBarbers() {
                 <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mb: 0.5 }}>
                   Correo Electrónico (Sólo Lectura)
                 </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 500, color: 'text.primary', bgcolor: '#f5f5f5', px: 1.5, py: 1, borderRadius: 1.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <Typography variant="body1" sx={{ fontWeight: 500, color: 'text.primary', bgcolor: '#f5f5f5', px: 1.5, py: 1, borderRadius: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {editingBarber.email}
                 </Typography>
               </Box>
@@ -1298,7 +1405,7 @@ export default function AdminBarbers() {
                 <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mb: 0.5 }}>
                   Días Programados (Sólo Lectura)
                 </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600, color: 'primary.dark', bgcolor: 'rgba(178, 121, 76, 0.05)', px: 1.5, py: 1, borderRadius: 1.5 }}>
+                <Typography variant="body1" sx={{ fontWeight: 600, color: 'primary.dark', bgcolor: 'rgba(178, 121, 76, 0.05)', px: 1.5, py: 1, borderRadius: 1 }}>
                   {getScheduleCountForBarber(editingBarber._id)} {getScheduleCountForBarber(editingBarber._id) === 1 ? 'día' : 'días'}
                 </Typography>
               </Box>
@@ -1327,7 +1434,7 @@ export default function AdminBarbers() {
               </Box>
 
               {/* Estado (Editable) */}
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid #dcdcdc', p: 1.5, borderRadius: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid #dcdcdc', p: 1.5, borderRadius: 1 }}>
                 <Box>
                   <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
                     Estado del Barbero
@@ -1359,7 +1466,7 @@ export default function AdminBarbers() {
             variant="contained"
             onClick={handleSaveBarber}
             disabled={savingBarber}
-            sx={{ borderRadius: 999, textTransform: 'none', minWidth: 120, fontWeight: 700 }}
+            sx={{ borderRadius: 1, textTransform: 'none', minWidth: 120, fontWeight: 700 }}
           >
             {savingBarber ? <CircularProgress size={20} color="inherit" /> : 'Guardar'}
           </Button>
@@ -1373,7 +1480,7 @@ export default function AdminBarbers() {
         slotProps={{
           paper: {
             sx: {
-              borderRadius: 4,
+              borderRadius: 1,
               width: '100%',
               maxWidth: 400,
               m: { xs: 2, sm: 4 },
@@ -1455,7 +1562,7 @@ export default function AdminBarbers() {
           </Box>
 
           {/* Estado (Editable) */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid #dcdcdc', p: 1.5, borderRadius: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid #dcdcdc', p: 1.5, borderRadius: 1 }}>
             <Box>
               <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
                 Estado Inicial
@@ -1485,7 +1592,7 @@ export default function AdminBarbers() {
             variant="contained"
             onClick={handleSaveCreateBarber}
             disabled={creatingBarber}
-            sx={{ borderRadius: 999, textTransform: 'none', minWidth: 120, fontWeight: 700 }}
+            sx={{ borderRadius: 1, textTransform: 'none', minWidth: 120, fontWeight: 700 }}
           >
             {creatingBarber ? <CircularProgress size={20} color="inherit" /> : 'Registrar'}
           </Button>
@@ -1503,7 +1610,7 @@ export default function AdminBarbers() {
           onClose={() => setToast(null)}
           severity={toast?.severity ?? 'success'}
           variant="filled"
-          sx={{ borderRadius: 2 }}
+          sx={{ borderRadius: 1 }}
         >
           {toast?.message}
         </Alert>

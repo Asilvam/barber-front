@@ -2,7 +2,12 @@ import { useEffect, useState } from 'react'
 import Container from '@mui/material/Container'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
+import Button from '@mui/material/Button'
+import { Link as RouterLink } from 'react-router-dom'
 import packageMeta from '../../package.json'
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
+import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt'
+import LoginIcon from '@mui/icons-material/Login'
 
 import img from '../assets/img.png'
 import img1 from '../assets/img_1.png'
@@ -38,6 +43,7 @@ function Home() {
   const appVersion = packageMeta.version
   const businessName =
     import.meta.env.VITE_BUSINESS_NAME?.trim() || 'Barber System'
+  const isLoggedIn = !!localStorage.getItem('auth_token')
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -77,6 +83,32 @@ function Home() {
                 <Box component="span" sx={{ width: 24, height: 24, bgcolor: 'primary.light', color: 'primary.dark', borderRadius: 1, display: 'grid', placeItems: 'center' }}>✓</Box>
                 <Typography variant="body2">Confirmaciones rápidas</Typography>
               </Box>
+            </Box>
+
+            <Box className="home-actions">
+              <Button
+                component={RouterLink}
+                to={isLoggedIn ? '/dashboard' : '/login'}
+                variant="contained"
+                color="primary"
+                startIcon={isLoggedIn ? <CalendarMonthIcon /> : <LoginIcon />}
+                className="home-primary-action"
+              >
+                {isLoggedIn ? 'Reservar ahora' : 'Iniciar sesión'}
+              </Button>
+
+              {!isLoggedIn && (
+                <Button
+                  component={RouterLink}
+                  to="/register"
+                  variant="outlined"
+                  color="primary"
+                  startIcon={<PersonAddAltIcon />}
+                  className="home-secondary-action"
+                >
+                  Crear cuenta
+                </Button>
+              )}
             </Box>
           </Box>
           {/* Carrusel de imágenes */}

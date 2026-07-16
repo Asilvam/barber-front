@@ -23,7 +23,7 @@
 }
 
 .schedule-card {
-  border-radius: 12px !important;
+  border-radius: 8px !important;
   border: 1px solid rgba(0, 0, 0, 0.08) !important;
   background-color: #ffffff !important;
   overflow: hidden;
@@ -81,7 +81,7 @@
 }
 
 .barber-admin-card {
-  border-radius: 16px !important;
+  border-radius: 8px !important;
   border: 1px solid rgba(0, 0, 0, 0.08) !important;
   background-color: #ffffff !important;
   padding: 24px !important;
@@ -130,7 +130,7 @@
   flex-direction: row;
   justify-content: center;
   align-items: start;
-  gap: 32px;
+  gap: 24px;
   margin: 20px auto 0 auto;
   width: 100%;
 }
@@ -145,12 +145,12 @@
 
 /* Contenedor del Calendario */
 .calendar-card-container {
-  background-color: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.015);
-  max-width: 400px;
+  background-color: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(178, 121, 76, 0.12);
+  border-radius: 8px;
+  padding: 16px 16px 14px;
+  box-shadow: 0 8px 24px rgba(124, 76, 47, 0.035);
+  max-width: 430px;
   width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
@@ -160,16 +160,16 @@
 .calendar-nav-header {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .calendar-month-title {
   font-weight: 700 !important;
   color: #2b1c11;
   font-size: 1rem !important;
-  min-width: 130px;
+  min-width: 150px;
   text-align: center;
 }
 
@@ -190,9 +190,8 @@
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   text-align: center;
-  margin-bottom: 8px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
-  padding-bottom: 6px;
+  margin-bottom: 7px;
+  padding-bottom: 2px;
 }
 
 .calendar-weekday-label {
@@ -207,7 +206,7 @@
 .calendar-days-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 5px;
+  gap: 6px;
 }
 
 /* Celda individual de día */
@@ -229,7 +228,7 @@
 }
 
 .calendar-day-cell .day-number {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 700;
   color: #2b1c11;
   line-height: 1;
@@ -246,7 +245,7 @@
 
 /* Celda de hoy */
 .calendar-day-cell.today {
-  border: 1px solid #b2794c !important;
+  border-color: rgba(178, 121, 76, 0.5) !important;
 }
 
 .calendar-day-cell.today .day-number {
@@ -256,36 +255,36 @@
 /* Celda seleccionada */
 .calendar-day-cell.selected {
   outline: 2px solid #b2794c;
-  outline-offset: -1px;
-  background-color: rgba(178, 121, 76, 0.04) !important;
+  outline-offset: 1px;
+  background-color: rgba(178, 121, 76, 0.07) !important;
 }
 
 /* Celda con trabajo configurado */
 .calendar-day-cell.is-working {
-  background-color: rgba(46, 125, 50, 0.03) !important;
-  border: 1px solid rgba(46, 125, 50, 0.08) !important;
+  background-color: rgba(46, 125, 50, 0.08) !important;
+  border-color: rgba(46, 125, 50, 0.18) !important;
 }
 
 .calendar-day-cell.is-working:hover {
-  background-color: rgba(46, 125, 50, 0.06) !important;
+  background-color: rgba(46, 125, 50, 0.12) !important;
   transform: translateY(-1px);
 }
 
 /* Celda con Día Libre (Day Off) */
 .calendar-day-cell.is-day-off {
-  background-color: rgba(255, 152, 0, 0.03) !important;
-  border: 1px solid rgba(255, 152, 0, 0.08) !important;
+  background-color: rgba(230, 81, 0, 0.08) !important;
+  border-color: rgba(230, 81, 0, 0.18) !important;
 }
 
 .calendar-day-cell.is-day-off:hover {
-  background-color: rgba(255, 152, 0, 0.06) !important;
+  background-color: rgba(230, 81, 0, 0.12) !important;
   transform: translateY(-1px);
 }
 
 /* Celda sin configurar */
 .calendar-day-cell.is-empty {
-  background-color: rgba(0, 0, 0, 0.008);
-  border: 1px dashed rgba(0, 0, 0, 0.05);
+  background-color: rgba(255, 255, 255, 0.56);
+  border: 1px dashed rgba(124, 76, 47, 0.12);
 }
 
 .calendar-day-cell.is-empty .day-number {
@@ -293,8 +292,8 @@
 }
 
 .calendar-day-cell.is-empty:hover {
-  background-color: rgba(178, 121, 76, 0.03);
-  border: 1px dashed rgba(178, 121, 76, 0.25);
+  background-color: rgba(178, 121, 76, 0.045);
+  border-color: rgba(178, 121, 76, 0.28);
   transform: translateY(-1px);
 }
 
@@ -315,12 +314,12 @@
 }
 
 .day-off-text {
-  font-size: 0.58rem;
+  font-size: 0.56rem;
   font-weight: 800;
   color: #e65100;
-  background-color: rgba(255, 152, 0, 0.08);
+  background-color: rgba(255, 255, 255, 0.52);
   padding: 1px 3px;
-  border-radius: 3px;
+  border-radius: 4px;
   letter-spacing: 0.1px;
   text-transform: uppercase;
   line-height: 1;
@@ -342,12 +341,12 @@
 }
 
 .working-hours-summary {
-  font-size: 0.58rem;
-  font-weight: 700;
+  font-size: 0.56rem;
+  font-weight: 800;
   color: #2e7d32;
-  background-color: rgba(46, 125, 50, 0.06);
+  background-color: rgba(255, 255, 255, 0.54);
   padding: 1px 3px;
-  border-radius: 3px;
+  border-radius: 4px;
   letter-spacing: 0.1px;
   line-height: 1;
   text-align: center;
@@ -381,20 +380,57 @@
   opacity: 0.8;
 }
 
+.calendar-admin-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+  color: #6b5d58;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.calendar-admin-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.calendar-admin-legend i {
+  width: 8px;
+  height: 8px;
+  display: inline-block;
+  border-radius: 999px;
+}
+
+.legend-working {
+  background: #2e7d32;
+}
+
+.legend-day-off {
+  background: #e65100;
+}
+
+.legend-empty {
+  background: #c9bcb0;
+}
+
 /* Panel de Detalle Derecho / Inferior */
 .details-panel-container {
-  max-width: 400px;
+  max-width: 430px;
   width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
 }
 
 .details-panel-card {
-  background-color: #ffffff !important;
-  border: 1px solid rgba(0, 0, 0, 0.05) !important;
-  border-radius: 16px !important;
-  padding: 18px !important;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.015) !important;
+  background-color: rgba(255, 255, 255, 0.78) !important;
+  border: 1px solid rgba(178, 121, 76, 0.12) !important;
+  border-radius: 8px !important;
+  padding: 20px !important;
+  box-shadow: 0 8px 24px rgba(124, 76, 47, 0.035) !important;
   min-height: 180px;
   display: flex;
   flex-direction: column;
@@ -403,10 +439,150 @@
 
 .details-date-header {
   font-weight: 700 !important;
-  color: #b2794c !important;
-  text-align: center;
+  color: #7c4c2f !important;
+  text-align: left;
   font-size: 1rem !important;
   letter-spacing: 0.1px;
+}
+
+.details-panel-card .MuiDivider-root {
+  border-color: rgba(178, 121, 76, 0.12);
+}
+
+.details-panel-card .MuiChip-root {
+  border-radius: 8px;
+}
+
+.details-section-title {
+  display: block;
+  color: #7c4c2f;
+  font-weight: 800 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase;
+  margin-bottom: 12px !important;
+}
+
+.availability-config-empty {
+  border-radius: 8px;
+  border: 1px dashed rgba(178, 121, 76, 0.22);
+  background: rgba(178, 121, 76, 0.045);
+  padding: 18px;
+  text-align: center;
+}
+
+.appointments-day-section {
+  display: grid;
+  gap: 12px;
+}
+
+.appointments-day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.appointments-day-header .details-section-title {
+  margin-bottom: 0 !important;
+}
+
+.appointments-count-chip {
+  height: 22px !important;
+  color: #7c4c2f !important;
+  border-color: rgba(178, 121, 76, 0.28) !important;
+  font-weight: 800 !important;
+}
+
+.appointments-empty-state {
+  padding: 14px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px dashed rgba(124, 76, 47, 0.14);
+}
+
+.appointments-list {
+  display: grid;
+  gap: 10px;
+}
+
+.appointment-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(124, 76, 47, 0.1);
+  background: rgba(255, 255, 255, 0.66);
+}
+
+.appointment-time-pill {
+  min-width: 54px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  text-align: center;
+  background: rgba(178, 121, 76, 0.1);
+  color: #7c4c2f;
+  font-weight: 850;
+  font-size: 0.78rem;
+}
+
+.appointment-client-info {
+  min-width: 0;
+}
+
+.appointment-client-name {
+  color: #1f1b1a;
+  font-weight: 800 !important;
+  line-height: 1.25 !important;
+  overflow-wrap: anywhere;
+}
+
+.appointment-client-email {
+  display: block;
+  color: #6f625b !important;
+  line-height: 1.25 !important;
+  overflow-wrap: anywhere;
+}
+
+.appointment-status-chip {
+  font-weight: 800 !important;
+  font-size: 0.68rem !important;
+}
+
+.appointment-status-pending {
+  background: rgba(255, 152, 0, 0.12) !important;
+  color: #a85d00 !important;
+}
+
+.appointment-status-confirmed {
+  background: rgba(46, 125, 50, 0.12) !important;
+  color: #2e7d32 !important;
+}
+
+.appointment-status-cancelled {
+  background: rgba(117, 117, 117, 0.12) !important;
+  color: #616161 !important;
+}
+
+.appointment-status-completed {
+  background: rgba(25, 118, 210, 0.1) !important;
+  color: #1565c0 !important;
+}
+
+@media (max-width: 600px) {
+  .details-panel-card {
+    padding: 16px !important;
+  }
+
+  .appointment-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .appointment-status-chip {
+    grid-column: 1 / -1;
+    justify-self: flex-start;
+  }
 }
 
 /* Estado vacío del panel */
