@@ -137,7 +137,7 @@
 
 @media (min-width: 1280px) {
   .calendar-admin-layout {
-    gap: 28px;
+    gap: 24px;
     align-items: stretch;
   }
 }
@@ -165,7 +165,7 @@
 
 @media (min-width: 1280px) {
   .calendar-card-container {
-    max-width: 520px;
+    max-width: 480px;
     padding: 18px 18px 16px;
   }
 }
@@ -441,7 +441,7 @@
 
 @media (min-width: 1280px) {
   .details-panel-container {
-    max-width: 640px;
+    max-width: 620px;
   }
 }
 

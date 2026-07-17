@@ -397,7 +397,18 @@ export default function BarberAvailability() {
   // ── render ──
   return (
     <Box className="availability-bg">
-      <Container maxWidth="md" className="availability-container" sx={{ py: { xs: 2, sm: 6 }, flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <Container
+        maxWidth="md"
+        className="availability-container"
+        sx={{
+          py: { xs: 2, sm: 6 },
+          px: { xs: 2, sm: 4 },
+          maxWidth: 'var(--shell-max-width) !important',
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
         
         {/* Back Button */}
         <Button

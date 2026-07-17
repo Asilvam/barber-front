@@ -488,7 +488,15 @@ export default function AdminBarbers() {
   return (
     <Box className="admin-bg">
       {/* ── Content ── */}
-      <Container maxWidth="xl" sx={{ flex: 1, py: { xs: 2, sm: 4 }, px: { xs: 1.5, sm: 3, lg: 4 } }}>
+      <Container
+        maxWidth="xl"
+        sx={{
+          flex: 1,
+          py: { xs: 2, sm: 4 },
+          px: { xs: 2, sm: 4 },
+          maxWidth: 'var(--shell-max-width) !important',
+        }}
+      >
         <Paper
           elevation={0}
           sx={{

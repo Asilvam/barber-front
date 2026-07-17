@@ -264,7 +264,14 @@ export default function AdminReserves() {
 
   return (
     <Box className="admin-bg">
-      <Container maxWidth="xl" sx={{ py: { xs: 2, sm: 4 }, px: { xs: 1.5, sm: 3, lg: 4 } }}>
+      <Container
+        maxWidth="xl"
+        sx={{
+          py: { xs: 2, sm: 4 },
+          px: { xs: 2, sm: 4 },
+          maxWidth: 'var(--shell-max-width) !important',
+        }}
+      >
         <Paper
           elevation={0}
           sx={{

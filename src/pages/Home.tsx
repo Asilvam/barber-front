@@ -55,7 +55,7 @@ function Home() {
   return (
     <Box className="auth-layout home-layout">
       <Container
-        maxWidth="xl"
+        maxWidth={false}
         className="home-container"
       >
         <Box className="home-content-row">
