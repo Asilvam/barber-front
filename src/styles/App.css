@@ -748,7 +748,7 @@
   margin-left: auto !important;
   margin-right: auto !important;
   width: calc(100% - 24px) !important;
-  max-width: 1200px !important;
+  max-width: var(--shell-max-width) !important;
   top: 8px !important;
   margin-top: 8px !important;
   margin-bottom: 8px !important;
@@ -979,6 +979,7 @@
   justify-content: center !important;
   padding-top: 12px !important; /* xs: 1.5 */
   padding-bottom: 32px !important; /* xs: 4 */
+  max-width: var(--shell-max-width) !important;
 }
 
 @media (min-width: 600px) {
@@ -996,6 +997,9 @@
 
 .home-content-row {
   width: 100%;
+  max-width: var(--shell-max-width);
+  margin-left: auto;
+  margin-right: auto;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -1012,7 +1016,7 @@
 }
 
 .home-brand-card {
-  max-width: 520px;
+  max-width: 500px;
   flex: 1 1 44%;
   display: grid;
   gap: 16px;
@@ -1034,7 +1038,7 @@
 }
 
 .home-brand-visual {
-  width: min(100%, 700px) !important;
+  width: min(100%, 620px) !important;
   height: clamp(260px, 36vw, 430px) !important;
   border-radius: 12px !important;
   box-shadow: 0 18px 40px -24px rgba(24, 32, 29, 0.45) !important;
@@ -1157,7 +1161,7 @@
 
 @media (min-width: 900px) {
   .home-brand-visual {
-    width: min(100%, 700px) !important;
+    width: min(100%, 620px) !important;
     height: clamp(280px, 34vw, 430px) !important;
   }
 }

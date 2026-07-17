@@ -197,7 +197,15 @@ export default function Dashboard() {
       </Box>
 
       {/* ── Main Content ── */}
-      <Container maxWidth="md" sx={{ flex: 1, py: { xs: 2, sm: 4 } }}>
+      <Container
+        maxWidth="md"
+        sx={{
+          flex: 1,
+          py: { xs: 2, sm: 4 },
+          maxWidth: 'var(--shell-max-width) !important',
+          px: { xs: 1.5, sm: 2.5 },
+        }}
+      >
         {error && (
           <Alert severity="error" sx={{ mb: 2, borderRadius: 1 }}>
             {error}

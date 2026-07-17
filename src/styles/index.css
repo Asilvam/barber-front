@@ -11,6 +11,7 @@
   --olive: #55615b;
   --shadow: rgba(24, 32, 29, 0.12) 0 18px 30px -20px;
   --shadow-strong: rgba(24, 32, 29, 0.2) 0 24px 40px -24px;
+  --shell-max-width: 1200px;
   --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
   --heading: 'Playfair Display', 'Times New Roman', serif;
   --body: 'Work Sans', 'Helvetica Neue', sans-serif;
