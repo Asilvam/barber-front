@@ -1,0 +1,18 @@
+{
+  "name": "Barber Frontend",
+  "description": "React and Vite frontend for the barber booking system.",
+  "env": {
+    "VITE_API_BASE_URL": {
+      "description": "Public HTTPS URL of the deployed barber API, without a trailing slash.",
+      "required": true
+    },
+    "VITE_GOOGLE_CLIENT_ID": {
+      "description": "Google OAuth web client ID shared with the backend.",
+      "required": true
+    },
+    "VITE_BUSINESS_NAME": {
+      "description": "Business name displayed in the interface.",
+      "value": "Barber System"
+    }
+  }
+}
