@@ -9,6 +9,7 @@ import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
 import Alert from '@mui/material/Alert'
 import Snackbar from '@mui/material/Snackbar'
+import Stack from '@mui/material/Stack'
 import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
@@ -20,6 +21,7 @@ import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import InputLabel from '@mui/material/InputLabel'
 import FormControl from '@mui/material/FormControl'
+import TextField from '@mui/material/TextField'
 import Divider from '@mui/material/Divider'
 import Table from '@mui/material/Table'
 import TableBody from '@mui/material/TableBody'
@@ -28,7 +30,8 @@ import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Tooltip from '@mui/material/Tooltip'
-import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'
+import useMediaQuery from '@mui/material/useMediaQuery'
+import { useTheme } from '@mui/material/styles'
 import EditIcon from '@mui/icons-material/Edit'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import AddIcon from '@mui/icons-material/Add'
@@ -44,7 +47,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import dayjs, { type Dayjs } from 'dayjs'
 import 'dayjs/locale/es'
-import './AdminBarbers.css'
+import '../styles/AdminBarbers.css'
 
 import {
   fetchBarbers,
@@ -120,11 +123,19 @@ function getAppointmentClientEmail(appointment: Appointment) {
     : ''
 }
 
+function isActiveNonExpiredSchedule(schedule: BarberSchedule): boolean {
+  const today = dayjs().startOf('day')
+  const scheduleDate = dayjs(schedule.date).startOf('day')
+  return !schedule.isDayOff && !scheduleDate.isBefore(today)
+}
+
 /* ── component ── */
 
 export default function AdminBarbers() {
   const navigate = useNavigate()
   const user = getAuthUser()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
   const [barbers, setBarbers] = useState<Barber[]>([])
   const [schedules, setSchedules] = useState<BarberSchedule[]>([])
@@ -221,9 +232,23 @@ export default function AdminBarbers() {
   const getScheduleCountForBarber = useCallback((barberId: string) => {
     return schedules.filter((s) => {
       const bid = typeof s.barberId === 'object' && s.barberId !== null ? s.barberId._id : s.barberId
-      return bid === barberId
+      return bid === barberId && isActiveNonExpiredSchedule(s)
     }).length
   }, [schedules])
+
+  const dashboardKpis = useMemo(() => {
+    const activeBarbers = barbers.filter((barber) => barber.isActive).length
+    const inactiveBarbers = barbers.length - activeBarbers
+    const activeAppointments = appointments.filter((appointment) => appointment.status === 'pending' || appointment.status === 'confirmed').length
+
+    return {
+      totalBarbers: barbers.length,
+      activeBarbers,
+      inactiveBarbers,
+      totalSchedules: schedules.filter((schedule) => isActiveNonExpiredSchedule(schedule)).length,
+      activeAppointments,
+    }
+  }, [appointments, barbers, schedules])
 
   // Barber edit handlers
   const handleOpenEditBarber = (barber: Barber) => {
@@ -461,43 +486,71 @@ export default function AdminBarbers() {
   /* ── render ── */
   return (
     <Box className="admin-bg">
-      {/* ── Top Bar ── */}
-      <Box className="admin-top-bar">
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <AdminPanelSettingsIcon sx={{ color: 'primary.main', fontSize: 28 }} />
-          <Typography
-            variant="h6"
-            sx={{ fontWeight: 700, color: 'primary.dark', fontSize: { xs: 16, sm: 20 } }}
-          >
-            Admin - Barberos
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
-          {!selectedBarberId && (
-            <Button
-              size="small"
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleOpenCreateBarber}
-              sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 700 }}
-            >
-              Agregar Barbero
-            </Button>
-          )}
-          <Button
-            size="small"
-            variant="outlined"
-            startIcon={<ArrowBackIcon />}
-            onClick={() => navigate('/dashboard')}
-            sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600 }}
-          >
-            Reserva
-          </Button>
-        </Box>
-      </Box>
-
       {/* ── Content ── */}
-      <Container maxWidth="md" sx={{ flex: 1, py: { xs: 1, sm: 3 }, px: { xs: 1, sm: 3 } }}>
+      <Container maxWidth="xl" sx={{ flex: 1, py: { xs: 2, sm: 4 }, px: { xs: 1.5, sm: 3, lg: 4 } }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 2, sm: 3, lg: 3.5 },
+            mb: 2.5,
+            borderRadius: 1,
+            border: '1px solid',
+            borderColor: 'divider',
+            background:
+              'linear-gradient(135deg, rgba(47,107,95,0.12) 0%, rgba(239,245,243,0.85) 55%, rgba(255,255,255,1) 100%)',
+          }}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: 800, color: 'primary.dark' }}>
+                Centro de Barberos
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                Administra perfiles, horarios y disponibilidad del equipo de trabajo.
+              </Typography>
+            </Box>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.2}>
+              {!selectedBarberId && (
+                <Button
+                  size="small"
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={handleOpenCreateBarber}
+                  sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 700 }}
+                >
+                  Agregar Barbero
+                </Button>
+              )}
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<CalendarMonthIcon />}
+                onClick={() => navigate('/admin/reserves')}
+                sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600 }}
+              >
+                Ver Reservas
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<ArrowBackIcon />}
+                onClick={() => navigate('/dashboard')}
+                sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600 }}
+              >
+                Volver
+              </Button>
+            </Stack>
+          </Box>
+        </Paper>
+
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mb: 2.2, flexWrap: 'wrap' }}>
+          <Chip label={`Barberos: ${dashboardKpis.totalBarbers}`} color="primary" />
+          <Chip label={`Activos: ${dashboardKpis.activeBarbers}`} color="success" />
+          <Chip label={`Inactivos: ${dashboardKpis.inactiveBarbers}`} color="default" />
+          <Chip label={`Horarios: ${dashboardKpis.totalSchedules}`} color="warning" />
+          <Chip label={`Reservas activas: ${dashboardKpis.activeAppointments}`} color="secondary" />
+        </Stack>
+
         {error && (
           <Alert severity="error" sx={{ mb: 2, borderRadius: 1 }}>
             {error}
@@ -515,20 +568,53 @@ export default function AdminBarbers() {
               <Box sx={{ py: 6, textAlign: 'center', color: 'text.secondary' }}>
                 <Typography variant="body2">No hay barberos registrados o activos.</Typography>
               </Box>
+            ) : isMobile ? (
+              <Box sx={{ display: 'grid', gap: 1.1 }}>
+                {barbers.map((barber) => (
+                  <Paper key={barber._id} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1.4 }}>
+                    <Stack spacing={0.8}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                          {barber.name}
+                        </Typography>
+                        <Chip size="small" label={barber.isActive ? 'Activo' : 'Inactivo'} color={barber.isActive ? 'success' : 'default'} sx={{ fontWeight: 700 }} />
+                      </Box>
+                      <Typography variant="caption" color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>
+                        {barber.email}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {getScheduleCountForBarber(barber._id)} horarios activos
+                      </Typography>
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
+                        <Tooltip title="Ver Calendario y Horarios" arrow>
+                          <IconButton size="small" color="primary" onClick={() => setSelectedBarberId(barber._id)}>
+                            <CalendarMonthIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Editar Información del Barbero" arrow>
+                          <IconButton size="small" sx={{ color: '#2e7d32' }} onClick={() => handleOpenEditBarber(barber)}>
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </Stack>
+                  </Paper>
+                ))}
+              </Box>
             ) : (
               <TableContainer
                 component={Paper}
                 elevation={0}
                 sx={{
-                  borderRadius: '4px',
-                  border: '1px solid #dcdcdc',
+                  borderRadius: 1,
+                  border: '1px solid',
+                  borderColor: 'divider',
                   overflowX: 'auto',
                   bgcolor: '#ffffff',
-                  boxShadow: 'none',
                 }}
               >
                 <Table sx={{ minWidth: '100%', tableLayout: 'fixed' }} size="small">
-                  <TableHead sx={{ bgcolor: '#f5f5f5' }}>
+                  <TableHead sx={{ bgcolor: 'rgba(47,107,95,0.08)' }}>
                     <TableRow>
                       <TableCell sx={{ width: { xs: '50%', sm: '55%' }, fontWeight: 600, color: '#333333', borderRight: '1px solid #dcdcdc', borderBottom: '2px solid #c0c0c0', py: 1, px: { xs: 1, sm: 1.5 } }}>Barbero</TableCell>
                       <TableCell sx={{ width: { xs: '25%', sm: '25%' }, fontWeight: 600, color: '#333333', borderRight: '1px solid #dcdcdc', borderBottom: '2px solid #c0c0c0', py: 1, px: { xs: 1, sm: 1.5 } }}>Estado</TableCell>
@@ -564,21 +650,18 @@ export default function AdminBarbers() {
                               >
                                 {barber.email}
                               </Typography>
+                              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mt: 0.5 }}>
+                                {getScheduleCountForBarber(barber._id)} horarios
+                              </Typography>
                             </Box>
                           </TableCell>
                           <TableCell sx={{ py: 1, px: { xs: 1, sm: 1.5 }, borderRight: '1px solid #e0e0e0', borderBottom: '1px solid #e0e0e0', overflow: 'hidden' }}>
-                            <Typography
-                              sx={{
-                                fontSize: '0.85rem',
-                                fontWeight: 600,
-                                color: barber.isActive ? '#2e7d32' : '#757575',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
-                              {barber.isActive ? 'Activo' : 'Inactivo'}
-                            </Typography>
+                            <Chip
+                              size="small"
+                              label={barber.isActive ? 'Activo' : 'Inactivo'}
+                              color={barber.isActive ? 'success' : 'default'}
+                              sx={{ fontWeight: 700 }}
+                            />
                           </TableCell>
                           <TableCell align="center" sx={{ py: 0.5, px: { xs: 0.5, sm: 1 }, borderBottom: '1px solid #e0e0e0' }}>
                             <Box sx={{ display: 'flex', justifyContent: 'center', gap: { xs: 0.5, sm: 1 } }}>
@@ -589,7 +672,7 @@ export default function AdminBarbers() {
                                   sx={{
                                     color: 'primary.main',
                                     p: 0.5,
-                                    '&:hover': { bgcolor: 'rgba(178, 121, 76, 0.08)' },
+                                      '&:hover': { bgcolor: 'rgba(47, 107, 95, 0.1)' },
                                   }}
                                 >
                                   <CalendarMonthIcon fontSize="small" />
@@ -634,7 +717,7 @@ export default function AdminBarbers() {
                 borderRadius: 1,
                 border: '1px solid',
                 borderColor: 'divider',
-                bgcolor: 'rgba(251,247,242,0.85)',
+                bgcolor: 'rgba(255,255,255,0.86)',
                 backdropFilter: 'blur(12px)',
               }}
             >
@@ -1405,7 +1488,7 @@ export default function AdminBarbers() {
                 <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mb: 0.5 }}>
                   Días Programados (Sólo Lectura)
                 </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600, color: 'primary.dark', bgcolor: 'rgba(178, 121, 76, 0.05)', px: 1.5, py: 1, borderRadius: 1 }}>
+                <Typography variant="body1" sx={{ fontWeight: 600, color: 'primary.dark', bgcolor: 'rgba(47, 107, 95, 0.08)', px: 1.5, py: 1, borderRadius: 1 }}>
                   {getScheduleCountForBarber(editingBarber._id)} {getScheduleCountForBarber(editingBarber._id) === 1 ? 'día' : 'días'}
                 </Typography>
               </Box>
@@ -1415,21 +1498,12 @@ export default function AdminBarbers() {
                 <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mb: 0.5 }}>
                   Teléfono
                 </Typography>
-                <input
-                  type="text"
+                <TextField
+                  size="small"
+                  fullWidth
                   value={editPhone}
                   onChange={(e) => setEditPhone(e.target.value)}
                   placeholder="Ingrese el teléfono"
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '10px 14px',
-                    fontSize: '0.9rem',
-                    border: '1px solid #dcdcdc',
-                    borderRadius: '8px',
-                    outline: 'none',
-                    fontFamily: 'inherit',
-                  }}
                 />
               </Box>
 
@@ -1497,21 +1571,12 @@ export default function AdminBarbers() {
             <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mb: 0.5 }}>
               Nombre Completo *
             </Typography>
-            <input
-              type="text"
+            <TextField
+              size="small"
+              fullWidth
               value={createName}
               onChange={(e) => setCreateName(e.target.value)}
               placeholder="Ingrese el nombre completo"
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                padding: '10px 14px',
-                fontSize: '0.9rem',
-                border: '1px solid #dcdcdc',
-                borderRadius: '8px',
-                outline: 'none',
-                fontFamily: 'inherit',
-              }}
             />
           </Box>
 
@@ -1520,21 +1585,13 @@ export default function AdminBarbers() {
             <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mb: 0.5 }}>
               Correo Electrónico *
             </Typography>
-            <input
+            <TextField
+              size="small"
+              fullWidth
               type="email"
               value={createEmail}
               onChange={(e) => setCreateEmail(e.target.value)}
               placeholder="correo@ejemplo.com"
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                padding: '10px 14px',
-                fontSize: '0.9rem',
-                border: '1px solid #dcdcdc',
-                borderRadius: '8px',
-                outline: 'none',
-                fontFamily: 'inherit',
-              }}
             />
           </Box>
 
@@ -1543,21 +1600,12 @@ export default function AdminBarbers() {
             <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mb: 0.5 }}>
               Teléfono *
             </Typography>
-            <input
-              type="text"
+            <TextField
+              size="small"
+              fullWidth
               value={createPhone}
               onChange={(e) => setCreatePhone(e.target.value)}
               placeholder="Ingrese el teléfono (ej. +569...)"
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                padding: '10px 14px',
-                fontSize: '0.9rem',
-                border: '1px solid #dcdcdc',
-                borderRadius: '8px',
-                outline: 'none',
-                fontFamily: 'inherit',
-              }}
             />
           </Box>
 

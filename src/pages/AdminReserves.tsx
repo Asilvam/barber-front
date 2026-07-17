@@ -26,6 +26,8 @@ import Button from '@mui/material/Button'
 import Snackbar from '@mui/material/Snackbar'
 import IconButton from '@mui/material/IconButton'
 import Tooltip from '@mui/material/Tooltip'
+import useMediaQuery from '@mui/material/useMediaQuery'
+import { useTheme } from '@mui/material/styles'
 import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
@@ -85,6 +87,8 @@ function isPastAppointment(appointment: AdminAppointment): boolean {
 
 export default function AdminReserves() {
   const navigate = useNavigate()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [appointments, setAppointments] = useState<AdminAppointment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -259,17 +263,17 @@ export default function AdminReserves() {
 
   return (
     <Box className="admin-bg">
-      <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
+      <Container maxWidth="xl" sx={{ py: { xs: 2, sm: 4 }, px: { xs: 1.5, sm: 3, lg: 4 } }}>
         <Paper
           elevation={0}
           sx={{
-            p: { xs: 2, sm: 3 },
+            p: { xs: 2, sm: 3, lg: 3.5 },
             mb: 2,
             borderRadius: 1,
             border: '1px solid',
             borderColor: 'divider',
             background:
-              'linear-gradient(135deg, rgba(178,121,76,0.13) 0%, rgba(251,247,242,0.85) 55%, rgba(255,255,255,1) 100%)',
+              'linear-gradient(135deg, rgba(47,107,95,0.12) 0%, rgba(239,245,243,0.85) 55%, rgba(255,255,255,1) 100%)',
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5, flexWrap: 'wrap' }}>
@@ -356,122 +360,158 @@ export default function AdminReserves() {
           </Box>
         </Paper>
 
-        <TableContainer
-          component={Paper}
-          elevation={0}
-          sx={{ borderRadius: 1, border: '1px solid', borderColor: 'divider', overflow: 'hidden' }}
-        >
-          <Table size="small">
-            <TableHead sx={{ bgcolor: 'rgba(178,121,76,0.08)' }}>
-              <TableRow>
-                <TableCell>
-                  <TableSortLabel active={sortKey === 'date'} direction={sortDirection} onClick={() => handleSort('date')}>
-                    Fecha
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell>
-                  <TableSortLabel active={sortKey === 'timeSlot'} direction={sortDirection} onClick={() => handleSort('timeSlot')}>
-                    Hora
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell>
-                  <TableSortLabel active={sortKey === 'barber'} direction={sortDirection} onClick={() => handleSort('barber')}>
-                    Barbero
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell>Cliente</TableCell>
-                <TableCell>Estado</TableCell>
-                <TableCell align="right">Acciones</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
-                    <CircularProgress size={26} />
-                  </TableCell>
-                </TableRow>
-              ) : filteredAndSorted.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      No hay reservas para los filtros seleccionados.
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredAndSorted.map((appointment) => (
-                  (() => {
-                    const isPast = isPastAppointment(appointment)
-                    return (
-                  <TableRow
-                    key={appointment._id}
-                    hover
-                    sx={{ '&:nth-of-type(odd)': { bgcolor: 'rgba(178,121,76,0.03)' } }}
-                  >
-                    <TableCell>{dayjs(appointment.date).format('DD/MM/YYYY')}</TableCell>
-                    <TableCell>{appointment.timeSlot}</TableCell>
-                    <TableCell>{getBarberName(appointment.barberId)}</TableCell>
-                    <TableCell>
-                      <Box sx={{ minWidth: 0 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', lineHeight: 1.25 }}>
-                          {getClientName(appointment.clientId)}
+        {isMobile ? (
+          <Box sx={{ display: 'grid', gap: 1.1 }}>
+            {loading ? (
+              <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 3, textAlign: 'center' }}>
+                <CircularProgress size={24} />
+              </Paper>
+            ) : filteredAndSorted.length === 0 ? (
+              <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 3, textAlign: 'center' }}>
+                <Typography variant="body2" color="text.secondary">
+                  No hay reservas para los filtros seleccionados.
+                </Typography>
+              </Paper>
+            ) : (
+              filteredAndSorted.map((appointment) => {
+                const isPast = isPastAppointment(appointment)
+                return (
+                  <Paper key={appointment._id} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1.5 }}>
+                    <Stack spacing={0.8}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                          {dayjs(appointment.date).format('DD/MM/YYYY')} · {appointment.timeSlot}
+                        </Typography>
+                        <Chip label={statusLabel[appointment.status]} color={statusColor[appointment.status]} size="small" sx={{ fontWeight: 600 }} />
+                      </Box>
+                      <Typography variant="body2" color="text.secondary">
+                        <strong>Barbero:</strong> {getBarberName(appointment.barberId)}
+                      </Typography>
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          <strong>Cliente:</strong> {getClientName(appointment.clientId)}
                         </Typography>
                         {getClientEmail(appointment.clientId) && (
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            sx={{ display: 'block', overflowWrap: 'anywhere', lineHeight: 1.25 }}
-                          >
+                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', overflowWrap: 'anywhere' }}>
                             {getClientEmail(appointment.clientId)}
                           </Typography>
                         )}
                       </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={statusLabel[appointment.status]}
-                        color={statusColor[appointment.status]}
-                        size="small"
-                        sx={{ fontWeight: 600 }}
-                      />
-                    </TableCell>
-                    <TableCell align="right">
-                      <Stack direction="row" spacing={0.4} sx={{ justifyContent: 'flex-end' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
                         <Tooltip title={isPast ? 'Reserva pasada no editable' : 'Editar estado'} arrow>
                           <span>
-                            <IconButton
-                              size="small"
-                              color="primary"
-                              onClick={() => openEditStatus(appointment)}
-                              disabled={updatingId === appointment._id || isPast}
-                            >
+                            <IconButton size="small" color="primary" onClick={() => openEditStatus(appointment)} disabled={updatingId === appointment._id || isPast}>
                               <EditIcon fontSize="small" />
                             </IconButton>
                           </span>
                         </Tooltip>
                         <Tooltip title={isPast ? 'Reserva pasada no editable' : 'Eliminar reserva'} arrow>
                           <span>
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() => setDeletingAppointment(appointment)}
-                              disabled={updatingId === appointment._id || isPast}
-                            >
+                            <IconButton size="small" color="error" onClick={() => setDeletingAppointment(appointment)} disabled={updatingId === appointment._id || isPast}>
                               <DeleteIcon fontSize="small" />
                             </IconButton>
                           </span>
                         </Tooltip>
-                      </Stack>
+                      </Box>
+                    </Stack>
+                  </Paper>
+                )
+              })
+            )}
+          </Box>
+        ) : (
+          <TableContainer
+            component={Paper}
+            elevation={0}
+            sx={{ borderRadius: 1, border: '1px solid', borderColor: 'divider', overflow: 'hidden' }}
+          >
+            <Table size="small">
+              <TableHead sx={{ bgcolor: 'rgba(47,107,95,0.08)' }}>
+                <TableRow>
+                  <TableCell>
+                    <TableSortLabel active={sortKey === 'date'} direction={sortDirection} onClick={() => handleSort('date')}>
+                      Fecha
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell>
+                    <TableSortLabel active={sortKey === 'timeSlot'} direction={sortDirection} onClick={() => handleSort('timeSlot')}>
+                      Hora
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell>
+                    <TableSortLabel active={sortKey === 'barber'} direction={sortDirection} onClick={() => handleSort('barber')}>
+                      Barbero
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell>Cliente</TableCell>
+                  <TableCell>Estado</TableCell>
+                  <TableCell align="right">Acciones</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                      <CircularProgress size={26} />
                     </TableCell>
                   </TableRow>
+                ) : filteredAndSorted.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        No hay reservas para los filtros seleccionados.
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredAndSorted.map((appointment) => {
+                    const isPast = isPastAppointment(appointment)
+                    return (
+                      <TableRow key={appointment._id} hover sx={{ '&:nth-of-type(odd)': { bgcolor: 'rgba(47,107,95,0.04)' } }}>
+                        <TableCell>{dayjs(appointment.date).format('DD/MM/YYYY')}</TableCell>
+                        <TableCell>{appointment.timeSlot}</TableCell>
+                        <TableCell>{getBarberName(appointment.barberId)}</TableCell>
+                        <TableCell>
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', lineHeight: 1.25 }}>
+                              {getClientName(appointment.clientId)}
+                            </Typography>
+                            {getClientEmail(appointment.clientId) && (
+                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', overflowWrap: 'anywhere', lineHeight: 1.25 }}>
+                                {getClientEmail(appointment.clientId)}
+                              </Typography>
+                            )}
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Chip label={statusLabel[appointment.status]} color={statusColor[appointment.status]} size="small" sx={{ fontWeight: 600 }} />
+                        </TableCell>
+                        <TableCell align="right">
+                          <Stack direction="row" spacing={0.4} sx={{ justifyContent: 'flex-end' }}>
+                            <Tooltip title={isPast ? 'Reserva pasada no editable' : 'Editar estado'} arrow>
+                              <span>
+                                <IconButton size="small" color="primary" onClick={() => openEditStatus(appointment)} disabled={updatingId === appointment._id || isPast}>
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                            <Tooltip title={isPast ? 'Reserva pasada no editable' : 'Eliminar reserva'} arrow>
+                              <span>
+                                <IconButton size="small" color="error" onClick={() => setDeletingAppointment(appointment)} disabled={updatingId === appointment._id || isPast}>
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
                     )
-                  })()
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
 
         <Snackbar
           open={!!toast}

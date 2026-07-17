@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import './App.css'
+import './styles/App.css'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import NavBar from './components/NavBar'
 import ProtectedRoute from './components/ProtectedRoute'

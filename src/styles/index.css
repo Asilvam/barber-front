@@ -1,15 +1,16 @@
 :root {
-  --ink: #1f1b1a;
-  --ink-soft: #6b5d58;
-  --surface: #f3ede7;
-  --panel: #fbf7f2;
-  --border: #dfd4c8;
-  --accent: #b2794c;
-  --accent-strong: #7c4c2f;
-  --accent-soft: #f1d8c5;
-  --olive: #5f5b50;
-  --shadow: rgba(39, 28, 24, 0.14) 0 18px 30px -20px;
-  --shadow-strong: rgba(39, 28, 24, 0.22) 0 24px 40px -24px;
+  --ink: #18201d;
+  --ink-soft: #5d6762;
+  --surface: #f3f5f4;
+  --panel: #ffffff;
+  --border: #d8dfdc;
+  --accent: #2f6b5f;
+  --accent-strong: #1e4a43;
+  --accent-soft: #d8e6e2;
+  --accent-warm: #c97b44;
+  --olive: #55615b;
+  --shadow: rgba(24, 32, 29, 0.12) 0 18px 30px -20px;
+  --shadow-strong: rgba(24, 32, 29, 0.2) 0 24px 40px -24px;
   --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
   --heading: 'Playfair Display', 'Times New Roman', serif;
   --body: 'Work Sans', 'Helvetica Neue', sans-serif;
@@ -34,7 +35,7 @@ body {
   margin: 0;
   font-family: var(--body);
   color: var(--ink-soft);
-  background: var(--surface);
+  background: radial-gradient(circle at top left, #f8faf9 0%, #f3f5f4 45%, #ecf1ef 100%);
 }
 
 #root {

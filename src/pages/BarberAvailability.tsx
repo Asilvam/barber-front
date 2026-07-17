@@ -20,7 +20,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import dayjs, { type Dayjs } from 'dayjs'
 import 'dayjs/locale/es'
 import Swal from 'sweetalert2'
-import './BarberAvailability.css'
+import '../styles/BarberAvailability.css'
 
 import {
   fetchBarbers,
@@ -131,7 +131,7 @@ export default function BarberAvailability() {
   useEffect(() => {
     let active = true
 
-    if (isAdmin || !localStorage.getItem('auth_token')) {
+    if (!localStorage.getItem('auth_token')) {
       return () => {
         active = false
       }
@@ -156,7 +156,7 @@ export default function BarberAvailability() {
       active = false
       clearTimeout(timer)
     }
-  }, [isAdmin])
+  }, [])
 
   // ── load barber info ──
   useEffect(() => {
@@ -307,14 +307,14 @@ export default function BarberAvailability() {
   const handleBookSlot = async (slot: string, timeRangeDisplay: string) => {
     if (!barber || !id) return
 
-    if (!isAdmin && activeAppointment) {
+    if (activeAppointment) {
       await Swal.fire({
         title: 'Ya tienes una reserva activa',
         text: 'Debes completar o cancelar tu cita actual antes de programar una nueva.',
         icon: 'info',
-        confirmButtonColor: '#b2794c',
-        background: '#fbf7f2',
-        color: '#1f1b1a',
+        confirmButtonColor: '#2f6b5f',
+        background: '#ffffff',
+        color: '#18201d',
       })
       return
     }
@@ -332,12 +332,12 @@ export default function BarberAvailability() {
       text: summary,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonColor: '#b2794c',
-      cancelButtonColor: '#5f5b50',
+      confirmButtonColor: '#2f6b5f',
+      cancelButtonColor: '#5d6762',
       confirmButtonText: 'Sí, agendar al instante',
       cancelButtonText: 'Cancelar',
-      background: '#fbf7f2',
-      color: '#1f1b1a',
+      background: '#ffffff',
+      color: '#18201d',
     })
 
     if (!confirmResult.isConfirmed) return
@@ -347,8 +347,8 @@ export default function BarberAvailability() {
       title: 'Agendando cita...',
       text: 'Por favor, espera un momento.',
       allowOutsideClick: false,
-      background: '#fbf7f2',
-      color: '#1f1b1a',
+      background: '#ffffff',
+      color: '#18201d',
       didOpen: () => {
         Swal.showLoading()
       },
@@ -362,18 +362,16 @@ export default function BarberAvailability() {
         title: '¡Cita Agendada!',
         text: 'Tu cita ha sido confirmada y agendada correctamente.',
         icon: 'success',
-        confirmButtonColor: '#b2794c',
-        background: '#fbf7f2',
-        color: '#1f1b1a',
+        confirmButtonColor: '#2f6b5f',
+        background: '#ffffff',
+        color: '#18201d',
       })
 
       // Reload available slots so the booked slot is immediately removed from the interface
       await loadSlotsForDate(selectedDate)
       loadCalendarOverview()
-      if (!isAdmin) {
-        const appointment = await fetchMyActiveAppointment()
-        setActiveAppointment(appointment)
-      }
+      const appointment = await fetchMyActiveAppointment()
+      setActiveAppointment(appointment)
 
     } catch (err) {
       const bookingError = getBookingErrorInfo(err)
@@ -388,9 +386,9 @@ export default function BarberAvailability() {
         title: bookingError.title,
         text: bookingError.message,
         icon: 'error',
-        confirmButtonColor: '#b2794c',
-        background: '#fbf7f2',
-        color: '#1f1b1a',
+        confirmButtonColor: '#2f6b5f',
+        background: '#ffffff',
+        color: '#18201d',
       })
     }
   }
@@ -409,7 +407,7 @@ export default function BarberAvailability() {
           sx={{
             mb: { xs: 2, sm: 4 },
             alignSelf: 'flex-start',
-            borderColor: 'rgba(178,121,76,0.35)',
+              borderColor: 'rgba(47,107,95,0.35)',
             color: 'primary.dark',
             fontWeight: 600,
             textTransform: 'none',
@@ -465,19 +463,12 @@ export default function BarberAvailability() {
                     fontSize: '1.05rem',
                     height: 36,
                     borderRadius: 1,
-                    boxShadow: '0 4px 12px rgba(178, 121, 76, 0.18)',
+                  boxShadow: '0 4px 12px rgba(30, 74, 67, 0.2)',
                   }}
-                />
-                <Chip
-                  label="Disponible"
-                  color="success"
-                  variant="filled"
-                  size="small"
-                  sx={{ fontWeight: 700, px: 1, ml: 'auto' }}
                 />
               </Box>
 
-              {!isAdmin && (loadingActiveAppointment || activeAppointment) && (
+              {(loadingActiveAppointment || activeAppointment) && (
                 <Box className="availability-active-appointment-card">
                   {loadingActiveAppointment ? (
                     <>
@@ -500,9 +491,6 @@ export default function BarberAvailability() {
                             </Typography>
                           </Box>
                         </Box>
-                        <Typography variant="body2" className="availability-active-copy">
-                          Completa o cancela tu cita actual antes de tomar otra hora.
-                        </Typography>
                       </Box>
 
                       <Box className="availability-active-details">
@@ -518,12 +506,14 @@ export default function BarberAvailability() {
                           <span>Hora</span>
                           <strong>{activeAppointment.timeSlot}</strong>
                         </Box>
-                        <Chip
-                          label={appointmentStatusLabel[activeAppointment.status]}
-                          size="small"
-                          color={activeAppointment.status === 'confirmed' ? 'success' : 'warning'}
-                          className="availability-active-status"
-                        />
+                        <Box className="availability-active-detail">
+                          <span>Estado</span>
+                          <Chip
+                            label={appointmentStatusLabel[activeAppointment.status]}
+                            size="small"
+                            className={`availability-active-status availability-active-status-${activeAppointment.status}`}
+                          />
+                        </Box>
                       </Box>
                     </>
                   ) : null}
@@ -584,7 +574,7 @@ export default function BarberAvailability() {
                     </Typography>
                   </Box>
                 ) : slots.length === 0 ? (
-                  <Box sx={{ textAlign: 'center', py: 5, px: 2, bgcolor: 'rgba(178,121,76,0.04)', borderRadius: 1, border: '1px dashed rgba(178,121,76,0.2)' }}>
+                  <Box sx={{ textAlign: 'center', py: 5, px: 2, bgcolor: 'rgba(47,107,95,0.05)', borderRadius: 1, border: '1px dashed rgba(47,107,95,0.22)' }}>
                     <Typography variant="body1" sx={{ color: 'text.primary', fontWeight: 600, mb: 0.8 }}>
                       Sin bloques configurados para esta fecha
                     </Typography>
@@ -598,7 +588,7 @@ export default function BarberAvailability() {
                       {slots.map((slot) => {
                         const blockInfo = getBlockTimeRange(slot.time)
                         const isAvailable = slot.status === 'available'
-                        const isBookingDisabled = !isAvailable || (!isAdmin && !!activeAppointment)
+                        const isBookingDisabled = !isAvailable || !!activeAppointment
                         return (
                           <Button
                             key={slot.time}
@@ -615,7 +605,7 @@ export default function BarberAvailability() {
                               fontWeight: 600,
                               fontSize: 14,
                               py: 1.8,
-                              borderColor: 'rgba(178,121,76,0.3)',
+                               borderColor: 'rgba(47,107,95,0.32)',
                               color: 'primary.dark',
                               bgcolor: '#fff',
                               textTransform: 'none',
@@ -624,7 +614,7 @@ export default function BarberAvailability() {
                                 bgcolor: 'primary.light',
                                 borderColor: 'primary.main',
                                 transform: 'translateY(-2px)',
-                                boxShadow: '0 4px 12px rgba(178,121,76,0.18)',
+                                 boxShadow: '0 4px 12px rgba(30,74,67,0.18)',
                               },
                             }}
                           >

@@ -2,7 +2,7 @@
 
 .dashboard-bg {
   min-height: 100svh;
-  background: radial-gradient(circle at top left, #f7efe6 0%, #efe2d6 45%, #e7d7c8 100%);
+  background: radial-gradient(circle at top left, #f8faf9 0%, #f3f5f4 45%, #ecf1ef 100%);
   display: flex;
   flex-direction: column;
 }
@@ -29,8 +29,8 @@
   border: 1px solid rgba(0, 0, 0, 0.08) !important;
   overflow: hidden;
   backdrop-filter: blur(12px);
-  background: rgba(251, 247, 242, 0.85) !important;
-  box-shadow: 0 8px 32px rgba(124, 76, 47, 0.04) !important;
+  background: rgba(255, 255, 255, 0.86) !important;
+  box-shadow: 0 8px 32px rgba(24, 32, 29, 0.06) !important;
   margin-bottom: 32px !important;
 }
 
@@ -44,11 +44,11 @@
   padding: 18px;
   margin-bottom: 18px;
   border-radius: 8px !important;
-  border: 1px solid rgba(178, 121, 76, 0.18) !important;
+  border: 1px solid rgba(47, 107, 95, 0.2) !important;
   background:
-    linear-gradient(90deg, rgba(178, 121, 76, 0.14), transparent 4px),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(251, 247, 242, 0.76)) !important;
-  box-shadow: 0 12px 30px rgba(124, 76, 47, 0.06) !important;
+    linear-gradient(90deg, rgba(47, 107, 95, 0.16), transparent 4px),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(239, 245, 243, 0.78)) !important;
+  box-shadow: 0 12px 30px rgba(24, 32, 29, 0.08) !important;
 }
 
 .active-appointment-main {
@@ -72,27 +72,21 @@
   display: grid;
   place-items: center;
   border-radius: 8px;
-  background: rgba(178, 121, 76, 0.12);
-  color: #7c4c2f;
+  background: rgba(47, 107, 95, 0.14);
+  color: #1e4a43;
 }
 
 .active-appointment-kicker {
-  color: #9a653f;
+  color: #2f6b5f;
   font-weight: 800 !important;
   letter-spacing: 0.08em !important;
   line-height: 1.1 !important;
 }
 
 .active-appointment-title {
-  color: #1f1b1a;
+  color: #18201d;
   font-weight: 800 !important;
   line-height: 1.22 !important;
-}
-
-.active-appointment-copy {
-  color: #6f625b !important;
-  line-height: 1.45 !important;
-  max-width: 420px;
 }
 
 .active-appointment-details {
@@ -109,7 +103,7 @@
   gap: 2px;
   padding: 9px 10px;
   border-radius: 8px;
-  border: 1px solid rgba(178, 121, 76, 0.12);
+  border: 1px solid rgba(47, 107, 95, 0.14);
   background: rgba(255, 255, 255, 0.58);
 }
 
@@ -124,7 +118,7 @@
 
 .active-appointment-detail strong {
   min-width: 0;
-  color: #2b1c11;
+  color: #18201d;
   font-size: 0.86rem;
   line-height: 1.25;
   overflow-wrap: anywhere;
@@ -134,7 +128,28 @@
   align-self: center;
   justify-self: flex-start;
   font-weight: 800 !important;
+  height: 24px !important;
   border-radius: 8px !important;
+}
+
+.active-appointment-status-pending {
+  color: #9a5b12 !important;
+  background: #fff0d8 !important;
+}
+
+.active-appointment-status-confirmed {
+  color: #256747 !important;
+  background: #dff2e6 !important;
+}
+
+.active-appointment-status-completed {
+  color: #365f83 !important;
+  background: #e1eef8 !important;
+}
+
+.active-appointment-status-cancelled {
+  color: #9b4545 !important;
+  background: #f8e2e2 !important;
 }
 
 @media (max-width: 700px) {
@@ -150,9 +165,6 @@
     gap: 8px;
   }
 
-  .active-appointment-copy {
-    max-width: none;
-  }
 }
 
 .barbers-grid {
@@ -263,7 +275,7 @@
 }
 
 .barber-admin-name {
-  color: #1f1b1a;
+  color: #18201d;
   font-size: 0.95rem !important;
   font-weight: 800 !important;
   line-height: 1.28 !important;
@@ -280,8 +292,8 @@
 
 .barber-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(178, 121, 76, 0.1) !important;
-  border-color: #b2794c !important;
+  box-shadow: 0 6px 20px rgba(30, 74, 67, 0.14) !important;
+  border-color: #2f6b5f !important;
 }
 
 .barber-client-card-content {
@@ -298,12 +310,12 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, rgba(178, 121, 76, 0.18), rgba(241, 216, 197, 0.72));
-  color: #7c4c2f;
+  background: linear-gradient(135deg, rgba(47, 107, 95, 0.2), rgba(216, 230, 226, 0.72));
+  color: #1e4a43;
   font-family: var(--heading);
   font-size: 24px;
   font-weight: 700;
-  box-shadow: 0 10px 18px -14px rgba(124, 76, 47, 0.8);
+  box-shadow: 0 10px 18px -14px rgba(30, 74, 67, 0.8);
 }
 
 .barber-avatar-compact {
@@ -316,7 +328,7 @@
 
 .barber-client-name {
   width: 100%;
-  color: #1f1b1a;
+  color: #18201d;
   font-weight: 800 !important;
   line-height: 1.25 !important;
   overflow-wrap: anywhere;

@@ -55,12 +55,12 @@ function Home() {
   return (
     <Box className="auth-layout home-layout">
       <Container
-        maxWidth="md"
+        maxWidth="xl"
         className="home-container"
       >
         <Box className="home-content-row">
           {/* Brand Card */}
-          <Box className="home-brand-card">
+          <Box className="home-brand-card home-copy-column">
             <Typography variant="overline" color="secondary" sx={{ textTransform: 'uppercase', letterSpacing: 2.4 }}>
               {businessName}
             </Typography>
@@ -112,8 +112,9 @@ function Home() {
             </Box>
           </Box>
           {/* Carrusel de imágenes */}
-          <Box className="brand-visual">
-            <div className="carousel">
+          <Box className="home-media-column">
+            <Box className="brand-visual home-brand-visual">
+              <div className="carousel home-carousel">
               {barberSlides.map((slide, index) => (
                 <img
                   key={slide.src}
@@ -124,7 +125,7 @@ function Home() {
                 />
               ))}
 
-              <div className="carousel-controls">
+                <div className="carousel-controls">
                 <button
                   type="button"
                   aria-label="Imagen anterior"
@@ -155,8 +156,9 @@ function Home() {
                 >
                   ›
                 </button>
+                </div>
               </div>
-            </div>
+            </Box>
           </Box>
         </Box>
       </Container>

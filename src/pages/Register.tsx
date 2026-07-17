@@ -85,7 +85,7 @@ function Register() {
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
-          background: 'radial-gradient(circle at top left, #f7efe6 0%, #efe2d6 45%, #e7d7c8 100%)',
+          background: 'radial-gradient(circle at top left, #f8faf9 0%, #f3f5f4 45%, #ecf1ef 100%)',
         }}
       >
         <CircularProgress color="primary" />

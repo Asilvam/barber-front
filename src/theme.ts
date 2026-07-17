@@ -4,23 +4,23 @@ import { createTheme, type ThemeOptions } from '@mui/material/styles';
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#b2794c',
-      dark: '#7c4c2f',
-      light: '#f1d8c5',
+      main: '#2f6b5f',
+      dark: '#1e4a43',
+      light: '#d8e6e2',
       contrastText: '#fff',
     },
     secondary: {
-      main: '#5f5b50',
+      main: '#5d6762',
     },
     background: {
-      default: '#f3ede7',
-      paper: '#fbf7f2',
+      default: '#f3f5f4',
+      paper: '#ffffff',
     },
     text: {
-      primary: '#1f1b1a',
-      secondary: '#6b5d58',
+      primary: '#18201d',
+      secondary: '#5d6762',
     },
-    divider: '#dfd4c8',
+    divider: '#d8dfdc',
   },
   typography: {
     fontFamily: ['Work Sans', 'Helvetica Neue', 'Arial', 'sans-serif'].join(','),
@@ -37,7 +37,7 @@ const theme = createTheme({
       fontWeight: 600,
     },
     body1: {
-      color: '#1f1b1a',
+      color: '#18201d',
     },
     button: {
       textTransform: 'none',
@@ -65,15 +65,15 @@ const theme = createTheme({
         {
           props: { variant: 'contained', color: 'primary' },
           style: {
-            background: 'linear-gradient(135deg, #b2794c, #c79b6f)',
+            background: 'linear-gradient(135deg, #2f6b5f, #3f7f72)',
             color: '#fff',
-            boxShadow: '0 12px 20px -16px rgba(124, 76, 47, 0.7)',
+            boxShadow: '0 12px 20px -16px rgba(30, 74, 67, 0.6)',
           },
         },
         {
           props: { variant: 'outlined', color: 'primary' },
           style: {
-            borderColor: 'rgba(178, 121, 76, 0.35)',
+            borderColor: 'rgba(47, 107, 95, 0.35)',
           },
         },
       ],

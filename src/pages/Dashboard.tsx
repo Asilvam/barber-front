@@ -18,7 +18,7 @@ import EmailIcon from '@mui/icons-material/Email'
 import dayjs from 'dayjs'
 import 'dayjs/locale/es'
 import type { AuthUser } from '../types/auth'
-import './Dashboard.css'
+import '../styles/Dashboard.css'
 
 import {
   fetchBarbers,
@@ -110,7 +110,7 @@ export default function Dashboard() {
   useEffect(() => {
     let active = true
 
-    if (isAdmin || !localStorage.getItem('auth_token')) {
+    if (!localStorage.getItem('auth_token')) {
       return () => {
         active = false
       }
@@ -135,7 +135,7 @@ export default function Dashboard() {
       active = false
       clearTimeout(timer)
     }
-  }, [isAdmin])
+  }, [])
 
   const handleSelectBarber = useCallback((barber: Barber) => {
     navigate(`/barbers/${barber._id}/availability`)
@@ -204,7 +204,7 @@ export default function Dashboard() {
           </Alert>
         )}
 
-        {!isAdmin && (loadingActiveAppointment || activeAppointment) && (
+        {(loadingActiveAppointment || activeAppointment) && (
           <Paper elevation={0} className="active-appointment-card">
             {loadingActiveAppointment ? (
               <>
@@ -227,9 +227,6 @@ export default function Dashboard() {
                       </Typography>
                     </Box>
                   </Box>
-                  <Typography variant="body2" className="active-appointment-copy">
-                    Para tomar una nueva hora, primero cancela o completa esta reserva.
-                  </Typography>
                 </Box>
 
                 <Box className="active-appointment-details">
@@ -245,12 +242,14 @@ export default function Dashboard() {
                     <span>Hora</span>
                     <strong>{activeAppointment.timeSlot}</strong>
                   </Box>
-                  <Chip
-                    label={appointmentStatusLabel[activeAppointment.status]}
-                    size="small"
-                    color={activeAppointment.status === 'confirmed' ? 'success' : 'warning'}
-                    className="active-appointment-status"
-                  />
+                  <Box className="active-appointment-detail">
+                    <span>Estado</span>
+                    <Chip
+                      label={appointmentStatusLabel[activeAppointment.status]}
+                      size="small"
+                      className={`active-appointment-status active-appointment-status-${activeAppointment.status}`}
+                    />
+                  </Box>
                 </Box>
               </>
             ) : null}
