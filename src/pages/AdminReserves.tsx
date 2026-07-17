@@ -47,6 +47,7 @@ import {
   type AdminAppointment,
   type AppointmentStatus,
 } from '../api/appointments'
+import { businessAppointmentDateTime, businessNow } from '../utils/businessTime'
 
 type SortKey = 'date' | 'timeSlot' | 'barber'
 type SortDirection = 'asc' | 'desc'
@@ -81,8 +82,8 @@ function getClientEmail(clientId: AdminAppointment['clientId']): string {
 }
 
 function isPastAppointment(appointment: AdminAppointment): boolean {
-  const appointmentDateTime = dayjs(`${appointment.date} ${appointment.timeSlot}`)
-  return appointmentDateTime.isBefore(dayjs())
+  const appointmentDateTime = businessAppointmentDateTime(appointment.date, appointment.timeSlot)
+  return appointmentDateTime.isBefore(businessNow())
 }
 
 export default function AdminReserves() {

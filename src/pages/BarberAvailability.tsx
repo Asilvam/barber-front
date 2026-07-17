@@ -33,6 +33,7 @@ import {
   type Barber,
 } from '../api/barber'
 import { getAuthUser } from '../auth/session'
+import { businessNow } from '../utils/businessTime'
 
 dayjs.locale('es')
 
@@ -99,7 +100,7 @@ export default function BarberAvailability() {
   const navigate = useNavigate()
   const user = getAuthUser()
   const isAdmin = user?.role === 'admin'
-  const today = useMemo(() => dayjs().startOf('day'), [])
+  const today = useMemo(() => businessNow().startOf('day'), [])
   const currentMonthStart = useMemo(() => today.startOf('month'), [today])
   const currentMonthEnd = useMemo(() => today.endOf('month'), [today])
   const clientMaxDate = useMemo(() => {
@@ -113,7 +114,7 @@ export default function BarberAvailability() {
   const [loadingBarber, setLoadingBarber] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const [selectedDate, setSelectedDate] = useState<Dayjs>(dayjs())
+  const [selectedDate, setSelectedDate] = useState<Dayjs>(() => businessNow())
   const [slots, setSlots] = useState<AvailabilitySlot[]>([])
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [loadingCalendar, setLoadingCalendar] = useState(false)
@@ -288,7 +289,7 @@ export default function BarberAvailability() {
   // ── 1-hour block formatter ──
   const getBlockTimeRange = useCallback((slot: string) => {
     const [hours, minutes] = slot.split(':').map(Number)
-    const startTime = dayjs().hour(hours).minute(minutes).second(0)
+    const startTime = businessNow().hour(hours).minute(minutes).second(0)
     const endTime = startTime.add(1, 'hour')
     return {
       start: slot,

@@ -62,6 +62,7 @@ import {
   type BarberSchedule,
   type TimeSlot,
 } from '../api/barber'
+import { businessDate, businessNow } from '../utils/businessTime'
 
 dayjs.locale('es')
 
@@ -124,8 +125,8 @@ function getAppointmentClientEmail(appointment: Appointment) {
 }
 
 function isActiveNonExpiredSchedule(schedule: BarberSchedule): boolean {
-  const today = dayjs().startOf('day')
-  const scheduleDate = dayjs(schedule.date).startOf('day')
+  const today = businessNow().startOf('day')
+  const scheduleDate = businessDate(schedule.date).startOf('day')
   return !schedule.isDayOff && !scheduleDate.isBefore(today)
 }
 
@@ -149,8 +150,8 @@ export default function AdminBarbers() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [formBarberId, setFormBarberId] = useState('')
   
-  const [formStartDate, setFormStartDate] = useState<Dayjs>(dayjs())
-  const [formEndDate, setFormEndDate] = useState<Dayjs>(dayjs())
+  const [formStartDate, setFormStartDate] = useState<Dayjs>(() => businessNow())
+  const [formEndDate, setFormEndDate] = useState<Dayjs>(() => businessNow())
 
   const [formIsDayOff, setFormIsDayOff] = useState(false)
   const [formWorkingHours, setFormWorkingHours] = useState<TimeSlot[]>([
@@ -166,8 +167,8 @@ export default function AdminBarbers() {
   const [deleteTarget, setDeleteTarget] = useState<BarberSchedule | null>(null)
 
   // calendar states
-  const [currentMonth, setCurrentMonth] = useState<Dayjs>(dayjs())
-  const [selectedCalendarDate, setSelectedCalendarDate] = useState<Dayjs | null>(dayjs())
+  const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => businessNow())
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState<Dayjs | null>(() => businessNow())
 
   // Barber edit dialog states
   const [barberEditOpen, setBarberEditOpen] = useState(false)
@@ -330,7 +331,7 @@ export default function AdminBarbers() {
   // ── form helpers ──
   const openNewSchedule = (prefilledDate?: Dayjs, barberId?: string) => {
     setFormBarberId(barberId || selectedBarberId || (barbers[0]?._id ?? ''))
-    const initialDate = prefilledDate || dayjs()
+    const initialDate = prefilledDate || businessNow()
     setFormStartDate(initialDate)
     setFormEndDate(initialDate)
     setFormIsDayOff(false)
@@ -812,7 +813,7 @@ export default function AdminBarbers() {
 	                    {calendarDays.map((day) => {
 	                      const dateStr = day.format('YYYY-MM-DD')
 	                      const schedule = scheduleMap[dateStr]
-	                      const isTodayVal = day.isSame(dayjs(), 'day')
+	                      const isTodayVal = day.isSame(businessNow(), 'day')
 	                      const isSelected = selectedCalendarDate ? day.isSame(selectedCalendarDate, 'day') : false
 	                      const isOutside = !day.isSame(currentMonth, 'month')
 
