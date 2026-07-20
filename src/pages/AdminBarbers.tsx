@@ -509,8 +509,8 @@ export default function AdminBarbers() {
               'linear-gradient(135deg, rgba(47,107,95,0.12) 0%, rgba(239,245,243,0.85) 55%, rgba(255,255,255,1) 100%)',
           }}
         >
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-            <Box>
+          <Box className="admin-barbers-hero-layout">
+            <Box className="admin-barbers-hero-copy">
               <Typography variant="h5" sx={{ fontWeight: 800, color: 'primary.dark' }}>
                 Centro de Barberos
               </Typography>
@@ -518,19 +518,21 @@ export default function AdminBarbers() {
                 Administra perfiles, horarios y disponibilidad del equipo de trabajo.
               </Typography>
             </Box>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.2}>
+            <Box className="admin-barbers-hero-actions">
               {!selectedBarberId && (
                 <Button
+                  className="admin-barbers-hero-button"
                   size="small"
                   variant="contained"
                   startIcon={<AddIcon />}
                   onClick={handleOpenCreateBarber}
                   sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 700 }}
                 >
-                  Agregar Barbero
+                  Agregar
                 </Button>
               )}
               <Button
+                className="admin-barbers-hero-button"
                 size="small"
                 variant="outlined"
                 startIcon={<CalendarMonthIcon />}
@@ -540,6 +542,7 @@ export default function AdminBarbers() {
                 Ver Reservas
               </Button>
               <Button
+                className="admin-barbers-hero-button"
                 size="small"
                 variant="outlined"
                 startIcon={<ArrowBackIcon />}
@@ -548,7 +551,7 @@ export default function AdminBarbers() {
               >
                 Volver
               </Button>
-            </Stack>
+            </Box>
           </Box>
         </Paper>
 
