@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
+import Swal from 'sweetalert2'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
@@ -220,8 +221,28 @@ export default function AdminReserves() {
 
   const handleConfirmEditStatus = async () => {
     if (!editingAppointment) return
-    await handleStatusChange(editingAppointment._id, statusDraft)
+
+    const appointmentId = editingAppointment._id
     setEditingAppointment(null)
+
+    void Swal.fire({
+      title: 'Guardando cambios...',
+      text: `Actualizando la reserva a "${statusLabel[statusDraft]}".`,
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      didOpen: () => {
+        const container = Swal.getContainer()
+        if (container) container.style.zIndex = '1500'
+        Swal.showLoading()
+      },
+    })
+
+    try {
+      await handleStatusChange(appointmentId, statusDraft)
+    } finally {
+      Swal.close()
+    }
   }
 
   const handleDeleteAppointment = async () => {
@@ -284,8 +305,18 @@ export default function AdminReserves() {
               'linear-gradient(135deg, rgba(47,107,95,0.12) 0%, rgba(239,245,243,0.85) 55%, rgba(255,255,255,1) 100%)',
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5, flexWrap: 'wrap' }}>
-            <Box>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: 'minmax(0, 1fr) minmax(122px, 0.72fr)',
+                sm: 'minmax(0, 1fr) auto',
+              },
+              alignItems: { xs: 'start', sm: 'center' },
+              gap: { xs: 1.5, sm: 3 },
+            }}
+          >
+            <Box sx={{ minWidth: 0 }}>
               <Typography variant="h5" sx={{ fontWeight: 800, color: 'primary.dark' }}>
                 Centro de Reservas
               </Typography>
@@ -293,33 +324,47 @@ export default function AdminReserves() {
                 Gestiona citas ordenadas por proximidad y controla su estado en tiempo real.
               </Typography>
             </Box>
-            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: 'auto auto' },
+                alignItems: 'center',
+                justifyContent: 'end',
+                gap: 1,
+              }}
+            >
               <Chip
                 icon={<EventNoteIcon />}
                 label={`${appointments.length} reservas`}
                 color="primary"
                 variant="filled"
-                sx={{ fontWeight: 700 }}
+                sx={{ fontWeight: 700, borderRadius: 1 }}
               />
-            </Stack>
+              <Button
+                variant="outlined"
+                startIcon={<ArrowBackIcon />}
+                onClick={() => navigate('/admin/barbers')}
+                sx={{
+                  borderRadius: 1,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                  width: '100%',
+                }}
+              >
+                Volver
+              </Button>
+            </Box>
           </Box>
         </Paper>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.2, gap: 1.5, flexWrap: 'wrap' }}>
+        <Box sx={{ mb: 2.2 }}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
             <Chip icon={<PendingActionsIcon />} label={`Pendientes: ${statusTotals.pending}`} color="warning" />
             <Chip icon={<CheckCircleIcon />} label={`Confirmadas: ${statusTotals.confirmed}`} color="success" />
             <Chip icon={<CancelIcon />} label={`Canceladas: ${statusTotals.cancelled}`} color="error" />
             <Chip icon={<TaskAltIcon />} label={`Completadas: ${statusTotals.completed}`} color="default" />
           </Stack>
-          <Button
-            variant="outlined"
-            startIcon={<ArrowBackIcon />}
-            onClick={() => navigate('/admin/barbers')}
-            sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 600 }}
-          >
-            Volver
-          </Button>
         </Box>
 
         {error ? <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert> : null}

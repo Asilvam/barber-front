@@ -59,7 +59,7 @@ function NavBar() {
     >
       <Toolbar className="navbar-toolbar">
         {/* Branding */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <NavLink to="/" className="navbar-brand-link" aria-label="Ir al inicio">
           <Box className="navbar-logo-monogram navbar-header-logo">
             <img src={img5} alt="Logo" className="navbar-logo-icon" />
           </Box>
@@ -70,7 +70,7 @@ function NavBar() {
           >
             {businessName}
           </Typography>
-        </Box>
+        </NavLink>
 
         <Box component="nav" aria-label="Navegacion principal" className="navbar-desktop-menu">
           <NavLink to="/" className="nav-hover-link">
@@ -131,7 +131,12 @@ function NavBar() {
         }}
       >
         <Box className="navbar-drawer-header">
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <NavLink
+            to="/"
+            className="navbar-brand-link"
+            aria-label="Ir al inicio"
+            onClick={() => setMobileOpen(false)}
+          >
             <Box className="navbar-logo-monogram navbar-drawer-logo" sx={{ width: 32, height: 32, fontSize: '0.8rem' }}>
               <img src={img6} alt="Logo" className="navbar-logo-icon" />
             </Box>
@@ -142,7 +147,7 @@ function NavBar() {
             >
               {businessName}
             </Typography>
-          </Box>
+          </NavLink>
           <IconButton onClick={() => setMobileOpen(false)} color="primary">
             <CloseIcon />
           </IconButton>

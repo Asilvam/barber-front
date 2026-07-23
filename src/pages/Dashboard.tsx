@@ -9,18 +9,22 @@ import Chip from '@mui/material/Chip'
 import Alert from '@mui/material/Alert'
 import Skeleton from '@mui/material/Skeleton'
 import Fade from '@mui/material/Fade'
-import RefreshIcon from '@mui/icons-material/Refresh'
+import Step from '@mui/material/Step'
+import StepLabel from '@mui/material/StepLabel'
+import Stepper from '@mui/material/Stepper'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import PersonIcon from '@mui/icons-material/Person'
-import LogoutIcon from '@mui/icons-material/Logout'
 import PhoneIcon from '@mui/icons-material/Phone'
 import EmailIcon from '@mui/icons-material/Email'
+import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import dayjs from 'dayjs'
 import 'dayjs/locale/es'
+import Swal from 'sweetalert2'
 import type { AuthUser } from '../types/auth'
 import '../styles/Dashboard.css'
 
 import {
+  cancelMyAppointment,
   fetchBarbers,
   fetchMyActiveAppointment,
   type Appointment,
@@ -64,9 +68,8 @@ export default function Dashboard() {
 
   // ── state ──
   const [barbers, setBarbers] = useState<Barber[]>([])
-  const [loadingBarbers, setLoadingBarbers] = useState(false)
   const [activeAppointment, setActiveAppointment] = useState<Appointment | null>(null)
-  const [loadingActiveAppointment, setLoadingActiveAppointment] = useState(false)
+  const [loadingActiveAppointment, setLoadingActiveAppointment] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   // ── redirect if not logged in ──
@@ -76,27 +79,13 @@ export default function Dashboard() {
     }
   }, [navigate])
 
-  // ── load barbers ──
-  const loadBarbers = useCallback(() => {
-    setLoadingBarbers(true)
-    fetchBarbers()
-      .then((data) => {
-        setBarbers(data.filter((b) => b.isActive))
-        setLoadingBarbers(false)
-      })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : 'Error cargando barberos')
-        setLoadingBarbers(false)
-      })
-  }, [])
-
   // ── initial mount: load barbers ──
   useEffect(() => {
     const controller = new AbortController()
     fetchBarbers()
       .then((data) => {
         if (!controller.signal.aborted) {
-          setBarbers(data.filter((b) => b.isActive))
+          setBarbers(data.filter((barber) => barber.isActive))
         }
       })
       .catch((err) => {
@@ -138,13 +127,64 @@ export default function Dashboard() {
   }, [])
 
   const handleSelectBarber = useCallback((barber: Barber) => {
+    if (loadingActiveAppointment || activeAppointment) return
     navigate(`/barbers/${barber._id}/availability`)
-  }, [navigate])
+  }, [activeAppointment, loadingActiveAppointment, navigate])
 
-  const handleLogout = () => {
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('auth_user')
-    navigate('/login')
+  const handleCancelAppointment = async () => {
+    if (!activeAppointment) return
+
+    const confirmation = await Swal.fire({
+      title: '¿Cancelar tu reserva?',
+      text: 'El horario quedará disponible para otra persona.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#b44747',
+      cancelButtonColor: '#5d6762',
+      confirmButtonText: 'Sí, cancelar reserva',
+      cancelButtonText: 'Volver',
+      background: '#ffffff',
+      color: '#18201d',
+    })
+
+    if (!confirmation.isConfirmed) return
+
+    Swal.fire({
+      title: 'Cancelando reserva...',
+      text: 'Por favor, espera un momento.',
+      allowOutsideClick: false,
+      background: '#ffffff',
+      color: '#18201d',
+      didOpen: () => Swal.showLoading(),
+    })
+
+    try {
+      await cancelMyAppointment(activeAppointment._id)
+      await Swal.fire({
+        title: 'Reserva cancelada',
+        text: 'El horario fue liberado correctamente.',
+        icon: 'success',
+        confirmButtonColor: '#2f6b5f',
+        background: '#ffffff',
+        color: '#18201d',
+      })
+      setActiveAppointment(null)
+    } catch (err) {
+      const response = (
+        err as { response?: { data?: { message?: string } } }
+      )?.response
+
+      await Swal.fire({
+        title: 'No se pudo cancelar',
+        text:
+          response?.data?.message ??
+          (err instanceof Error ? err.message : 'Ocurrió un error inesperado.'),
+        icon: 'error',
+        confirmButtonColor: '#2f6b5f',
+        background: '#ffffff',
+        color: '#18201d',
+      })
+    }
   }
 
   /* ──────────────────── render ──────────────────── */
@@ -152,17 +192,24 @@ export default function Dashboard() {
     <Box className="dashboard-bg">
       {/* ── Top Bar ── */}
       <Box className="dashboard-top-bar">
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
-          <CalendarMonthIcon sx={{ color: 'primary.main', fontSize: { xs: 24, sm: 28 } }} />
-          <Typography
-            variant="h6"
-            sx={{ fontWeight: 700, color: 'primary.dark', fontSize: { xs: 18, sm: 20 } }}
-          >
-            Reserva
-          </Typography>
-        </Box>
+        {!loadingActiveAppointment && !activeAppointment && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
+            <CalendarMonthIcon sx={{ color: 'primary.main', fontSize: { xs: 24, sm: 28 } }} />
+            <Box className="dashboard-title-group">
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 700, color: 'primary.dark', fontSize: { xs: 18, sm: 20 } }}
+              >
+                Reserva
+              </Typography>
+              <Typography variant="body2" className="dashboard-step-instruction">
+                Selecciona un barbero disponible
+              </Typography>
+            </Box>
+          </Box>
+        )}
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', ml: 'auto' }}>
           {user && (
             <Chip
               icon={<PersonIcon sx={{ fontSize: '16px !important' }} />}
@@ -175,24 +222,10 @@ export default function Dashboard() {
                 color: 'primary.dark',
                 fontSize: { xs: 11, sm: 13 },
                 height: 28,
+                borderRadius: 1,
               }}
             />
           )}
-          <Button
-            size="small"
-            variant="outlined"
-            startIcon={<LogoutIcon sx={{ fontSize: '16px !important' }} />}
-            onClick={handleLogout}
-            sx={{
-              borderRadius: 1,
-              textTransform: 'none',
-              fontSize: { xs: 11, sm: 13 },
-              height: 28,
-              fontWeight: 600,
-            }}
-          >
-            Salir
-          </Button>
         </Box>
       </Box>
 
@@ -201,7 +234,8 @@ export default function Dashboard() {
         maxWidth="md"
         sx={{
           flex: 1,
-          py: { xs: 2, sm: 4 },
+          pt: { xs: 1.5, sm: 2 },
+          pb: { xs: 2, sm: 4 },
           maxWidth: 'var(--shell-max-width) !important',
           px: { xs: 2, sm: 4 },
         }}
@@ -237,27 +271,39 @@ export default function Dashboard() {
                   </Box>
                 </Box>
 
-                <Box className="active-appointment-details">
-                  <Box className="active-appointment-detail">
-                    <span>Barbero</span>
-                    <strong>{getAppointmentBarberName(activeAppointment)}</strong>
+                <Box className="active-appointment-side">
+                  <Box className="active-appointment-details">
+                    <Box className="active-appointment-detail">
+                      <span>Barbero</span>
+                      <strong>{getAppointmentBarberName(activeAppointment)}</strong>
+                    </Box>
+                    <Box className="active-appointment-detail">
+                      <span>Fecha</span>
+                      <strong>{dayjs(activeAppointment.date).format('dddd D [de] MMMM')}</strong>
+                    </Box>
+                    <Box className="active-appointment-detail">
+                      <span>Hora</span>
+                      <strong>{activeAppointment.timeSlot}</strong>
+                    </Box>
+                    <Box className="active-appointment-detail">
+                      <span>Estado</span>
+                      <Chip
+                        label={appointmentStatusLabel[activeAppointment.status]}
+                        size="small"
+                        className={`active-appointment-status active-appointment-status-${activeAppointment.status}`}
+                      />
+                    </Box>
                   </Box>
-                  <Box className="active-appointment-detail">
-                    <span>Fecha</span>
-                    <strong>{dayjs(activeAppointment.date).format('dddd D [de] MMMM')}</strong>
-                  </Box>
-                  <Box className="active-appointment-detail">
-                    <span>Hora</span>
-                    <strong>{activeAppointment.timeSlot}</strong>
-                  </Box>
-                  <Box className="active-appointment-detail">
-                    <span>Estado</span>
-                    <Chip
-                      label={appointmentStatusLabel[activeAppointment.status]}
-                      size="small"
-                      className={`active-appointment-status active-appointment-status-${activeAppointment.status}`}
-                    />
-                  </Box>
+                  <Button
+                    className="active-appointment-cancel-button"
+                    variant="outlined"
+                    color="error"
+                    size="small"
+                    startIcon={<CancelOutlinedIcon />}
+                    onClick={handleCancelAppointment}
+                  >
+                    Cancelar reserva
+                  </Button>
                 </Box>
               </>
             ) : null}
@@ -265,8 +311,21 @@ export default function Dashboard() {
         )}
 
         {/* ── Barbers Grid ── */}
-        <Fade in timeout={500}>
+        {!loadingActiveAppointment && !activeAppointment && (
+          <Fade in timeout={500}>
           <Paper elevation={0} className="dashboard-container-card">
+            <Stepper
+              activeStep={0}
+              alternativeLabel
+              sx={{ px: { xs: 1.5, sm: 3 }, pt: { xs: 2, sm: 3 }, pb: 1 }}
+            >
+              {['Barbero', 'Fecha y horario', 'Confirmar'].map((label) => (
+                <Step key={label}>
+                  <StepLabel>{label}</StepLabel>
+                </Step>
+              ))}
+            </Stepper>
+
             <Box
               sx={{
                 px: { xs: 2, sm: 3 },
@@ -284,41 +343,10 @@ export default function Dashboard() {
               >
                 Barberos Disponibles
               </Typography>
-              <Button
-                size="small"
-                startIcon={<RefreshIcon />}
-                onClick={loadBarbers}
-                sx={{ textTransform: 'none', fontWeight: 600, fontSize: { xs: 12, sm: 13 } }}
-              >
-                Actualizar
-              </Button>
             </Box>
 
             <Box sx={{ p: { xs: 2, sm: 3 } }}>
-              {loadingBarbers ? (
-                <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' } }}>
-                  {Array.from({ length: 2 }).map((_, i) => (
-                    <Paper
-                      key={i}
-                      elevation={0}
-                      sx={{
-                        p: 2,
-                        borderRadius: 1,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexDirection: 'column',
-                        gap: 2,
-                      }}
-                    >
-                      <Skeleton variant="circular" width={58} height={58} />
-                      <Skeleton width="55%" height={24} />
-                    </Paper>
-                  ))}
-                </Box>
-              ) : barbers.length === 0 ? (
+              {barbers.length === 0 ? (
                 <Box sx={{ py: 6, textAlign: 'center', color: 'text.secondary' }}>
                   <Typography variant="body2">No hay barberos registrados</Typography>
                 </Box>
@@ -384,7 +412,8 @@ export default function Dashboard() {
               )}
             </Box>
           </Paper>
-        </Fade>
+          </Fade>
+        )}
       </Container>
     </Box>
   )

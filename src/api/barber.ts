@@ -148,6 +148,19 @@ export async function fetchMyActiveAppointment(): Promise<Appointment | null> {
   })
 }
 
+/** Cancel the authenticated client's own active appointment */
+export async function cancelMyAppointment(appointmentId: string): Promise<Appointment> {
+  try {
+    const { data } = await apiClient.patch<Appointment>(
+      `/appointments/me/${appointmentId}/cancel`,
+    )
+    return data
+  } finally {
+    invalidateCache([ACTIVE_APPOINTMENT_CACHE_KEY])
+    invalidateAvailability()
+  }
+}
+
 /** List appointments. Backend restricts this endpoint to admin users. */
 export async function fetchAppointments(): Promise<Appointment[]> {
   return getCached('appointments:all', APPOINTMENTS_TTL_MS, async () => {

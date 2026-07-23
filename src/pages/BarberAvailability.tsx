@@ -10,9 +10,13 @@ import Alert from '@mui/material/Alert'
 import Skeleton from '@mui/material/Skeleton'
 import Fade from '@mui/material/Fade'
 import Chip from '@mui/material/Chip'
+import Step from '@mui/material/Step'
+import StepLabel from '@mui/material/StepLabel'
+import Stepper from '@mui/material/Stepper'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
+import PersonIcon from '@mui/icons-material/Person'
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar'
 import { PickerDay, type PickerDayProps } from '@mui/x-date-pickers/PickerDay'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
@@ -37,7 +41,10 @@ import { businessNow } from '../utils/businessTime'
 
 dayjs.locale('es')
 
-type CalendarDayStatus = 'available' | 'full'
+type SelectedBookingSlot = {
+  start: string
+  display: string
+}
 
 const appointmentStatusLabel: Record<Appointment['status'], string> = {
   pending: 'Pendiente',
@@ -101,13 +108,15 @@ export default function BarberAvailability() {
   const user = getAuthUser()
   const isAdmin = user?.role === 'admin'
   const today = useMemo(() => businessNow().startOf('day'), [])
-  const currentMonthStart = useMemo(() => today.startOf('month'), [today])
   const currentMonthEnd = useMemo(() => today.endOf('month'), [today])
+  const adminMinDate = useMemo(() => today.subtract(3, 'month'), [today])
+  const adminMaxDate = useMemo(() => today.add(3, 'month'), [today])
   const clientMaxDate = useMemo(() => {
     const oneWeekAhead = today.add(7, 'day')
     return oneWeekAhead.isBefore(currentMonthEnd) ? oneWeekAhead : currentMonthEnd
   }, [currentMonthEnd, today])
-  const maxSelectableDate = isAdmin ? currentMonthEnd : clientMaxDate
+  const minSelectableDate = isAdmin ? adminMinDate : today
+  const maxSelectableDate = isAdmin ? adminMaxDate : clientMaxDate
 
   // ── states ──
   const [barber, setBarber] = useState<Barber | null>(null)
@@ -119,8 +128,9 @@ export default function BarberAvailability() {
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [loadingCalendar, setLoadingCalendar] = useState(false)
   const [activeAppointment, setActiveAppointment] = useState<Appointment | null>(null)
-  const [loadingActiveAppointment, setLoadingActiveAppointment] = useState(false)
-  const [calendarStatuses, setCalendarStatuses] = useState<Record<string, CalendarDayStatus>>({})
+  const [loadingActiveAppointment, setLoadingActiveAppointment] = useState(true)
+  const [scheduledDates, setScheduledDates] = useState<Set<string>>(() => new Set())
+  const [selectedBookingSlot, setSelectedBookingSlot] = useState<SelectedBookingSlot | null>(null)
 
   // ── session protection ──
   useEffect(() => {
@@ -210,8 +220,7 @@ export default function BarberAvailability() {
     setLoadingCalendar(true)
     try {
       const schedules = await fetchBarberSchedules()
-      const lookupStart = today.isAfter(currentMonthStart) ? today : currentMonthStart
-      const scheduledDates = schedules
+      const datesWithSchedule = schedules
         .filter((schedule) => {
           const scheduleBarberId =
             typeof schedule.barberId === 'object' && schedule.barberId !== null
@@ -222,29 +231,20 @@ export default function BarberAvailability() {
           return (
             scheduleBarberId === id &&
             !schedule.isDayOff &&
-            !scheduleDate.isBefore(lookupStart, 'day') &&
+            !scheduleDate.isBefore(minSelectableDate, 'day') &&
             !scheduleDate.isAfter(maxSelectableDate, 'day')
           )
         })
         .map((schedule) => dayjs(schedule.date).format('YYYY-MM-DD'))
 
-      const uniqueDates = Array.from(new Set(scheduledDates))
-      const availabilityEntries = await Promise.all(
-        uniqueDates.map(async (date) => {
-          const response = await fetchAvailableSlots(id, date)
-          const status: CalendarDayStatus = response.availableSlots.length > 0 ? 'available' : 'full'
-          return [date, status] as const
-        }),
-      )
-
-      setCalendarStatuses(Object.fromEntries(availabilityEntries))
+      setScheduledDates(new Set(datesWithSchedule))
     } catch (err) {
       console.error('Error loading calendar overview:', err)
-      setCalendarStatuses({})
+      setScheduledDates(new Set())
     } finally {
       setLoadingCalendar(false)
     }
-  }, [currentMonthStart, id, maxSelectableDate, today])
+  }, [id, maxSelectableDate, minSelectableDate])
 
   // ── fetch current day availability by default on mount, and automatically on selectedDate changes ──
   useEffect(() => {
@@ -271,20 +271,19 @@ export default function BarberAvailability() {
 
   const shouldDisableDate = useCallback((date: Dayjs) => {
     return (
-      date.isBefore(today, 'day') ||
+      date.isBefore(minSelectableDate, 'day') ||
       date.isAfter(maxSelectableDate, 'day') ||
-      !date.isSame(today, 'month')
+      (!isAdmin && !date.isSame(today, 'month'))
     )
-  }, [maxSelectableDate, today])
+  }, [isAdmin, maxSelectableDate, minSelectableDate, today])
 
   const AvailabilityPickerDay = useCallback((dayProps: PickerDayProps) => {
     const dateKey = dayjs(dayProps.day).format('YYYY-MM-DD')
-    const status = calendarStatuses[dateKey]
-    const statusClass = status ? `availability-day-${status}` : ''
+    const statusClass = scheduledDates.has(dateKey) ? 'availability-day-available' : ''
     const className = [dayProps.className, statusClass].filter(Boolean).join(' ')
 
     return <PickerDay {...dayProps} className={className} />
-  }, [calendarStatuses])
+  }, [scheduledDates])
 
   // ── 1-hour block formatter ──
   const getBlockTimeRange = useCallback((slot: string) => {
@@ -304,8 +303,7 @@ export default function BarberAvailability() {
     return 'Disponible'
   }, [])
 
-  // ── book appointment with SweetAlert2 ──
-  const handleBookSlot = async (slot: string, timeRangeDisplay: string) => {
+  const handleSelectSlot = async (slot: string, timeRangeDisplay: string) => {
     if (!barber || !id) return
 
     if (activeAppointment) {
@@ -320,30 +318,13 @@ export default function BarberAvailability() {
       return
     }
 
-    const dateFormatted = selectedDate.format('dddd D [de] MMMM, YYYY')
-    const summary = [
-      `Barbero: ${barber.name}`,
-      `Fecha: ${dateFormatted}`,
-      `Bloque de Hora: ${timeRangeDisplay}`,
-    ].join('\n')
+    setSelectedBookingSlot({ start: slot, display: timeRangeDisplay })
+  }
 
-    // 1. Confirm dialog
-    const confirmResult = await Swal.fire({
-      title: '¿Confirmar tu Cita?',
-      text: summary,
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: '#2f6b5f',
-      cancelButtonColor: '#5d6762',
-      confirmButtonText: 'Sí, agendar al instante',
-      cancelButtonText: 'Cancelar',
-      background: '#ffffff',
-      color: '#18201d',
-    })
+  // ── book appointment after the explicit confirmation step ──
+  const handleConfirmBooking = async () => {
+    if (!barber || !id || !selectedBookingSlot) return
 
-    if (!confirmResult.isConfirmed) return
-
-    // 2. Loading state popup
     Swal.fire({
       title: 'Agendando cita...',
       text: 'Por favor, espera un momento.',
@@ -356,9 +337,8 @@ export default function BarberAvailability() {
     })
 
     try {
-      await createAppointment(id, selectedDate.format('YYYY-MM-DD'), slot)
+      await createAppointment(id, selectedDate.format('YYYY-MM-DD'), selectedBookingSlot.start)
       
-      // 3. Success dialog
       await Swal.fire({
         title: '¡Cita Agendada!',
         text: 'Tu cita ha sido confirmada y agendada correctamente.',
@@ -368,21 +348,16 @@ export default function BarberAvailability() {
         color: '#18201d',
       })
 
-      // Reload available slots so the booked slot is immediately removed from the interface
-      await loadSlotsForDate(selectedDate)
-      loadCalendarOverview()
-      const appointment = await fetchMyActiveAppointment()
-      setActiveAppointment(appointment)
+      navigate('/dashboard', { replace: true })
 
     } catch (err) {
       const bookingError = getBookingErrorInfo(err)
 
       if (bookingError.shouldRefreshAvailability) {
+        setSelectedBookingSlot(null)
         await loadSlotsForDate(selectedDate)
-        loadCalendarOverview()
       }
 
-      // 4. Error dialog
       await Swal.fire({
         title: bookingError.title,
         text: bookingError.message,
@@ -397,11 +372,50 @@ export default function BarberAvailability() {
   // ── render ──
   return (
     <Box className="availability-bg">
+      <Box className="availability-top-bar">
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
+          <CalendarMonthIcon sx={{ color: 'primary.main', fontSize: { xs: 24, sm: 28 } }} />
+          <Box className="availability-title-group">
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 700, color: 'primary.dark', fontSize: { xs: 18, sm: 20 } }}
+            >
+              Reserva
+            </Typography>
+            <Typography variant="body2" className="availability-step-instruction">
+              {selectedBookingSlot
+                ? 'Confirma los datos de tu reserva'
+                : 'Selecciona una fecha y un horario disponible'}
+            </Typography>
+          </Box>
+        </Box>
+
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+          {user && (
+            <Chip
+              icon={<PersonIcon sx={{ fontSize: '16px !important' }} />}
+              label={user.name}
+              variant="outlined"
+              size="small"
+              sx={{
+                borderColor: 'rgba(178,121,76,0.35)',
+                fontWeight: 600,
+                color: 'primary.dark',
+                fontSize: { xs: 11, sm: 13 },
+                height: 28,
+                borderRadius: 1,
+              }}
+            />
+          )}
+        </Box>
+      </Box>
+
       <Container
         maxWidth="md"
         className="availability-container"
         sx={{
-          py: { xs: 2, sm: 6 },
+          pt: { xs: 1.5, sm: 2 },
+          pb: { xs: 2, sm: 4 },
           px: { xs: 2, sm: 4 },
           maxWidth: 'var(--shell-max-width) !important',
           flex: 1,
@@ -409,29 +423,6 @@ export default function BarberAvailability() {
           flexDirection: 'column',
         }}
       >
-        
-        {/* Back Button */}
-        <Button
-          size="small"
-          variant="outlined"
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/dashboard')}
-          sx={{
-            mb: { xs: 2, sm: 4 },
-            alignSelf: 'flex-start',
-              borderColor: 'rgba(47,107,95,0.35)',
-            color: 'primary.dark',
-            fontWeight: 600,
-            textTransform: 'none',
-            '&:hover': {
-              bgcolor: 'primary.light',
-              borderColor: 'primary.main',
-            }
-          }}
-        >
-          Volver a Reserva
-        </Button>
-
         {error && (
           <Alert severity="error" sx={{ mb: 4, borderRadius: 1 }}>
             {error}
@@ -475,10 +466,41 @@ export default function BarberAvailability() {
                     fontSize: '1.05rem',
                     height: 36,
                     borderRadius: 1,
-                  boxShadow: '0 4px 12px rgba(30, 74, 67, 0.2)',
+                    boxShadow: '0 4px 12px rgba(30, 74, 67, 0.2)',
                   }}
                 />
+                <Button
+                  className="availability-back-button"
+                  size="small"
+                  variant="outlined"
+                  startIcon={<ArrowBackIcon />}
+                  onClick={() => navigate('/dashboard')}
+                  sx={{
+                    borderColor: 'rgba(47,107,95,0.35)',
+                    color: 'primary.dark',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    '&:hover': {
+                      bgcolor: 'primary.light',
+                      borderColor: 'primary.main',
+                    },
+                  }}
+                >
+                  Volver a Reserva
+                </Button>
               </Box>
+
+              <Stepper
+                activeStep={selectedBookingSlot ? 2 : 1}
+                alternativeLabel
+                className="availability-stepper"
+              >
+                {['Barbero', 'Fecha y horario', 'Confirmar'].map((label) => (
+                  <Step key={label}>
+                    <StepLabel>{label}</StepLabel>
+                  </Step>
+                ))}
+              </Stepper>
 
               {(loadingActiveAppointment || activeAppointment) && (
                 <Box className="availability-active-appointment-card">
@@ -532,115 +554,155 @@ export default function BarberAvailability() {
                 </Box>
               )}
 
-              {/* Date Selection Section */}
-              <Box className="availability-calendar-section">
-                <Box className="availability-calendar-header">
-                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'primary.dark', display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <CalendarMonthIcon color="primary" />
-                    Fecha de cita
+              {selectedBookingSlot ? (
+                <Box className="availability-confirmation">
+                  <Typography variant="h6" className="availability-confirmation-title">
+                    Confirma los datos de tu reserva
                   </Typography>
-                </Box>
 
-                <Box className="availability-calendar-card">
-                  <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
-                    <DateCalendar
-                      value={selectedDate}
-                      onChange={handleDateChange}
-                      referenceDate={today}
-                      minDate={today}
-                      maxDate={maxSelectableDate}
-                      disablePast
-                      fixedWeekNumber={6}
-                      showDaysOutsideCurrentMonth
-                      shouldDisableDate={shouldDisableDate}
-                      slots={{ day: AvailabilityPickerDay }}
-                      sx={{ width: '100%', maxWidth: 380, mx: 'auto' }}
-                    />
-                  </LocalizationProvider>
-
-                  <Box className="availability-calendar-legend">
-                    <span><i className="legend-dot legend-dot-available" />Con agenda disponible</span>
-                    <span><i className="legend-dot legend-dot-full" />Agenda llena</span>
-                    {loadingCalendar && (
-                      <span className="calendar-loading-label">
-                        <CircularProgress size={12} />
-                        Actualizando
-                      </span>
-                    )}
-                  </Box>
-                </Box>
-              </Box>
-
-              {/* Available Slots Section (Rendered inline on the same page) */}
-              <Box className="availability-slots-section" sx={{ mt: 2 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'primary.dark', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <AccessTimeIcon color="primary" />
-                  Horarios
-                </Typography>
-
-                {loadingSlots || loadingActiveAppointment ? (
-                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 5, gap: 2 }}>
-                    <CircularProgress size={40} />
-                    <Typography variant="body2" color="text.secondary">
-                      Consultando disponibilidad...
-                    </Typography>
-                  </Box>
-                ) : slots.length === 0 ? (
-                  <Box sx={{ textAlign: 'center', py: 5, px: 2, bgcolor: 'rgba(47,107,95,0.05)', borderRadius: 1, border: '1px dashed rgba(47,107,95,0.22)' }}>
-                    <Typography variant="body1" sx={{ color: 'text.primary', fontWeight: 600, mb: 0.8 }}>
-                      Sin bloques configurados para esta fecha
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      El barbero no cuenta con bloques de agenda para el {selectedDate.format('dddd D [de] MMMM')}. Por favor, elige otro día en el selector superior.
-                    </Typography>
-                  </Box>
-                ) : (
-                  <Box>
-                    <Box className="availability-slots-grid">
-                      {slots.map((slot) => {
-                        const blockInfo = getBlockTimeRange(slot.time)
-                        const isAvailable = slot.status === 'available'
-                        const isBookingDisabled = !isAvailable || !!activeAppointment
-                        return (
-                          <Button
-                            key={slot.time}
-                            variant="outlined"
-                            className={`availability-slot-button availability-slot-${slot.status}`}
-                            disabled={isBookingDisabled}
-                            onClick={() => {
-                              if (!isBookingDisabled) {
-                                handleBookSlot(blockInfo.start, blockInfo.display)
-                              }
-                            }}
-                            sx={{
-                              borderRadius: 1,
-                              fontWeight: 600,
-                              fontSize: 14,
-                              py: 1.8,
-                               borderColor: 'rgba(47,107,95,0.32)',
-                              color: 'primary.dark',
-                              bgcolor: '#fff',
-                              textTransform: 'none',
-                              transition: 'all 0.2s ease-in-out',
-                              '&:hover': {
-                                bgcolor: 'primary.light',
-                                borderColor: 'primary.main',
-                                transform: 'translateY(-2px)',
-                                 boxShadow: '0 4px 12px rgba(30,74,67,0.18)',
-                              },
-                            }}
-                          >
-                            <span className="slot-time-label">{blockInfo.display}</span>
-                            <span className="slot-status-label">
-                              {getSlotStatusLabel(slot.status)}
-                            </span>
-                          </Button>
-                        )
-                      })}
+                  <Box className="availability-confirmation-details">
+                    <Box className="availability-confirmation-detail">
+                      <span>Barbero</span>
+                      <strong>{barber.name}</strong>
+                    </Box>
+                    <Box className="availability-confirmation-detail">
+                      <span>Fecha</span>
+                      <strong>{selectedDate.format('dddd D [de] MMMM, YYYY')}</strong>
+                    </Box>
+                    <Box className="availability-confirmation-detail">
+                      <span>Horario</span>
+                      <strong>{selectedBookingSlot.display}</strong>
                     </Box>
                   </Box>
-                )}
-              </Box>
+
+                  <Box className="availability-confirmation-actions">
+                    <Button
+                      variant="outlined"
+                      onClick={() => setSelectedBookingSlot(null)}
+                      sx={{ textTransform: 'none', fontWeight: 700 }}
+                    >
+                      Cambiar horario
+                    </Button>
+                    <Button
+                      variant="contained"
+                      onClick={handleConfirmBooking}
+                      sx={{ textTransform: 'none', fontWeight: 700 }}
+                    >
+                      Confirmar reserva
+                    </Button>
+                  </Box>
+                </Box>
+              ) : (
+                <Box className="availability-booking-grid">
+                {/* Date Selection Section */}
+                <Box className="availability-calendar-section">
+                  <Box className="availability-calendar-header">
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'primary.dark', display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <CalendarMonthIcon color="primary" />
+                      Fecha de cita
+                    </Typography>
+                  </Box>
+
+                  <Box className="availability-calendar-card">
+                    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
+                      <DateCalendar
+                          value={selectedDate}
+                          onChange={handleDateChange}
+                          referenceDate={today}
+                          minDate={minSelectableDate}
+                          maxDate={maxSelectableDate}
+                          fixedWeekNumber={6}
+                        showDaysOutsideCurrentMonth
+                        shouldDisableDate={shouldDisableDate}
+                        slots={{ day: AvailabilityPickerDay }}
+                        sx={{ width: '100%', maxWidth: 380, mx: 'auto' }}
+                      />
+                    </LocalizationProvider>
+
+                    <Box className="availability-calendar-legend">
+                      <span><i className="legend-dot legend-dot-available" />Con agenda disponible</span>
+                      {loadingCalendar && (
+                        <span className="calendar-loading-label">
+                          <CircularProgress size={12} />
+                          Actualizando
+                        </span>
+                      )}
+                    </Box>
+                  </Box>
+                </Box>
+
+                {/* Available Slots Section (Rendered inline on the same page) */}
+                <Box className="availability-slots-section">
+                  <Typography variant="subtitle1" sx={{ fontWeight: 700, color: 'primary.dark', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <AccessTimeIcon color="primary" />
+                    Horarios
+                  </Typography>
+
+                  {loadingSlots || loadingActiveAppointment ? (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 5, gap: 2 }}>
+                      <CircularProgress size={40} />
+                      <Typography variant="body2" color="text.secondary">
+                        Consultando disponibilidad...
+                      </Typography>
+                    </Box>
+                  ) : slots.length === 0 ? (
+                    <Box sx={{ textAlign: 'center', py: 5, px: 2, bgcolor: 'rgba(47,107,95,0.05)', borderRadius: 1, border: '1px dashed rgba(47,107,95,0.22)' }}>
+                      <Typography variant="body1" sx={{ color: 'text.primary', fontWeight: 600, mb: 0.8 }}>
+                        Sin bloques configurados para esta fecha
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        El barbero no cuenta con bloques de agenda para el {selectedDate.format('dddd D [de] MMMM')}. Por favor, elige otro día en el selector superior.
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Box>
+                      <Box className="availability-slots-grid">
+                        {slots.map((slot) => {
+                          const blockInfo = getBlockTimeRange(slot.time)
+                          const isAvailable = slot.status === 'available'
+                          const isBookingDisabled = !isAvailable || !!activeAppointment
+                          return (
+                            <Button
+                              key={slot.time}
+                              variant="outlined"
+                              className={`availability-slot-button availability-slot-${slot.status}`}
+                              disabled={isBookingDisabled}
+                              onClick={() => {
+                                if (!isBookingDisabled) {
+                                  handleSelectSlot(blockInfo.start, blockInfo.display)
+                                }
+                              }}
+                              sx={{
+                                borderRadius: 1,
+                                fontWeight: 600,
+                                fontSize: 14,
+                                py: 1.8,
+                                borderColor: 'rgba(47,107,95,0.32)',
+                                color: 'primary.dark',
+                                bgcolor: '#fff',
+                                textTransform: 'none',
+                                transition: 'all 0.2s ease-in-out',
+                                '&:hover': {
+                                  bgcolor: 'primary.light',
+                                  borderColor: 'primary.main',
+                                  transform: 'translateY(-2px)',
+                                  boxShadow: '0 4px 12px rgba(30,74,67,0.18)',
+                                },
+                              }}
+                            >
+                              <span className="slot-time-label">{blockInfo.display}</span>
+                              <span className="slot-status-label">
+                                {getSlotStatusLabel(slot.status)}
+                              </span>
+                            </Button>
+                          )
+                        })}
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+                </Box>
+              )}
             </Paper>
           </Fade>
         ) : null}
