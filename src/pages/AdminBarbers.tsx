@@ -104,6 +104,13 @@ const appointmentStatusLabel: Record<Appointment['status'], string> = {
   completed: 'Completada',
 }
 
+function getAppointmentStatusLabel(appointment: Appointment) {
+  if (appointment.status !== 'cancelled') return appointmentStatusLabel[appointment.status]
+  if (appointment.cancelledBy === 'user') return 'Cancelada por usuario'
+  if (appointment.cancelledBy === 'admin') return 'Cancelada por administrador'
+  return appointmentStatusLabel.cancelled
+}
+
 function getAppointmentBarberId(appointment: Appointment) {
   return typeof appointment.barberId === 'object' && appointment.barberId !== null
     ? appointment.barberId._id
@@ -173,6 +180,7 @@ export default function AdminBarbers() {
   // Barber edit dialog states
   const [barberEditOpen, setBarberEditOpen] = useState(false)
   const [editingBarber, setEditingBarber] = useState<Barber | null>(null)
+  const [editName, setEditName] = useState('')
   const [editPhone, setEditPhone] = useState('')
   const [editIsActive, setEditIsActive] = useState(true)
   const [savingBarber, setSavingBarber] = useState(false)
@@ -254,6 +262,7 @@ export default function AdminBarbers() {
   // Barber edit handlers
   const handleOpenEditBarber = (barber: Barber) => {
     setEditingBarber(barber)
+    setEditName(barber.name)
     setEditPhone(barber.phone || '')
     setEditIsActive(barber.isActive)
     setBarberEditOpen(true)
@@ -261,9 +270,14 @@ export default function AdminBarbers() {
 
   const handleSaveBarber = async () => {
     if (!editingBarber) return
+    if (!editName.trim()) {
+      setToast({ message: 'El nombre es obligatorio', severity: 'error' })
+      return
+    }
     setSavingBarber(true)
     try {
       await updateBarber(editingBarber._id, {
+        name: editName.trim(),
         phone: editPhone,
         isActive: editIsActive,
       })
@@ -1194,7 +1208,7 @@ export default function AdminBarbers() {
 	                                        )}
 	                                      </Box>
 	                                      <Chip
-	                                        label={appointmentStatusLabel[appointment.status]}
+	                                        label={getAppointmentStatusLabel(appointment)}
 	                                        size="small"
 	                                        className={`appointment-status-chip appointment-status-${appointment.status}`}
 	                                      />
@@ -1475,14 +1489,18 @@ export default function AdminBarbers() {
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: '20px !important' }}>
           {editingBarber && (
             <>
-              {/* Nombre (Sólo lectura) */}
+              {/* Nombre (Editable) */}
               <Box>
                 <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mb: 0.5 }}>
-                  Nombre (Sólo Lectura)
+                  Nombre
                 </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600, color: 'text.primary', bgcolor: '#f5f5f5', px: 1.5, py: 1, borderRadius: 1 }}>
-                  {editingBarber.name}
-                </Typography>
+                <TextField
+                  size="small"
+                  fullWidth
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="Ingrese el nombre"
+                />
               </Box>
 
               {/* Correo Electrónico (Sólo lectura) */}

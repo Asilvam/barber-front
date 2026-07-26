@@ -2,6 +2,7 @@ import { apiClient } from './client'
 import type { Barber } from './barber'
 
 export type AppointmentStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed'
+export type AppointmentCancellationActor = 'user' | 'admin'
 
 export type AppointmentUser = {
   _id: string
@@ -15,6 +16,8 @@ export interface AdminAppointment {
   date: string
   timeSlot: string
   status: AppointmentStatus
+  cancelledBy?: AppointmentCancellationActor
+  cancelledAt?: string
   barberId: string | Barber
   clientId: string | AppointmentUser
 }

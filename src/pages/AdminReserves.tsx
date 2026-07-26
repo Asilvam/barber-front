@@ -67,6 +67,13 @@ const statusColor: Record<AppointmentStatus, 'warning' | 'success' | 'default' |
   completed: 'default',
 }
 
+function getAppointmentStatusLabel(appointment: AdminAppointment): string {
+  if (appointment.status !== 'cancelled') return statusLabel[appointment.status]
+  if (appointment.cancelledBy === 'user') return 'Cancelada por usuario'
+  if (appointment.cancelledBy === 'admin') return 'Cancelada por administrador'
+  return statusLabel.cancelled
+}
+
 function getBarberName(barberId: string | Barber): string {
   if (typeof barberId === 'string') return barberId.slice(0, 8)
   return barberId.name
@@ -196,6 +203,10 @@ export default function AdminReserves() {
 
   const handleStatusChange = async (appointmentId: string, status: AppointmentStatus) => {
     const current = appointments.find((item) => item._id === appointmentId)
+    if (current?.status === 'cancelled') {
+      setToast('Una reserva cancelada es definitiva y no puede modificarse')
+      return
+    }
     if (current && isPastAppointment(current)) {
       setToast('No puedes editar una reserva pasada o vencida')
       return
@@ -215,6 +226,10 @@ export default function AdminReserves() {
   }
 
   const openEditStatus = (appointment: AdminAppointment) => {
+    if (appointment.status === 'cancelled') {
+      setToast('Una reserva cancelada es definitiva y no puede modificarse')
+      return
+    }
     setEditingAppointment(appointment)
     setStatusDraft(appointment.status)
   }
@@ -428,6 +443,13 @@ export default function AdminReserves() {
             ) : (
               filteredAndSorted.map((appointment) => {
                 const isPast = isPastAppointment(appointment)
+                const isCancelled = appointment.status === 'cancelled'
+                const editDisabled = updatingId === appointment._id || isPast || isCancelled
+                const editTooltip = isCancelled
+                  ? 'Una reserva cancelada no puede cambiar de estado'
+                  : isPast
+                    ? 'Reserva pasada no editable'
+                    : 'Editar estado'
                 return (
                   <Paper key={appointment._id} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1.5 }}>
                     <Stack spacing={0.8}>
@@ -435,7 +457,7 @@ export default function AdminReserves() {
                         <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                           {dayjs(appointment.date).format('DD/MM/YYYY')} · {appointment.timeSlot}
                         </Typography>
-                        <Chip label={statusLabel[appointment.status]} color={statusColor[appointment.status]} size="small" sx={{ fontWeight: 600 }} />
+                        <Chip label={getAppointmentStatusLabel(appointment)} color={statusColor[appointment.status]} size="small" sx={{ fontWeight: 600 }} />
                       </Box>
                       <Typography variant="body2" color="text.secondary">
                         <strong>Barbero:</strong> {getBarberName(appointment.barberId)}
@@ -451,9 +473,9 @@ export default function AdminReserves() {
                         )}
                       </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
-                        <Tooltip title={isPast ? 'Reserva pasada no editable' : 'Editar estado'} arrow>
+                        <Tooltip title={editTooltip} arrow>
                           <span>
-                            <IconButton size="small" color="primary" onClick={() => openEditStatus(appointment)} disabled={updatingId === appointment._id || isPast}>
+                            <IconButton size="small" color="primary" onClick={() => openEditStatus(appointment)} disabled={editDisabled}>
                               <EditIcon fontSize="small" />
                             </IconButton>
                           </span>
@@ -519,6 +541,8 @@ export default function AdminReserves() {
                 ) : (
                   filteredAndSorted.map((appointment) => {
                     const isPast = isPastAppointment(appointment)
+                    const isCancelled = appointment.status === 'cancelled'
+                    const statusDisabled = updatingId === appointment._id || isPast
                     return (
                       <TableRow key={appointment._id} hover sx={{ '&:nth-of-type(odd)': { bgcolor: 'rgba(47,107,95,0.04)' } }}>
                         <TableCell>{dayjs(appointment.date).format('DD/MM/YYYY')}</TableCell>
@@ -537,17 +561,37 @@ export default function AdminReserves() {
                           </Box>
                         </TableCell>
                         <TableCell>
-                          <Chip label={statusLabel[appointment.status]} color={statusColor[appointment.status]} size="small" sx={{ fontWeight: 600 }} />
+                          {isCancelled ? (
+                            <Chip
+                              label={getAppointmentStatusLabel(appointment)}
+                              color={statusColor.cancelled}
+                              size="small"
+                              sx={{ fontWeight: 600 }}
+                            />
+                          ) : (
+                            <FormControl size="small" sx={{ minWidth: 138 }}>
+                              <Select
+                                value={appointment.status}
+                                onChange={(event) => {
+                                  void handleStatusChange(
+                                    appointment._id,
+                                    event.target.value as AppointmentStatus,
+                                  )
+                                }}
+                                disabled={statusDisabled}
+                                inputProps={{ 'aria-label': 'Cambiar estado de reserva' }}
+                                sx={{ fontSize: 13, fontWeight: 600 }}
+                              >
+                                <MenuItem value="pending">Pendiente</MenuItem>
+                                <MenuItem value="confirmed">Confirmada</MenuItem>
+                                <MenuItem value="cancelled">Cancelada</MenuItem>
+                                <MenuItem value="completed">Completada</MenuItem>
+                              </Select>
+                            </FormControl>
+                          )}
                         </TableCell>
                         <TableCell align="right">
                           <Stack direction="row" spacing={0.4} sx={{ justifyContent: 'flex-end' }}>
-                            <Tooltip title={isPast ? 'Reserva pasada no editable' : 'Editar estado'} arrow>
-                              <span>
-                                <IconButton size="small" color="primary" onClick={() => openEditStatus(appointment)} disabled={updatingId === appointment._id || isPast}>
-                                  <EditIcon fontSize="small" />
-                                </IconButton>
-                              </span>
-                            </Tooltip>
                             <Tooltip title={isPast ? 'Reserva pasada no editable' : 'Eliminar reserva'} arrow>
                               <span>
                                 <IconButton size="small" color="error" onClick={() => setDeletingAppointment(appointment)} disabled={updatingId === appointment._id || isPast}>

@@ -96,6 +96,8 @@ export interface Appointment {
   date: string
   timeSlot: string
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed'
+  cancelledBy?: 'user' | 'admin'
+  cancelledAt?: string
 }
 
 /* ── API calls ── */
