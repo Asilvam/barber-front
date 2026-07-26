@@ -306,7 +306,7 @@ export default function BarberAvailability() {
   const handleSelectSlot = async (slot: string, timeRangeDisplay: string) => {
     if (!barber || !id) return
 
-    if (activeAppointment) {
+    if (!isAdmin && activeAppointment) {
       await Swal.fire({
         title: 'Ya tienes una reserva activa',
         text: 'Debes completar o cancelar tu cita actual antes de programar una nueva.',
@@ -660,7 +660,8 @@ export default function BarberAvailability() {
                         {slots.map((slot) => {
                           const blockInfo = getBlockTimeRange(slot.time)
                           const isAvailable = slot.status === 'available'
-                          const isBookingDisabled = !isAvailable || !!activeAppointment
+                          const isBookingDisabled =
+                            !isAvailable || (!isAdmin && !!activeAppointment)
                           return (
                             <Button
                               key={slot.time}

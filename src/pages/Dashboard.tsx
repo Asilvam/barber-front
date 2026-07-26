@@ -71,6 +71,8 @@ export default function Dashboard() {
   const [activeAppointment, setActiveAppointment] = useState<Appointment | null>(null)
   const [loadingActiveAppointment, setLoadingActiveAppointment] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const canBrowseBarbers =
+    isAdmin || (!loadingActiveAppointment && !activeAppointment)
 
   // ── redirect if not logged in ──
   useEffect(() => {
@@ -127,9 +129,9 @@ export default function Dashboard() {
   }, [])
 
   const handleSelectBarber = useCallback((barber: Barber) => {
-    if (loadingActiveAppointment || activeAppointment) return
+    if (!isAdmin && (loadingActiveAppointment || activeAppointment)) return
     navigate(`/barbers/${barber._id}/availability`)
-  }, [activeAppointment, loadingActiveAppointment, navigate])
+  }, [activeAppointment, isAdmin, loadingActiveAppointment, navigate])
 
   const handleCancelAppointment = async () => {
     if (!activeAppointment) return
@@ -192,7 +194,7 @@ export default function Dashboard() {
     <Box className="dashboard-bg">
       {/* ── Top Bar ── */}
       <Box className="dashboard-top-bar">
-        {!loadingActiveAppointment && !activeAppointment && (
+        {canBrowseBarbers && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
             <CalendarMonthIcon sx={{ color: 'primary.main', fontSize: { xs: 24, sm: 28 } }} />
             <Box className="dashboard-title-group">
@@ -311,7 +313,7 @@ export default function Dashboard() {
         )}
 
         {/* ── Barbers Grid ── */}
-        {!loadingActiveAppointment && !activeAppointment && (
+        {canBrowseBarbers && (
           <Fade in timeout={500}>
           <Paper elevation={0} className="dashboard-container-card">
             <Stepper
