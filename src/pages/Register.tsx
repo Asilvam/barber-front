@@ -4,6 +4,7 @@ import packageMeta from '../../package.json'
 import type { AuthResponse } from '../types/auth'
 import { register } from '../api/auth'
 import { getAuthToken, saveAuthSession } from '../auth/session'
+import { showNotice } from '../utils/notifications'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
@@ -19,13 +20,11 @@ function Register() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
 
   const [token, setToken] = useState<string | null>(() => getAuthToken())
 
   const businessName =
-    import.meta.env.VITE_BUSINESS_NAME?.trim() || 'Barber System'
+    import.meta.env.VITE_BUSINESS_NAME?.trim() || 'Shalo Barber'
   const appVersion = packageMeta.version
 
   const saveAuth = useCallback((payload: AuthResponse) => {
@@ -45,15 +44,18 @@ function Register() {
   const handleRegister = useCallback(
     async (event: React.FormEvent) => {
       event.preventDefault()
-      setError(null)
 
       if (password.length < 6) {
-        setError('La contraseña debe tener al menos 6 caracteres.')
+        void showNotice(
+          'La contraseña debe tener al menos 6 caracteres.',
+          'warning',
+          'Revisa tus datos',
+        )
         return
       }
 
       if (password !== confirmPassword) {
-        setError('Las contraseñas no coinciden.')
+        void showNotice('Las contraseñas no coinciden.', 'warning', 'Revisa tus datos')
         return
       }
 
@@ -63,11 +65,13 @@ function Register() {
         saveAuth(payload)
       } catch (err) {
         const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-        setError(
+        void showNotice(
           msg ??
             (err instanceof Error
               ? err.message
               : 'Ocurrió un error inesperado al intentar registrarte.'),
+          'error',
+          'No se pudo crear la cuenta',
         )
       } finally {
         setLoading(false)
@@ -85,7 +89,7 @@ function Register() {
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
-          background: 'radial-gradient(circle at top left, #f8faf9 0%, #f3f5f4 45%, #ecf1ef 100%)',
+          background: 'radial-gradient(circle at top left, #ffffff 0%, #f5f3f4 45%, #eee9ed 100%)',
         }}
       >
         <CircularProgress color="primary" />
@@ -153,11 +157,6 @@ function Register() {
               fullWidth
               size="small"
             />
-            {error ? (
-              <Typography color="error" sx={{ fontWeight: 600 }}>
-                {error}
-              </Typography>
-            ) : null}
             <Button
               type="submit"
               variant="contained"

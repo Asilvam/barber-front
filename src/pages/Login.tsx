@@ -4,6 +4,7 @@ import packageMeta from '../../package.json'
 import type { AuthResponse } from '../types/auth'
 import { login, loginWithGoogle } from '../api/auth'
 import { getAuthToken, saveAuthSession } from '../auth/session'
+import { showNotice } from '../utils/notifications'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
@@ -49,11 +50,9 @@ function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
   const [token, setToken] = useState<string | null>(() => getAuthToken())
   const businessName =
-    import.meta.env.VITE_BUSINESS_NAME?.trim() || 'Barber System'
+    import.meta.env.VITE_BUSINESS_NAME?.trim() || 'Shalo Barber'
   const googleButtonRef = useRef<HTMLDivElement | null>(null)
   const googleRenderedRef = useRef(false)
 
@@ -63,6 +62,12 @@ function Login() {
     return import.meta.env.VITE_GOOGLE_CLIENT_ID ? null : 'VITE_GOOGLE_CLIENT_ID no configurado'
   })
   const appVersion = packageMeta.version
+
+  useEffect(() => {
+    if (googleClientId && googleError && googleError !== 'VITE_GOOGLE_CLIENT_ID no configurado') {
+      void showNotice(googleError, 'error', 'No se pudo cargar el acceso con Google')
+    }
+  }, [googleClientId, googleError])
 
   // callbacks and helper functions declared in order to satisfy linting
 
@@ -81,17 +86,18 @@ function Login() {
   }, [token, navigate])
 
   const handleGoogleLogin = useCallback(async (credential: string) => {
-    setError(null)
     setLoading(true)
     try {
       const payload = await loginWithGoogle(credential)
       saveAuth(payload)
     } catch (err) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-      setError(
+      void showNotice(
         msg ?? (err instanceof Error
           ? err.message
           : 'No se pudo validar Google. Intenta nuevamente.'),
+        'error',
+        'No se pudo iniciar sesión',
       )
     } finally {
       setLoading(false)
@@ -100,17 +106,18 @@ function Login() {
 
   const handleManualLogin = useCallback(async (event: React.FormEvent) => {
     event.preventDefault()
-    setError(null)
     setLoading(true)
     try {
       const payload = await login(email, password)
       saveAuth(payload)
     } catch (err) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-      setError(
+      void showNotice(
         msg ?? (err instanceof Error
           ? err.message
           : 'No se pudo iniciar sesion. Revisa tus datos.'),
+        'error',
+        'No se pudo iniciar sesión',
       )
     } finally {
       setLoading(false)
@@ -159,7 +166,11 @@ function Login() {
         callback: async (response: unknown) => {
           const resp = response as { credential?: string } | null
           if (!resp || !resp.credential) {
-            setError('No se pudo obtener la credencial de Google.')
+            void showNotice(
+              'No se pudo obtener la credencial de Google.',
+              'error',
+              'No se pudo iniciar sesión',
+            )
             return
           }
           await handleGoogleLogin(resp.credential)
@@ -230,7 +241,7 @@ function Login() {
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
-          background: 'radial-gradient(circle at top left, #f8faf9 0%, #f3f5f4 45%, #ecf1ef 100%)',
+          background: 'radial-gradient(circle at top left, #ffffff 0%, #f5f3f4 45%, #eee9ed 100%)',
         }}
       >
         <CircularProgress color="primary" />
@@ -278,14 +289,6 @@ function Login() {
               fullWidth
               size="small"
             />
-            {error ? (
-              <Typography
-                color="error"
-                sx={{ fontWeight: 600 }}
-              >
-                {error}
-              </Typography>
-            ) : null}
             <Button
               type="submit"
               variant="contained"
@@ -304,11 +307,6 @@ function Login() {
                 {!googleEnabled && !googleError ? (
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
                     Cargando inicio de sesión con Google…
-                  </Typography>
-                ) : null}
-                {googleError ? (
-                  <Typography color="error" sx={{ mt: 1, fontWeight: 600 }}>
-                    {googleError}
                   </Typography>
                 ) : null}
               </>

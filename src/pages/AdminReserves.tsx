@@ -6,7 +6,6 @@ import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
 import Paper from '@mui/material/Paper'
-import Alert from '@mui/material/Alert'
 import CircularProgress from '@mui/material/CircularProgress'
 import Stack from '@mui/material/Stack'
 import Table from '@mui/material/Table'
@@ -24,7 +23,6 @@ import MenuItem from '@mui/material/MenuItem'
 import TextField from '@mui/material/TextField'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import Button from '@mui/material/Button'
-import Snackbar from '@mui/material/Snackbar'
 import IconButton from '@mui/material/IconButton'
 import Tooltip from '@mui/material/Tooltip'
 import useMediaQuery from '@mui/material/useMediaQuery'
@@ -49,6 +47,7 @@ import {
   type AppointmentStatus,
 } from '../api/appointments'
 import { businessAppointmentDateTime, businessNow } from '../utils/businessTime'
+import { showNotice } from '../utils/notifications'
 
 type SortKey = 'date' | 'timeSlot' | 'barber'
 type SortDirection = 'asc' | 'desc'
@@ -100,17 +99,14 @@ export default function AdminReserves() {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [appointments, setAppointments] = useState<AdminAppointment[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<'all' | AppointmentStatus>('all')
   const [barberFilter, setBarberFilter] = useState<'all' | string>('all')
   const [clientQuery, setClientQuery] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('date')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
   const [updatingId, setUpdatingId] = useState<string | null>(null)
-  const [toast, setToast] = useState<string | null>(null)
   const [editingAppointment, setEditingAppointment] = useState<AdminAppointment | null>(null)
   const [statusDraft, setStatusDraft] = useState<AppointmentStatus>('pending')
-  const [deletingAppointment, setDeletingAppointment] = useState<AdminAppointment | null>(null)
 
   useEffect(() => {
     let active = true
@@ -121,7 +117,11 @@ export default function AdminReserves() {
       })
       .catch((err) => {
         if (!active) return
-        setError(err instanceof Error ? err.message : 'No se pudieron cargar las reservas')
+        void showNotice(
+          err instanceof Error ? err.message : 'No se pudieron cargar las reservas',
+          'error',
+          'No se pudieron cargar las reservas',
+        )
       })
       .finally(() => {
         if (!active) return
@@ -204,11 +204,11 @@ export default function AdminReserves() {
   const handleStatusChange = async (appointmentId: string, status: AppointmentStatus) => {
     const current = appointments.find((item) => item._id === appointmentId)
     if (current?.status === 'cancelled') {
-      setToast('Una reserva cancelada es definitiva y no puede modificarse')
+      void showNotice('Una reserva cancelada es definitiva y no puede modificarse.', 'warning')
       return
     }
     if (current && isPastAppointment(current)) {
-      setToast('No puedes editar una reserva pasada o vencida')
+      void showNotice('No puedes editar una reserva pasada o vencida.', 'warning')
       return
     }
 
@@ -216,10 +216,10 @@ export default function AdminReserves() {
     try {
       const updated = await updateAppointmentStatus(appointmentId, status)
       setAppointments((prev) => prev.map((item) => (item._id === appointmentId ? updated : item)))
-      setToast('Estado actualizado correctamente')
+      void showNotice('Estado actualizado correctamente.', 'success')
     } catch (err) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-      setToast(msg ?? 'No se pudo actualizar el estado')
+      void showNotice(msg ?? 'No se pudo actualizar el estado.', 'error')
     } finally {
       setUpdatingId(null)
     }
@@ -227,7 +227,7 @@ export default function AdminReserves() {
 
   const openEditStatus = (appointment: AdminAppointment) => {
     if (appointment.status === 'cancelled') {
-      setToast('Una reserva cancelada es definitiva y no puede modificarse')
+      void showNotice('Una reserva cancelada es definitiva y no puede modificarse.', 'warning')
       return
     }
     setEditingAppointment(appointment)
@@ -239,47 +239,40 @@ export default function AdminReserves() {
 
     const appointmentId = editingAppointment._id
     setEditingAppointment(null)
-
-    void Swal.fire({
-      title: 'Guardando cambios...',
-      text: `Actualizando la reserva a "${statusLabel[statusDraft]}".`,
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      showConfirmButton: false,
-      didOpen: () => {
-        const container = Swal.getContainer()
-        if (container) container.style.zIndex = '1500'
-        Swal.showLoading()
-      },
-    })
-
-    try {
-      await handleStatusChange(appointmentId, statusDraft)
-    } finally {
-      Swal.close()
-    }
+    await handleStatusChange(appointmentId, statusDraft)
   }
 
-  const handleDeleteAppointment = async () => {
-    if (!deletingAppointment) return
-    if (isPastAppointment(deletingAppointment)) {
-      setToast('No puedes eliminar una reserva pasada o vencida')
-      setDeletingAppointment(null)
+  const handleDeleteAppointment = async (appointment: AdminAppointment) => {
+    if (isPastAppointment(appointment)) {
+      void showNotice('No puedes eliminar una reserva pasada o vencida.', 'warning')
       return
     }
 
-    const appointmentId = deletingAppointment._id
+    const confirmation = await Swal.fire({
+      title: '¿Eliminar reserva?',
+      text: 'Esta acción eliminará la reserva seleccionada de forma permanente.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#b44747',
+      cancelButtonColor: '#5e5961',
+      background: '#ffffff',
+      color: '#1b191d',
+    })
+    if (!confirmation.isConfirmed) return
+
+    const appointmentId = appointment._id
     setUpdatingId(appointmentId)
     try {
       await deleteAppointment(appointmentId)
       setAppointments((prev) => prev.filter((item) => item._id !== appointmentId))
-      setToast('Reserva eliminada correctamente')
+      void showNotice('Reserva eliminada correctamente.', 'success')
     } catch (err) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-      setToast(msg ?? 'No se pudo eliminar la reserva')
+      void showNotice(msg ?? 'No se pudo eliminar la reserva.', 'error')
     } finally {
       setUpdatingId(null)
-      setDeletingAppointment(null)
     }
   }
 
@@ -382,8 +375,6 @@ export default function AdminReserves() {
           </Stack>
         </Box>
 
-        {error ? <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert> : null}
-
         <Paper
           elevation={0}
           sx={{
@@ -482,7 +473,7 @@ export default function AdminReserves() {
                         </Tooltip>
                         <Tooltip title={isPast ? 'Reserva pasada no editable' : 'Eliminar reserva'} arrow>
                           <span>
-                            <IconButton size="small" color="error" onClick={() => setDeletingAppointment(appointment)} disabled={updatingId === appointment._id || isPast}>
+                            <IconButton size="small" color="error" onClick={() => void handleDeleteAppointment(appointment)} disabled={updatingId === appointment._id || isPast}>
                               <DeleteIcon fontSize="small" />
                             </IconButton>
                           </span>
@@ -594,7 +585,7 @@ export default function AdminReserves() {
                           <Stack direction="row" spacing={0.4} sx={{ justifyContent: 'flex-end' }}>
                             <Tooltip title={isPast ? 'Reserva pasada no editable' : 'Eliminar reserva'} arrow>
                               <span>
-                                <IconButton size="small" color="error" onClick={() => setDeletingAppointment(appointment)} disabled={updatingId === appointment._id || isPast}>
+                                <IconButton size="small" color="error" onClick={() => void handleDeleteAppointment(appointment)} disabled={updatingId === appointment._id || isPast}>
                                   <DeleteIcon fontSize="small" />
                                 </IconButton>
                               </span>
@@ -609,13 +600,6 @@ export default function AdminReserves() {
             </Table>
           </TableContainer>
         )}
-
-        <Snackbar
-          open={!!toast}
-          autoHideDuration={2500}
-          onClose={() => setToast(null)}
-          message={toast ?? ''}
-        />
 
         <Dialog open={!!editingAppointment} onClose={() => setEditingAppointment(null)} fullWidth maxWidth="xs">
           <DialogTitle>Editar estado de reserva</DialogTitle>
@@ -642,20 +626,6 @@ export default function AdminReserves() {
           </DialogActions>
         </Dialog>
 
-        <Dialog open={!!deletingAppointment} onClose={() => setDeletingAppointment(null)} fullWidth maxWidth="xs">
-          <DialogTitle>Eliminar reserva</DialogTitle>
-          <DialogContent>
-            <Typography variant="body2" color="text.secondary">
-              Esta accion eliminara la reserva seleccionada de forma permanente.
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setDeletingAppointment(null)}>Cancelar</Button>
-            <Button variant="contained" color="error" onClick={handleDeleteAppointment} disabled={updatingId !== null}>
-              Eliminar
-            </Button>
-          </DialogActions>
-        </Dialog>
       </Container>
     </Box>
   )

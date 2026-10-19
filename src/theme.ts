@@ -4,36 +4,36 @@ import { createTheme, type ThemeOptions } from '@mui/material/styles';
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#2f6b5f',
-      dark: '#1e4a43',
-      light: '#d8e6e2',
+      main: '#c91470',
+      dark: '#941251',
+      light: '#f9deeb',
       contrastText: '#fff',
     },
     secondary: {
-      main: '#5d6762',
+      main: '#4a474e',
     },
     background: {
-      default: '#f3f5f4',
+      default: '#f5f3f4',
       paper: '#ffffff',
     },
     text: {
-      primary: '#18201d',
-      secondary: '#5d6762',
+      primary: '#1b191d',
+      secondary: '#5e5961',
     },
-    divider: '#d8dfdc',
+    divider: '#e3dce1',
   },
   typography: {
     fontFamily: ['Work Sans', 'Helvetica Neue', 'Arial', 'sans-serif'].join(','),
     h1: {
-      fontFamily: 'Playfair Display, Times New Roman, serif',
+      fontFamily: 'Oswald, Impact, sans-serif',
       fontWeight: 600,
     },
     h2: {
-      fontFamily: 'Playfair Display, Times New Roman, serif',
+      fontFamily: 'Oswald, Impact, sans-serif',
       fontWeight: 600,
     },
     h3: {
-      fontFamily: 'Playfair Display, Times New Roman, serif',
+      fontFamily: 'Oswald, Impact, sans-serif',
       fontWeight: 600,
     },
     body1: {
@@ -65,15 +65,15 @@ const theme = createTheme({
         {
           props: { variant: 'contained', color: 'primary' },
           style: {
-            background: 'linear-gradient(135deg, #2f6b5f, #3f7f72)',
+            background: 'linear-gradient(135deg, #c91470, #ed3c98)',
             color: '#fff',
-            boxShadow: '0 12px 20px -16px rgba(30, 74, 67, 0.6)',
+            boxShadow: '0 12px 20px -16px rgba(148, 18, 81, 0.6)',
           },
         },
         {
           props: { variant: 'outlined', color: 'primary' },
           style: {
-            borderColor: 'rgba(47, 107, 95, 0.35)',
+            borderColor: 'rgba(201, 20, 112, 0.35)',
           },
         },
       ],

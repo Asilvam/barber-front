@@ -6,7 +6,7 @@ import App from './App.tsx'
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import theme from './theme';
 
-const businessName = import.meta.env.VITE_BUSINESS_NAME?.trim() || 'Barber System'
+const businessName = import.meta.env.VITE_BUSINESS_NAME?.trim() || 'Shalo Barber'
 document.title = businessName
 
 createRoot(document.getElementById('root')!).render(

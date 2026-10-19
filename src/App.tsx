@@ -3,6 +3,7 @@ import './styles/App.css'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import NavBar from './components/NavBar'
 import ProtectedRoute from './components/ProtectedRoute'
+import shaloBarberLogo from './assets/shalo-barber-logo.jpg'
 
 const Home = lazy(() => import('./pages/Home'))
 const Login = lazy(() => import('./pages/Login'))
@@ -16,7 +17,7 @@ function AppFallback() {
   return (
     <div className="app-loading" role="status" aria-live="polite">
       <div className="app-loading-card">
-        <div className="app-loading-mark">BS</div>
+        <img className="app-loading-mark" src={shaloBarberLogo} alt="" />
         <p>Cargando reserva...</p>
       </div>
     </div>

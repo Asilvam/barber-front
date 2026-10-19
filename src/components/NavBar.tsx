@@ -13,8 +13,7 @@ import ListItemText from '@mui/material/ListItemText'
 import Divider from '@mui/material/Divider'
 import { NavLink, useNavigate } from 'react-router-dom'
 
-import img5 from '../assets/img_5.png'
-import img6 from '../assets/img_6.png'
+import shaloBarberLogo from '../assets/shalo-barber-logo.jpg'
 
 // Icons
 import MenuIcon from '@mui/icons-material/Menu'
@@ -37,7 +36,7 @@ function getAuthUser(): { role?: string } | null {
 function NavBar() {
   const navigate = useNavigate()
   const businessName =
-    import.meta.env.VITE_BUSINESS_NAME?.trim() || 'Barber System'
+    import.meta.env.VITE_BUSINESS_NAME?.trim() || 'Shalo Barber'
   const isLoggedIn = !!localStorage.getItem('auth_token')
   const user = getAuthUser()
   const isAdmin = user?.role === 'admin'
@@ -61,7 +60,7 @@ function NavBar() {
         {/* Branding */}
         <NavLink to="/" className="navbar-brand-link" aria-label="Ir al inicio">
           <Box className="navbar-logo-monogram navbar-header-logo">
-            <img src={img5} alt="Logo" className="navbar-logo-icon" />
+            <img src={shaloBarberLogo} alt="Shalo Barber" className="navbar-logo-icon" />
           </Box>
           <Typography
             variant="h6"
@@ -138,7 +137,7 @@ function NavBar() {
             onClick={() => setMobileOpen(false)}
           >
             <Box className="navbar-logo-monogram navbar-drawer-logo" sx={{ width: 32, height: 32, fontSize: '0.8rem' }}>
-              <img src={img6} alt="Logo" className="navbar-logo-icon" />
+              <img src={shaloBarberLogo} alt="Shalo Barber" className="navbar-logo-icon" />
             </Box>
             <Typography
               variant="subtitle1"
@@ -153,7 +152,7 @@ function NavBar() {
           </IconButton>
         </Box>
 
-        <Divider sx={{ borderColor: 'rgba(178, 121, 76, 0.12)' }} />
+        <Divider sx={{ borderColor: 'rgba(201, 20, 112, 0.12)' }} />
 
         <List sx={{ display: 'flex', flexDirection: 'column', gap: 1, p: 0 }}>
           <ListItem disablePadding>

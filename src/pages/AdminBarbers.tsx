@@ -7,8 +7,6 @@ import Button from '@mui/material/Button'
 import Paper from '@mui/material/Paper'
 import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
-import Alert from '@mui/material/Alert'
-import Snackbar from '@mui/material/Snackbar'
 import Stack from '@mui/material/Stack'
 import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
@@ -63,6 +61,8 @@ import {
   type TimeSlot,
 } from '../api/barber'
 import { businessDate, businessNow } from '../utils/businessTime'
+import Swal from 'sweetalert2'
+import { showNotice } from '../utils/notifications'
 
 dayjs.locale('es')
 
@@ -149,8 +149,6 @@ export default function AdminBarbers() {
   const [schedules, setSchedules] = useState<BarberSchedule[]>([])
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [toast, setToast] = useState<{ message: string; severity: 'success' | 'error' } | null>(null)
   const [selectedBarberId, setSelectedBarberId] = useState<string>('')
 
   // form dialog states
@@ -171,8 +169,6 @@ export default function AdminBarbers() {
   const [submitting, setSubmitting] = useState(false)
 
   // delete dialog target
-  const [deleteTarget, setDeleteTarget] = useState<BarberSchedule | null>(null)
-
   // calendar states
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => businessNow())
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<Dayjs | null>(() => businessNow())
@@ -213,7 +209,13 @@ export default function AdminBarbers() {
         setSchedules(s)
         setAppointments(a)
       })
-      .catch((err) => setError(err instanceof Error ? err.message : 'Error cargando datos'))
+      .catch((err) => {
+        void showNotice(
+          err instanceof Error ? err.message : 'Error cargando datos',
+          'error',
+          'No se pudieron cargar los datos',
+        )
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -228,7 +230,13 @@ export default function AdminBarbers() {
         }
       })
       .catch((err) => {
-        if (!ac.signal.aborted) setError(err instanceof Error ? err.message : 'Error cargando datos')
+        if (!ac.signal.aborted) {
+          void showNotice(
+            err instanceof Error ? err.message : 'Error cargando datos',
+            'error',
+            'No se pudieron cargar los datos',
+          )
+        }
       })
       .finally(() => {
         if (!ac.signal.aborted) setLoading(false)
@@ -271,7 +279,7 @@ export default function AdminBarbers() {
   const handleSaveBarber = async () => {
     if (!editingBarber) return
     if (!editName.trim()) {
-      setToast({ message: 'El nombre es obligatorio', severity: 'error' })
+      void showNotice('El nombre es obligatorio.', 'error', 'Revisa el formulario')
       return
     }
     setSavingBarber(true)
@@ -281,14 +289,15 @@ export default function AdminBarbers() {
         phone: editPhone,
         isActive: editIsActive,
       })
-      setToast({ message: 'Barbero actualizado correctamente', severity: 'success' })
+      void showNotice('Barbero actualizado correctamente.', 'success')
       setBarberEditOpen(false)
       loadData()
     } catch (err) {
-      setToast({
-        message: err instanceof Error ? err.message : 'Error al actualizar el barbero',
-        severity: 'error',
-      })
+      void showNotice(
+        err instanceof Error ? err.message : 'Error al actualizar el barbero',
+        'error',
+        'No se pudo actualizar el barbero',
+      )
     } finally {
       setSavingBarber(false)
     }
@@ -304,20 +313,20 @@ export default function AdminBarbers() {
   }
   const handleSaveCreateBarber = async () => {
     if (!createName.trim()) {
-      setToast({ message: 'El nombre es obligatorio', severity: 'error' })
+      void showNotice('El nombre es obligatorio.', 'error', 'Revisa el formulario')
       return
     }
     if (!createEmail.trim()) {
-      setToast({ message: 'El correo electrónico es obligatorio', severity: 'error' })
+      void showNotice('El correo electrónico es obligatorio.', 'error', 'Revisa el formulario')
       return
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(createEmail.trim())) {
-      setToast({ message: 'El formato del correo electrónico no es válido', severity: 'error' })
+      void showNotice('El formato del correo electrónico no es válido.', 'error', 'Revisa el formulario')
       return
     }
     if (!createPhone.trim()) {
-      setToast({ message: 'El teléfono es obligatorio', severity: 'error' })
+      void showNotice('El teléfono es obligatorio.', 'error', 'Revisa el formulario')
       return
     }
 
@@ -329,14 +338,15 @@ export default function AdminBarbers() {
         phone: createPhone.trim(),
         isActive: createIsActive,
       })
-      setToast({ message: 'Barbero creado correctamente', severity: 'success' })
+      void showNotice('Barbero creado correctamente.', 'success')
       setBarberCreateOpen(false)
       loadData()
     } catch (err) {
-      setToast({
-        message: err instanceof Error ? err.message : 'Error al crear el barbero',
-        severity: 'error',
-      })
+      void showNotice(
+        err instanceof Error ? err.message : 'Error al crear el barbero',
+        'error',
+        'No se pudo crear el barbero',
+      )
     } finally {
       setCreatingBarber(false)
     }
@@ -359,7 +369,7 @@ export default function AdminBarbers() {
     setSubmitting(true)
 
     if (formStartDate.isAfter(formEndDate, 'day')) {
-      setToast({ message: 'La fecha "Desde" no puede ser posterior a "Hasta"', severity: 'error' })
+      void showNotice('La fecha "Desde" no puede ser posterior a "Hasta".', 'error', 'Rango de fechas inválido')
       setSubmitting(false)
       return
     }
@@ -368,14 +378,14 @@ export default function AdminBarbers() {
     const datesToCreate = getDatesInRange(formStartDate, formEndDate)
 
     if (datesToCreate.length === 0) {
-      setToast({ message: 'Selecciona fechas válidas antes de continuar', severity: 'error' })
+      void showNotice('Selecciona fechas válidas antes de continuar.', 'error', 'Fechas inválidas')
       setSubmitting(false)
       return
     }
 
     // Protection to avoid server saturation (max 62 days)
     if (datesToCreate.length > 62) {
-      setToast({ message: 'El rango máximo permitido es de 62 días (2 meses)', severity: 'error' })
+      void showNotice('El rango máximo permitido es de 62 días (2 meses).', 'error', 'Rango demasiado extenso')
       setSubmitting(false)
       return
     }
@@ -394,32 +404,44 @@ export default function AdminBarbers() {
 
       await Promise.all(promises)
 
-      setToast({
-        message: `Horarios creados para ${datesToCreate.length} día(s) exitosamente`,
-        severity: 'success',
-      })
+      void showNotice(`Horarios creados para ${datesToCreate.length} día(s) exitosamente.`, 'success')
       setDialogOpen(false)
       loadData()
     } catch (err) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
         (err instanceof Error ? err.message : 'Error al crear horario')
-      setToast({ message: msg, severity: 'error' })
+      void showNotice(msg, 'error', 'No se pudieron crear los horarios')
     } finally {
       setSubmitting(false)
     }
   }
 
-  const handleDelete = async () => {
-    if (!deleteTarget) return
+  const handleDelete = async (schedule: BarberSchedule) => {
+    const confirmation = await Swal.fire({
+      title: '¿Eliminar horario?',
+      text: `Se eliminará el horario de ${getBarberName(schedule.barberId)} del día ${dayjs(schedule.date).format('D [de] MMM, YYYY')}.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#b44747',
+      cancelButtonColor: '#5e5961',
+      background: '#ffffff',
+      color: '#1b191d',
+    })
+    if (!confirmation.isConfirmed) return
+
     try {
-      await deleteBarberSchedule(deleteTarget._id)
-      setToast({ message: 'Horario eliminado', severity: 'success' })
-      setDeleteTarget(null)
+      await deleteBarberSchedule(schedule._id)
+      void showNotice('Horario eliminado.', 'success')
       loadData()
     } catch (err) {
-      setToast({ message: err instanceof Error ? err.message : 'Error al eliminar', severity: 'error' })
-      setDeleteTarget(null)
+      void showNotice(
+        err instanceof Error ? err.message : 'Error al eliminar',
+        'error',
+        'No se pudo eliminar el horario',
+      )
     }
   }
 
@@ -577,12 +599,6 @@ export default function AdminBarbers() {
           <Chip label={`Reservas activas: ${dashboardKpis.activeAppointments}`} color="secondary" />
         </Stack>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 2, borderRadius: 1 }}>
-            {error}
-          </Alert>
-        )}
-
         {!selectedBarberId ? (
           <Box>
 
@@ -698,7 +714,7 @@ export default function AdminBarbers() {
                                   sx={{
                                     color: 'primary.main',
                                     p: 0.5,
-                                      '&:hover': { bgcolor: 'rgba(47, 107, 95, 0.1)' },
+                                      '&:hover': { bgcolor: 'rgba(201, 20, 112, 0.1)' },
                                   }}
                                 >
                                   <CalendarMonthIcon fontSize="small" />
@@ -939,7 +955,7 @@ export default function AdminBarbers() {
 	                              {selectedSchedule && (
 	                                <IconButton
 	                                  size="small"
-	                                  onClick={() => setDeleteTarget(selectedSchedule)}
+	                                  onClick={() => void handleDelete(selectedSchedule)}
 	                                  sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}
 	                                >
 	                                  <DeleteIcon fontSize="small" />
@@ -1440,34 +1456,6 @@ export default function AdminBarbers() {
         </DialogActions>
       </Dialog>
 
-      {/* ── Delete Confirmation ── */}
-      <Dialog
-        open={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        slotProps={{ paper: { sx: { borderRadius: 1, m: { xs: 2, sm: 4 } } } }}
-      >
-        <DialogTitle sx={{ fontWeight: 700 }}>¿Eliminar horario?</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary">
-            Se eliminará el horario de <strong>{deleteTarget ? getBarberName(deleteTarget.barberId) : ''}</strong> del día{' '}
-            <strong>{deleteTarget ? dayjs(deleteTarget.date).format('D [de] MMM, YYYY') : ''}</strong>.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setDeleteTarget(null)} sx={{ textTransform: 'none', fontWeight: 600 }}>
-            Cancelar
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleDelete}
-            sx={{ borderRadius: 1, textTransform: 'none', fontWeight: 700 }}
-          >
-            Eliminar
-          </Button>
-        </DialogActions>
-      </Dialog>
-
       {/* ── Edit Barber Modal ── */}
       <Dialog
         open={barberEditOpen}
@@ -1518,7 +1506,7 @@ export default function AdminBarbers() {
                 <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mb: 0.5 }}>
                   Días Programados (Sólo Lectura)
                 </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600, color: 'primary.dark', bgcolor: 'rgba(47, 107, 95, 0.08)', px: 1.5, py: 1, borderRadius: 1 }}>
+                <Typography variant="body1" sx={{ fontWeight: 600, color: 'primary.dark', bgcolor: 'rgba(201, 20, 112, 0.08)', px: 1.5, py: 1, borderRadius: 1 }}>
                   {getScheduleCountForBarber(editingBarber._id)} {getScheduleCountForBarber(editingBarber._id) === 1 ? 'día' : 'días'}
                 </Typography>
               </Box>
@@ -1677,22 +1665,6 @@ export default function AdminBarbers() {
         </DialogActions>
       </Dialog>
 
-      {/* ── Toast ── */}
-      <Snackbar
-        open={!!toast}
-        autoHideDuration={4000}
-        onClose={() => setToast(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={() => setToast(null)}
-          severity={toast?.severity ?? 'success'}
-          variant="filled"
-          sx={{ borderRadius: 1 }}
-        >
-          {toast?.message}
-        </Alert>
-      </Snackbar>
     </Box>
   )
 }

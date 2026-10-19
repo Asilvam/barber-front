@@ -9,48 +9,46 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
 import PersonAddAltIcon from '@mui/icons-material/PersonAddAlt'
 import LoginIcon from '@mui/icons-material/Login'
 
-import img from '../assets/img.png'
-import img1 from '../assets/img_1.png'
-import img2 from '../assets/img_2.png'
-import img3 from '../assets/img_3.png'
-import img4 from '../assets/img_4.png'
+import cutDetail from '../assets/portfolio/cut-detail.jpg'
+import lowFade from '../assets/portfolio/low-fade.jpg'
+import curlyFade from '../assets/portfolio/curly-fade.jpg'
+import fadePromo from '../assets/portfolio/fade-promo.svg'
 
 const barberSlides = [
   {
-    src: img,
-    alt: 'Barberia moderna con estilo premium',
+    src: fadePromo,
+    alt: 'Promoción Shalo Barber: corte degradado, cejas, diseño de líneas, barba y asesoramiento por $8.000. Agenda ahora.',
+    position: 'center',
+    durationMs: 10000,
   },
   {
-    src: img1,
-    alt: 'Corte masculino moderno con acabado limpio',
+    src: cutDetail,
+    alt: 'Degradado con diseño de líneas, visto de perfil',
+    position: '54% center',
   },
   {
-    src: img2,
-    alt: 'Estilo moderno con degradado preciso',
+    src: lowFade,
+    alt: 'Corte fade con volumen y acabado limpio',
+    position: '52% center',
   },
   {
-    src: img3,
-    alt: 'Look masculino con corte prolijo',
-  },
-  {
-    src: img4,
-    alt: 'Corte premium con textura y peinado moderno',
+    src: curlyFade,
+    alt: 'Degradado en cabello rizado',
+    position: '52% center',
   },
 ]
 
 function Home() {
   const [slideIndex, setSlideIndex] = useState(0)
   const appVersion = packageMeta.version
-  const businessName =
-    import.meta.env.VITE_BUSINESS_NAME?.trim() || 'Barber System'
   const isLoggedIn = !!localStorage.getItem('auth_token')
 
   useEffect(() => {
-    const interval = window.setInterval(() => {
+    const timeout = window.setTimeout(() => {
       setSlideIndex((prev) => (prev + 1) % barberSlides.length)
-    }, 5200)
-    return () => window.clearInterval(interval)
-  }, [])
+    }, barberSlides[slideIndex].durationMs ?? 5200)
+    return () => window.clearTimeout(timeout)
+  }, [slideIndex])
 
   return (
     <Box className="auth-layout home-layout">
@@ -61,27 +59,24 @@ function Home() {
         <Box className="home-content-row">
           {/* Brand Card */}
           <Box className="home-brand-card home-copy-column">
-            <Typography variant="overline" color="secondary" sx={{ textTransform: 'uppercase', letterSpacing: 2.4 }}>
-              {businessName}
-            </Typography>
             <Typography variant="h1" sx={{ fontSize: { xs: 32, sm: 44 }, mb: 1 }}>
-              Sistema de Reservas
+              Un corte que se nota.
             </Typography>
             <Typography variant="subtitle1" sx={{ color: 'text.secondary', mb: 2 }}>
-              Reserva con tu barbero favorito.
+              Tu estilo, tu hora. Reserva tu próximo corte con Shalo Barber.
             </Typography>
             <Box sx={{ display: 'grid', gap: 1, fontWeight: 500, color: 'primary.dark', mb: 2 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Box component="span" sx={{ width: 24, height: 24, bgcolor: 'primary.light', color: 'primary.dark', borderRadius: 1, display: 'grid', placeItems: 'center' }}>✓</Box>
-                <Typography variant="body2">Elige y reserva</Typography>
+                <Typography variant="body2">Cortes con detalle</Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Box component="span" sx={{ width: 24, height: 24, bgcolor: 'primary.light', color: 'primary.dark', borderRadius: 1, display: 'grid', placeItems: 'center' }}>✓</Box>
-                <Typography variant="body2">Disponibilidad real</Typography>
+                <Typography variant="body2">Horarios disponibles</Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Box component="span" sx={{ width: 24, height: 24, bgcolor: 'primary.light', color: 'primary.dark', borderRadius: 1, display: 'grid', placeItems: 'center' }}>✓</Box>
-                <Typography variant="body2">Confirmaciones rápidas</Typography>
+                <Typography variant="body2">Reserva en minutos</Typography>
               </Box>
             </Box>
 
@@ -120,8 +115,10 @@ function Home() {
                   key={slide.src}
                   src={slide.src}
                   alt={slide.alt}
-                  className={index === slideIndex ? 'active' : ''}
+                  className={`${index === slideIndex ? 'active' : ''} ${slide.src === fadePromo ? 'promo-slide' : ''}`}
                   loading={index === 0 ? 'eager' : 'lazy'}
+                  decoding="async"
+                  style={{ objectPosition: slide.position }}
                 />
               ))}
 
@@ -163,7 +160,7 @@ function Home() {
         </Box>
       </Container>
       <Box component="footer" className="footer footer-wide" sx={{ py: 2, px: { xs: 2, sm: 7 }, bgcolor: 'background.paper', mt: 'auto' }}>
-        <span>{businessName}</span>
+        <span>Shalo Barber</span>
         <span className="version">Version {appVersion}</span>
       </Box>
     </Box>

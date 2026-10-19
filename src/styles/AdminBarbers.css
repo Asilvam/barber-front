@@ -2,7 +2,7 @@
 
 .admin-bg {
   min-height: 100svh;
-  background: radial-gradient(circle at top left, #f8faf9 0%, #f3f5f4 45%, #ecf1ef 100%);
+  background: radial-gradient(circle at top left, #ffffff 0%, #f5f3f4 45%, #eee9ed 100%);
   display: flex;
   flex-direction: column;
 }
@@ -87,7 +87,7 @@
 }
 
 .schedule-card:hover {
-  box-shadow: 0 4px 20px rgba(30, 74, 67, 0.14) !important;
+  box-shadow: 0 4px 20px rgba(148, 18, 81, 0.14) !important;
 }
 
 .schedule-card-header {
@@ -153,8 +153,8 @@
 
 .barber-admin-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(30, 74, 67, 0.14) !important;
-  border-color: #2f6b5f !important;
+  box-shadow: 0 8px 24px rgba(148, 18, 81, 0.14) !important;
+  border-color: #c91470 !important;
 }
 
 .barber-admin-avatar {
@@ -162,17 +162,17 @@
   height: 56px;
   border-radius: 50%;
   background-color: #e8efec;
-  color: #2f6b5f;
+  color: #c91470;
   display: grid;
   place-items: center;
   font-weight: 700;
   font-size: 20px;
-  box-shadow: 0 4px 12px rgba(30, 74, 67, 0.12);
+  box-shadow: 0 4px 12px rgba(148, 18, 81, 0.12);
   transition: all 0.2s;
 }
 
 .barber-admin-card:hover .barber-admin-avatar {
-  background-color: #2f6b5f;
+  background-color: #c91470;
   color: #ffffff;
 }
 
@@ -209,7 +209,7 @@
 /* Contenedor del Calendario */
 .calendar-card-container {
   background-color: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(47, 107, 95, 0.14);
+  border: 1px solid rgba(201, 20, 112, 0.14);
   border-radius: 8px;
   padding: 16px 16px 14px;
   box-shadow: 0 8px 24px rgba(24, 32, 29, 0.08);
@@ -237,21 +237,21 @@
 
 .calendar-month-title {
   font-weight: 700 !important;
-  color: #18201d;
+  color: #1b191d;
   font-size: 1rem !important;
   min-width: 150px;
   text-align: center;
 }
 
 .calendar-nav-btn {
-  background-color: rgba(47, 107, 95, 0.06) !important;
-  color: #2f6b5f !important;
+  background-color: rgba(201, 20, 112, 0.06) !important;
+  color: #c91470 !important;
   transition: all 0.2s ease !important;
   padding: 4px !important;
 }
 
 .calendar-nav-btn:hover {
-  background-color: #2f6b5f !important;
+  background-color: #c91470 !important;
   color: #ffffff !important;
 }
 
@@ -300,7 +300,7 @@
 .calendar-day-cell .day-number {
   font-size: 0.88rem;
   font-weight: 700;
-  color: #18201d;
+  color: #1b191d;
   line-height: 1;
 }
 
@@ -315,18 +315,18 @@
 
 /* Celda de hoy */
 .calendar-day-cell.today {
-  border-color: rgba(47, 107, 95, 0.5) !important;
+  border-color: rgba(201, 20, 112, 0.5) !important;
 }
 
 .calendar-day-cell.today .day-number {
-  color: #2f6b5f;
+  color: #c91470;
 }
 
 /* Celda seleccionada */
 .calendar-day-cell.selected {
-  outline: 2px solid #2f6b5f;
+  outline: 2px solid #c91470;
   outline-offset: 1px;
-  background-color: rgba(47, 107, 95, 0.1) !important;
+  background-color: rgba(201, 20, 112, 0.1) !important;
 }
 
 /* Celda con trabajo configurado */
@@ -354,7 +354,7 @@
 /* Celda sin configurar */
 .calendar-day-cell.is-empty {
   background-color: rgba(255, 255, 255, 0.56);
-  border: 1px dashed rgba(47, 107, 95, 0.2);
+  border: 1px dashed rgba(201, 20, 112, 0.2);
 }
 
 .calendar-day-cell.is-empty .day-number {
@@ -362,8 +362,8 @@
 }
 
 .calendar-day-cell.is-empty:hover {
-  background-color: rgba(47, 107, 95, 0.06);
-  border-color: rgba(47, 107, 95, 0.3);
+  background-color: rgba(201, 20, 112, 0.06);
+  border-color: rgba(201, 20, 112, 0.3);
   transform: translateY(-1px);
 }
 
@@ -440,7 +440,7 @@
 .add-quick-btn {
   font-size: 0.85rem;
   font-weight: 700;
-  color: #2f6b5f;
+  color: #c91470;
   opacity: 0;
   transition: opacity 0.15s ease;
   line-height: 1;
@@ -457,7 +457,7 @@
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 14px;
-  color: #5d6762;
+  color: #5e5961;
   font-size: 0.72rem;
   font-weight: 700;
 }
@@ -503,7 +503,7 @@
 
 .details-panel-card {
   background-color: rgba(255, 255, 255, 0.78) !important;
-  border: 1px solid rgba(47, 107, 95, 0.14) !important;
+  border: 1px solid rgba(201, 20, 112, 0.14) !important;
   border-radius: 8px !important;
   padding: 20px !important;
   box-shadow: 0 8px 24px rgba(24, 32, 29, 0.08) !important;
@@ -522,14 +522,14 @@
 
 .details-date-header {
   font-weight: 700 !important;
-  color: #1e4a43 !important;
+  color: #941251 !important;
   text-align: left;
   font-size: 1rem !important;
   letter-spacing: 0.1px;
 }
 
 .details-panel-card .MuiDivider-root {
-  border-color: rgba(47, 107, 95, 0.14);
+  border-color: rgba(201, 20, 112, 0.14);
 }
 
 .details-panel-card .MuiChip-root {
@@ -538,7 +538,7 @@
 
 .details-section-title {
   display: block;
-  color: #1e4a43;
+  color: #941251;
   font-weight: 800 !important;
   letter-spacing: 0.06em !important;
   text-transform: uppercase;
@@ -547,8 +547,8 @@
 
 .availability-config-empty {
   border-radius: 8px;
-  border: 1px dashed rgba(47, 107, 95, 0.24);
-  background: rgba(47, 107, 95, 0.06);
+  border: 1px dashed rgba(201, 20, 112, 0.24);
+  background: rgba(201, 20, 112, 0.06);
   padding: 18px;
   text-align: center;
 }
@@ -571,8 +571,8 @@
 
 .appointments-count-chip {
   height: 22px !important;
-  color: #1e4a43 !important;
-  border-color: rgba(47, 107, 95, 0.28) !important;
+  color: #941251 !important;
+  border-color: rgba(201, 20, 112, 0.28) !important;
   font-weight: 800 !important;
 }
 
@@ -604,8 +604,8 @@
   padding: 6px 8px;
   border-radius: 8px;
   text-align: center;
-  background: rgba(47, 107, 95, 0.12);
-  color: #1e4a43;
+  background: rgba(201, 20, 112, 0.12);
+  color: #941251;
   font-weight: 850;
   font-size: 0.78rem;
 }
@@ -615,7 +615,7 @@
 }
 
 .appointment-client-name {
-  color: #18201d;
+  color: #1b191d;
   font-weight: 800 !important;
   line-height: 1.25 !important;
   overflow-wrap: anywhere;
@@ -682,7 +682,7 @@
 
 .details-empty-icon {
   font-size: 36px !important;
-  color: rgba(47, 107, 95, 0.2);
+  color: rgba(201, 20, 112, 0.2);
   animation: pulse-slow 3s infinite ease-in-out;
 }
 

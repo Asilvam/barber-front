@@ -6,7 +6,6 @@ import Typography from '@mui/material/Typography'
 import Button from '@mui/material/Button'
 import Paper from '@mui/material/Paper'
 import CircularProgress from '@mui/material/CircularProgress'
-import Alert from '@mui/material/Alert'
 import Skeleton from '@mui/material/Skeleton'
 import Fade from '@mui/material/Fade'
 import Chip from '@mui/material/Chip'
@@ -24,6 +23,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import dayjs, { type Dayjs } from 'dayjs'
 import 'dayjs/locale/es'
 import Swal from 'sweetalert2'
+import { showNotice } from '../utils/notifications'
 import '../styles/BarberAvailability.css'
 
 import {
@@ -121,7 +121,6 @@ export default function BarberAvailability() {
   // ── states ──
   const [barber, setBarber] = useState<Barber | null>(null)
   const [loadingBarber, setLoadingBarber] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   const [selectedDate, setSelectedDate] = useState<Dayjs>(() => businessNow())
   const [slots, setSlots] = useState<AvailabilitySlot[]>([])
@@ -156,7 +155,14 @@ export default function BarberAvailability() {
         })
         .catch((err) => {
           console.error('Error cargando cita activa:', err)
-          if (active) setActiveAppointment(null)
+          if (active) {
+            setActiveAppointment(null)
+            void showNotice(
+              err instanceof Error ? err.message : 'No se pudo verificar tu cita activa.',
+              'error',
+              'No se pudo verificar tu reserva',
+            )
+          }
         })
         .finally(() => {
           if (active) setLoadingActiveAppointment(false)
@@ -183,11 +189,17 @@ export default function BarberAvailability() {
         if (found) {
           setBarber(found)
         } else {
-          setError('Barbero no encontrado o inactivo.')
+          await showNotice('El barbero seleccionado ya no está disponible.', 'error', 'Barbero no disponible')
+          if (active) navigate('/dashboard', { replace: true })
         }
       } catch (err) {
         if (!active) return
-        setError(err instanceof Error ? err.message : 'Error cargando barbero')
+        await showNotice(
+          err instanceof Error ? err.message : 'Error cargando barbero',
+          'error',
+          'No se pudo cargar el barbero',
+        )
+        if (active) navigate('/dashboard', { replace: true })
       } finally {
         if (active) setLoadingBarber(false)
       }
@@ -196,7 +208,7 @@ export default function BarberAvailability() {
     return () => {
       active = false
     }
-  }, [id])
+  }, [id, navigate])
 
   // ── slots fetch handler ──
   const loadSlotsForDate = useCallback(async (date: Dayjs) => {
@@ -311,9 +323,9 @@ export default function BarberAvailability() {
         title: 'Ya tienes una reserva activa',
         text: 'Debes completar o cancelar tu cita actual antes de programar una nueva.',
         icon: 'info',
-        confirmButtonColor: '#2f6b5f',
+        confirmButtonColor: '#c91470',
         background: '#ffffff',
-        color: '#18201d',
+        color: '#1b191d',
       })
       return
     }
@@ -330,7 +342,7 @@ export default function BarberAvailability() {
       text: 'Por favor, espera un momento.',
       allowOutsideClick: false,
       background: '#ffffff',
-      color: '#18201d',
+      color: '#1b191d',
       didOpen: () => {
         Swal.showLoading()
       },
@@ -343,9 +355,9 @@ export default function BarberAvailability() {
         title: '¡Cita Agendada!',
         text: 'Tu cita ha sido confirmada y agendada correctamente.',
         icon: 'success',
-        confirmButtonColor: '#2f6b5f',
+        confirmButtonColor: '#c91470',
         background: '#ffffff',
-        color: '#18201d',
+        color: '#1b191d',
       })
 
       navigate('/dashboard', { replace: true })
@@ -362,9 +374,9 @@ export default function BarberAvailability() {
         title: bookingError.title,
         text: bookingError.message,
         icon: 'error',
-        confirmButtonColor: '#2f6b5f',
+        confirmButtonColor: '#c91470',
         background: '#ffffff',
-        color: '#18201d',
+        color: '#1b191d',
       })
     }
   }
@@ -423,12 +435,6 @@ export default function BarberAvailability() {
           flexDirection: 'column',
         }}
       >
-        {error && (
-          <Alert severity="error" sx={{ mb: 4, borderRadius: 1 }}>
-            {error}
-          </Alert>
-        )}
-
         {loadingBarber ? (
           <Paper
             elevation={0}
@@ -466,7 +472,7 @@ export default function BarberAvailability() {
                     fontSize: '1.05rem',
                     height: 36,
                     borderRadius: 1,
-                    boxShadow: '0 4px 12px rgba(30, 74, 67, 0.2)',
+                    boxShadow: '0 4px 12px rgba(148, 18, 81, 0.2)',
                   }}
                 />
                 <Button

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
@@ -6,7 +6,6 @@ import Typography from '@mui/material/Typography'
 import Button from '@mui/material/Button'
 import Paper from '@mui/material/Paper'
 import Chip from '@mui/material/Chip'
-import Alert from '@mui/material/Alert'
 import Skeleton from '@mui/material/Skeleton'
 import Fade from '@mui/material/Fade'
 import Step from '@mui/material/Step'
@@ -20,6 +19,7 @@ import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import dayjs from 'dayjs'
 import 'dayjs/locale/es'
 import Swal from 'sweetalert2'
+import { showNotice } from '../utils/notifications'
 import type { AuthUser } from '../types/auth'
 import '../styles/Dashboard.css'
 
@@ -68,11 +68,23 @@ export default function Dashboard() {
 
   // ── state ──
   const [barbers, setBarbers] = useState<Barber[]>([])
+  const [loadingBarbers, setLoadingBarbers] = useState(true)
+  const [barbersLoadFailed, setBarbersLoadFailed] = useState(false)
   const [activeAppointment, setActiveAppointment] = useState<Appointment | null>(null)
   const [loadingActiveAppointment, setLoadingActiveAppointment] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [activeAppointmentCheckFailed, setActiveAppointmentCheckFailed] = useState(false)
+  const emptyBarberNoticeShown = useRef(false)
+  const singleBarberNavigationStarted = useRef(false)
+  const autoSelectingSingleBarber =
+    !isAdmin &&
+    !loadingBarbers &&
+    !loadingActiveAppointment &&
+    !activeAppointment &&
+    !activeAppointmentCheckFailed &&
+    !barbersLoadFailed &&
+    barbers.length === 1
   const canBrowseBarbers =
-    isAdmin || (!loadingActiveAppointment && !activeAppointment)
+    isAdmin || (!loadingActiveAppointment && !activeAppointment && !autoSelectingSingleBarber)
 
   // ── redirect if not logged in ──
   useEffect(() => {
@@ -92,11 +104,62 @@ export default function Dashboard() {
       })
       .catch((err) => {
         if (!controller.signal.aborted) {
-          setError(err instanceof Error ? err.message : 'Error cargando barberos')
+          setBarbersLoadFailed(true)
+          void showNotice(
+            err instanceof Error ? err.message : 'Error cargando barberos',
+            'error',
+            'No se pudieron cargar los barberos',
+          )
         }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoadingBarbers(false)
       })
     return () => controller.abort()
   }, [])
+
+  useEffect(() => {
+    if (
+      isAdmin ||
+      loadingBarbers ||
+      loadingActiveAppointment ||
+      activeAppointment ||
+      activeAppointmentCheckFailed ||
+      barbersLoadFailed
+    ) {
+      return
+    }
+
+    if (barbers.length === 0) {
+      if (!emptyBarberNoticeShown.current) {
+        emptyBarberNoticeShown.current = true
+        void showNotice(
+          'Por el momento no hay barberos disponibles para agendar una cita.',
+          'info',
+          'No hay barberos disponibles',
+        )
+      }
+      return
+    }
+
+    if (
+      barbers.length === 1 &&
+      !activeAppointmentCheckFailed &&
+      !singleBarberNavigationStarted.current
+    ) {
+      singleBarberNavigationStarted.current = true
+      navigate(`/barbers/${barbers[0]._id}/availability`)
+    }
+  }, [
+    activeAppointment,
+    activeAppointmentCheckFailed,
+    barbers,
+    barbersLoadFailed,
+    isAdmin,
+    loadingActiveAppointment,
+    loadingBarbers,
+    navigate,
+  ])
 
   useEffect(() => {
     let active = true
@@ -115,7 +178,15 @@ export default function Dashboard() {
         })
         .catch((err) => {
           console.error('Error cargando cita activa:', err)
-          if (active) setActiveAppointment(null)
+          if (active) {
+            setActiveAppointmentCheckFailed(true)
+            setActiveAppointment(null)
+            void showNotice(
+              err instanceof Error ? err.message : 'No se pudo verificar tu cita activa.',
+              'error',
+              'No se pudo verificar tu reserva',
+            )
+          }
         })
         .finally(() => {
           if (active) setLoadingActiveAppointment(false)
@@ -142,11 +213,11 @@ export default function Dashboard() {
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#b44747',
-      cancelButtonColor: '#5d6762',
+      cancelButtonColor: '#5e5961',
       confirmButtonText: 'Sí, cancelar reserva',
       cancelButtonText: 'Volver',
       background: '#ffffff',
-      color: '#18201d',
+      color: '#1b191d',
     })
 
     if (!confirmation.isConfirmed) return
@@ -156,7 +227,7 @@ export default function Dashboard() {
       text: 'Por favor, espera un momento.',
       allowOutsideClick: false,
       background: '#ffffff',
-      color: '#18201d',
+      color: '#1b191d',
       didOpen: () => Swal.showLoading(),
     })
 
@@ -166,9 +237,9 @@ export default function Dashboard() {
         title: 'Reserva cancelada',
         text: 'El horario fue liberado correctamente.',
         icon: 'success',
-        confirmButtonColor: '#2f6b5f',
+        confirmButtonColor: '#c91470',
         background: '#ffffff',
-        color: '#18201d',
+        color: '#1b191d',
       })
       setActiveAppointment(null)
     } catch (err) {
@@ -182,9 +253,9 @@ export default function Dashboard() {
           response?.data?.message ??
           (err instanceof Error ? err.message : 'Ocurrió un error inesperado.'),
         icon: 'error',
-        confirmButtonColor: '#2f6b5f',
+        confirmButtonColor: '#c91470',
         background: '#ffffff',
-        color: '#18201d',
+        color: '#1b191d',
       })
     }
   }
@@ -242,12 +313,6 @@ export default function Dashboard() {
           px: { xs: 2, sm: 4 },
         }}
       >
-        {error && (
-          <Alert severity="error" sx={{ mb: 2, borderRadius: 1 }}>
-            {error}
-          </Alert>
-        )}
-
         {(loadingActiveAppointment || activeAppointment) && (
           <Paper elevation={0} className="active-appointment-card">
             {loadingActiveAppointment ? (
@@ -348,9 +413,15 @@ export default function Dashboard() {
             </Box>
 
             <Box sx={{ p: { xs: 2, sm: 3 } }}>
-              {barbers.length === 0 ? (
+              {loadingBarbers ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                  <Skeleton width={180} height={28} />
+                </Box>
+              ) : barbers.length === 0 ? (
                 <Box sx={{ py: 6, textAlign: 'center', color: 'text.secondary' }}>
-                  <Typography variant="body2">No hay barberos registrados</Typography>
+                  <Typography variant="body2">
+                    {isAdmin ? 'No hay barberos registrados' : 'No hay barberos disponibles'}
+                  </Typography>
                 </Box>
               ) : (
                 <Box className={`barbers-grid ${isAdmin ? 'barbers-grid-admin' : 'barbers-grid-client'}`}>
