@@ -1232,3 +1232,24 @@
 .navbar-drawer-list-item-btn {
   font-family: 'Work Sans', 'Helvetica Neue', Arial, sans-serif !important;
 }
+
+/* Let shared navigation shrink within narrow booking screens. */
+.navbar-toolbar,
+.navbar-brand-link {
+  min-width: 0;
+}
+.navbar-brand-link {
+  flex: 1 1 auto;
+}
+.navbar-header-logo,
+.navbar-mobile-burger {
+  flex-shrink: 0;
+}
+.navbar-brand-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .navbar-brand-link { gap: 8px; }
+  .navbar-toolbar { column-gap: 8px; }
+}

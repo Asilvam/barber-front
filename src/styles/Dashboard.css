@@ -370,3 +370,21 @@
   line-height: 1.25 !important;
   overflow-wrap: anywhere;
 }
+
+/* Keep booking content inside the viewport, including long user names. */
+.dashboard-bg,
+.dashboard-bg > .MuiContainer-root,
+.dashboard-top-bar > *,
+.dashboard-title-group {
+  min-width: 0;
+  max-width: 100%;
+}
+.dashboard-top-bar > :first-child { flex: 1 1 240px; }
+.dashboard-top-bar .MuiChip-root { max-width: 100%; }
+.dashboard-step-instruction { overflow-wrap: anywhere; }
+.dashboard-top-bar > :first-child > svg { flex-shrink: 0; }
+.dashboard-bg .MuiStep-root { min-width: 0; }
+.dashboard-bg .MuiStepLabel-label { overflow-wrap: anywhere; }
+
+.barber-card,
+.barber-client-card-content { min-width: 0; }

@@ -87,7 +87,7 @@
 @media (max-width: 600px) {
   .availability-header-label {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: minmax(0, 1fr);
     gap: 8px;
     padding-bottom: 12px;
     margin-bottom: 18px;
@@ -109,8 +109,9 @@
 
   .availability-back-button {
     margin-left: 0 !important;
-    justify-self: end;
-    white-space: nowrap;
+    justify-self: start;
+    max-width: 100%;
+    white-space: normal;
   }
 
   .availability-stepper {
@@ -416,6 +417,7 @@
   gap: 6px;
 }
 
+.availability-calendar-card .MuiPickerDay-root,
 .availability-calendar-card .MuiPickersDay-root {
   width: 40px;
   height: 40px;
@@ -452,6 +454,7 @@
     gap: 4px;
   }
 
+  .availability-calendar-card .MuiPickerDay-root,
   .availability-calendar-card .MuiPickersDay-root {
     width: 40px;
     height: 40px;
@@ -631,4 +634,51 @@
 .slot-button:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(148, 18, 81, 0.18) !important;
+}
+
+/* Keep booking content inside the viewport, including long user names. */
+.availability-bg,
+.availability-bg > .MuiContainer-root,
+.availability-top-bar > *,
+.availability-title-group {
+  min-width: 0;
+  max-width: 100%;
+}
+.availability-top-bar > :first-child { flex: 1 1 240px; }
+.availability-top-bar .MuiChip-root { max-width: 100%; }
+.availability-step-instruction { overflow-wrap: anywhere; }
+.availability-top-bar > :first-child > svg { flex-shrink: 0; }
+.availability-bg .MuiStep-root { min-width: 0; }
+.availability-bg .MuiStepLabel-label { overflow-wrap: anywhere; }
+
+@media (max-width: 600px) {
+  .availability-header-label > * { min-width: 0; }
+  .availability-header-label .MuiChip-root { justify-self: start; }
+  .availability-calendar-card .MuiDayCalendar-header,
+  .availability-calendar-card .MuiDayCalendar-weekContainer {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0;
+  }
+  .availability-calendar-card .MuiPickerDay-root,
+  .availability-calendar-card .MuiPickersDay-root {
+    --PickerDay-size: 36px;
+    width: min(36px, 100%);
+    height: 36px;
+    margin: 0;
+    justify-self: center;
+  }
+  .availability-calendar-card .MuiDayCalendar-weekDayLabel {
+    width: 100%;
+    min-width: 0;
+  }
+  .availability-calendar-card .MuiPickersCalendarHeader-root {
+    padding-left: 4px;
+    padding-right: 0;
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .availability-calendar-card .MuiPickersCalendarHeader-labelContainer {
+    min-width: 0;
+    margin-right: 0;
+  }
 }
