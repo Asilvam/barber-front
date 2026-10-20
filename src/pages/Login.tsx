@@ -69,6 +69,7 @@ function Login() {
     import.meta.env.VITE_BUSINESS_NAME?.trim() || 'Shalo Barber'
   const googleButtonRef = useRef<HTMLDivElement | null>(null)
   const googleRenderedRef = useRef(false)
+  const googleButtonWidthRef = useRef(0)
 
   const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
   const [googleEnabled, setGoogleEnabled] = useState(false)
@@ -142,6 +143,34 @@ function Login() {
     }
   }, [email, password, saveAuth])
 
+  const renderGoogleButton = useCallback(() => {
+    const element = googleButtonRef.current
+    if (!element || !window.google?.accounts.id) return
+    const width = Math.floor(Math.min(320, element.getBoundingClientRect().width))
+    if (width <= 0 || width === googleButtonWidthRef.current) return
+    window.google?.accounts.id.renderButton(element, {
+      theme: 'outline',
+      size: 'large',
+      shape: 'pill',
+      text: 'signin_with',
+      width,
+      click_listener: () => {
+        if (accessPendingRef.current || googleSelectingRef.current) return
+        googleSelectingRef.current = true
+        setGoogleSelecting(true)
+      },
+    })
+    googleButtonWidthRef.current = width
+  }, [])
+
+  useEffect(() => {
+    const element = googleButtonRef.current
+    if (!googleEnabled || !element) return
+    const observer = new ResizeObserver(renderGoogleButton)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [googleEnabled, renderGoogleButton])
+
   const initializeGoogle = useCallback(async (): Promise<void> => {
     if (!googleClientId || !googleButtonRef.current) {
       throw new Error('Google client ID o contenedor no disponible')
@@ -196,18 +225,7 @@ function Login() {
           await handleGoogleLogin(resp.credential)
         },
       })
-      googleApi?.accounts.id.renderButton(googleButtonRef.current, {
-        theme: 'outline',
-        size: 'large',
-        shape: 'pill',
-        text: 'signin_with',
-        width: 320,
-        click_listener: () => {
-          if (accessPendingRef.current || googleSelectingRef.current) return
-          googleSelectingRef.current = true
-          setGoogleSelecting(true)
-        },
-      })
+      renderGoogleButton()
       console.debug('Google button render attempted')
       googleRenderedRef.current = true
       setGoogleEnabled(true)
@@ -215,7 +233,7 @@ function Login() {
       console.error('Error initializing Google Identity:', err)
       throw err
     }
-  }, [googleClientId, handleGoogleLogin])
+  }, [googleClientId, handleGoogleLogin, renderGoogleButton])
 
   const initializeGoogleCb = useCallback(async () => {
     return initializeGoogle()
@@ -300,15 +318,15 @@ function Login() {
     <Box className="auth-layout">
       <Backdrop
         open={googleLoading || googleSelecting}
-        sx={{ zIndex: (theme) => theme.zIndex.modal + 1, color: '#fff', flexDirection: 'column', gap: 2 }}
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 1, backgroundColor: 'rgba(27, 25, 29, 0.94)', color: '#fff', flexDirection: 'column', gap: 2, px: 3, textAlign: 'center' }}
         role="status"
         aria-live="polite"
       >
         <CircularProgress color="inherit" aria-label="Autenticación con Google en curso" />
-        <Typography variant="body1" sx={{ fontWeight: 600 }}>
+        <Typography variant="body1" sx={{ fontWeight: 600, color: '#fff' }}>
           {googleLoading ? 'Validando tu cuenta con Google…' : 'Abriendo Google…'}
         </Typography>
-        <Typography variant="body2" sx={{ opacity: 0.85, textAlign: 'center', px: 2 }}>
+        <Typography variant="body2" sx={{ color: '#fff', opacity: 0.9, textAlign: 'center', maxWidth: 360 }}>
           {googleLoading ? 'Espera un momento, estamos verificando tu acceso.' : 'Selecciona tu cuenta en la ventana de Google.'}
         </Typography>
       </Backdrop>
@@ -362,8 +380,8 @@ function Login() {
           <Box className="auth-google-container">
             {googleClientId ? (
               <>
-                <Box inert={loading || googleSelecting} aria-disabled={loading || googleSelecting} sx={{ opacity: loading ? 0.5 : 1 }}>
-                  <Box ref={googleButtonRef} data-google-button="true" component="div" sx={{ width: 320, minHeight: 44 }} />
+                <Box inert={loading || googleSelecting} aria-disabled={loading || googleSelecting} sx={{ opacity: loading ? 0.5 : 1, width: '100%', maxWidth: 320, minWidth: 0 }}>
+                  <Box ref={googleButtonRef} data-google-button="true" component="div" sx={{ width: '100%', minHeight: 44 }} />
                 </Box>
                 {!googleEnabled && !googleError ? (
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
