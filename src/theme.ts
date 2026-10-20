@@ -1,26 +1,31 @@
+import { palette } from './palette';
 import { createTheme, type ThemeOptions } from '@mui/material/styles';
 
 // Keep MUI as source of truth for colors/typography but mirror the CSS variables
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#c91470',
-      dark: '#941251',
-      light: '#f9deeb',
+      main: palette.primary,
+      dark: palette.primaryDark,
+      light: palette.primaryLight,
       contrastText: '#fff',
     },
     secondary: {
-      main: '#4a474e',
+      main: palette.secondary,
     },
+    warning: { main: palette.pending.main },
+    success: { main: palette.confirmed.main },
+    error: { main: palette.cancelled.main },
+    info: { main: palette.info.main },
     background: {
-      default: '#f5f3f4',
-      paper: '#ffffff',
+      default: palette.surface,
+      paper: palette.panel,
     },
     text: {
-      primary: '#1b191d',
-      secondary: '#5e5961',
+      primary: palette.charcoal,
+      secondary: palette.textSecondary,
     },
-    divider: '#e3dce1',
+    divider: palette.border,
   },
   typography: {
     fontFamily: ['Work Sans', 'Helvetica Neue', 'Arial', 'sans-serif'].join(','),
@@ -37,7 +42,7 @@ const theme = createTheme({
       fontWeight: 600,
     },
     body1: {
-      color: '#18201d',
+      color: palette.charcoal,
     },
     button: {
       textTransform: 'none',
@@ -48,6 +53,25 @@ const theme = createTheme({
     borderRadius: 8,
   },
   components: {
+    MuiChip: {
+      styleOverrides: {
+        root: ({ ownerState }) => {
+          const tones = {
+            warning: palette.pending,
+            success: palette.confirmed,
+            error: palette.cancelled,
+            info: palette.info,
+            default: palette.completed,
+          };
+          const tone = tones[ownerState.color as keyof typeof tones];
+          return tone ? {
+            color: tone.main,
+            backgroundColor: ownerState.variant === 'outlined' ? 'transparent' : tone.background,
+            borderColor: tone.main,
+          } : {};
+        },
+      },
+    },
     MuiButton: {
       styleOverrides: {
         root: {
@@ -65,7 +89,7 @@ const theme = createTheme({
         {
           props: { variant: 'contained', color: 'primary' },
           style: {
-            background: 'linear-gradient(135deg, #c91470, #ed3c98)',
+            background: 'linear-gradient(135deg, #c91470, #d51a78)',
             color: '#fff',
             boxShadow: '0 12px 20px -16px rgba(148, 18, 81, 0.6)',
           },

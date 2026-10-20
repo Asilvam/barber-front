@@ -161,7 +161,7 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background-color: #e8efec;
+  background-color: #f9deeb;
   color: #c91470;
   display: grid;
   place-items: center;
@@ -212,7 +212,7 @@
   border: 1px solid rgba(201, 20, 112, 0.14);
   border-radius: 8px;
   padding: 16px 16px 14px;
-  box-shadow: 0 8px 24px rgba(24, 32, 29, 0.08);
+  box-shadow: 0 8px 24px rgba(27, 25, 29, 0.08);
   max-width: 430px;
   width: 100%;
   margin: 0 auto;
@@ -267,7 +267,7 @@
 .calendar-weekday-label {
   font-size: 0.7rem !important;
   font-weight: 700 !important;
-  color: #8c7d70 !important;
+  color: #5e5961 !important;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -331,23 +331,23 @@
 
 /* Celda con trabajo configurado */
 .calendar-day-cell.is-working {
-  background-color: rgba(46, 125, 50, 0.08) !important;
-  border-color: rgba(46, 125, 50, 0.18) !important;
+  background-color: rgba(35, 99, 76, 0.08) !important;
+  border-color: rgba(35, 99, 76, 0.18) !important;
 }
 
 .calendar-day-cell.is-working:hover {
-  background-color: rgba(46, 125, 50, 0.12) !important;
+  background-color: rgba(35, 99, 76, 0.12) !important;
   transform: translateY(-1px);
 }
 
 /* Celda con Día Libre (Day Off) */
 .calendar-day-cell.is-day-off {
-  background-color: rgba(230, 81, 0, 0.08) !important;
-  border-color: rgba(230, 81, 0, 0.18) !important;
+  background-color: rgba(138, 90, 18, 0.08) !important;
+  border-color: rgba(138, 90, 18, 0.18) !important;
 }
 
 .calendar-day-cell.is-day-off:hover {
-  background-color: rgba(230, 81, 0, 0.12) !important;
+  background-color: rgba(138, 90, 18, 0.12) !important;
   transform: translateY(-1px);
 }
 
@@ -358,7 +358,7 @@
 }
 
 .calendar-day-cell.is-empty .day-number {
-  color: #9c8e82;
+  color: #5e5961;
 }
 
 .calendar-day-cell.is-empty:hover {
@@ -379,14 +379,14 @@
   display: none;
   width: 5px;
   height: 5px;
-  background-color: #e65100;
+  background-color: #8a5a12;
   border-radius: 50%;
 }
 
 .day-off-text {
   font-size: 0.56rem;
   font-weight: 800;
-  color: #e65100;
+  color: #8a5a12;
   background-color: rgba(255, 255, 255, 0.52);
   padding: 1px 3px;
   border-radius: 4px;
@@ -406,14 +406,14 @@
   display: none;
   width: 5px;
   height: 5px;
-  background-color: #2e7d32;
+  background-color: #23634c;
   border-radius: 50%;
 }
 
 .working-hours-summary {
   font-size: 0.56rem;
   font-weight: 800;
-  color: #2e7d32;
+  color: #23634c;
   background-color: rgba(255, 255, 255, 0.54);
   padding: 1px 3px;
   border-radius: 4px;
@@ -476,15 +476,15 @@
 }
 
 .legend-working {
-  background: #2e7d32;
+  background: #23634c;
 }
 
 .legend-day-off {
-  background: #e65100;
+  background: #8a5a12;
 }
 
 .legend-empty {
-  background: #c9bcb0;
+  background: #d8d2dc;
 }
 
 /* Panel de Detalle Derecho / Inferior */
@@ -506,7 +506,7 @@
   border: 1px solid rgba(201, 20, 112, 0.14) !important;
   border-radius: 8px !important;
   padding: 20px !important;
-  box-shadow: 0 8px 24px rgba(24, 32, 29, 0.08) !important;
+  box-shadow: 0 8px 24px rgba(27, 25, 29, 0.08) !important;
   min-height: 180px;
   display: flex;
   flex-direction: column;
@@ -580,7 +580,7 @@
   padding: 14px;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.58);
-  border: 1px dashed rgba(124, 76, 47, 0.14);
+  border: 1px dashed rgba(201, 20, 112, 0.14);
 }
 
 .appointments-list {
@@ -595,7 +595,7 @@
   gap: 10px;
   padding: 10px;
   border-radius: 8px;
-  border: 1px solid rgba(124, 76, 47, 0.1);
+  border: 1px solid rgba(201, 20, 112, 0.1);
   background: rgba(255, 255, 255, 0.66);
 }
 
@@ -623,7 +623,7 @@
 
 .appointment-client-email {
   display: block;
-  color: #6f625b !important;
+  color: #5e5961 !important;
   line-height: 1.25 !important;
   overflow-wrap: anywhere;
 }
@@ -634,23 +634,23 @@
 }
 
 .appointment-status-pending {
-  background: rgba(255, 152, 0, 0.12) !important;
-  color: #a85d00 !important;
+  background: rgba(138, 90, 18, 0.12) !important;
+  color: #8a5a12 !important;
 }
 
 .appointment-status-confirmed {
-  background: rgba(46, 125, 50, 0.12) !important;
-  color: #2e7d32 !important;
+  background: rgba(35, 99, 76, 0.12) !important;
+  color: #23634c !important;
 }
 
 .appointment-status-cancelled {
-  background: rgba(117, 117, 117, 0.12) !important;
-  color: #616161 !important;
+  background: rgba(86, 81, 94, 0.12) !important;
+  color: #56515e !important;
 }
 
 .appointment-status-completed {
-  background: rgba(25, 118, 210, 0.1) !important;
-  color: #1565c0 !important;
+  background: rgba(98, 80, 140, 0.1) !important;
+  color: #62508c !important;
 }
 
 @media (max-width: 600px) {

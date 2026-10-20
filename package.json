@@ -4,8 +4,8 @@
   "version": "0.0.1",
   "type": "module",
   "engines": {
-    "node": "22.x",
-    "npm": "10.x"
+    "node": "24.x",
+    "npm": "11.x"
   },
   "scripts": {
     "dev": "vite",
@@ -41,5 +41,13 @@
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12"
+  },
+  "overrides": {
+    "serve": {
+      "compression": "^1.8.2"
+    }
+  },
+  "allowScripts": {
+    "fsevents@2.3.3": true
   }
 }

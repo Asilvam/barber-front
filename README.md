@@ -53,8 +53,9 @@ El ecosistema tecnológico del frontend incluye:
 
 ## ⚙️ Requisitos Previos
 
-* **Node.js**: Versión `v22` (especificada en el archivo `.nvmrc`).
-* **Gestor de Paquetes**: `npm` o `yarn`.
+* **Node.js**: Versión `24.22.0` (especificada en `.nvmrc`; rama compatible `24.x`).
+* **Gestor de Paquetes**: `npm 11.x` (validado con `11.19.1`).
+* **nvm**: Para seleccionar la versión indicada por el proyecto.
 
 ---
 
@@ -63,14 +64,20 @@ El ecosistema tecnológico del frontend incluye:
 ### 1. Clonar e Instalar Dependencias
 Instala los paquetes necesarios en el directorio raíz:
 ```bash
-npm install
+nvm install
+nvm use
+npm ci
 ```
+
+`npm ci` instala las versiones fijadas en `package-lock.json`. Usa `npm install`
+cuando necesites cambiar dependencias. Las decisiones revisadas sobre scripts de
+instalación están registradas en `allowScripts`, dentro de `package.json`.
 
 ### 2. Configurar Variables de Entorno
 Crea un archivo `.env` en la raíz del proyecto y define las siguientes variables:
 ```env
 # URL base de la API backend de la barbería
-VITE_API_BASE_URL=https://tu-api-back.herokuapp.com
+VITE_API_BASE_URL=http://localhost:3000
 
 # Nombre comercial de la barbería visible en toda la aplicación
 VITE_BUSINESS_NAME="Mi Barbería Premium"
@@ -78,6 +85,10 @@ VITE_BUSINESS_NAME="Mi Barbería Premium"
 # ID de cliente de la API de Google para el inicio de sesión
 VITE_GOOGLE_CLIENT_ID=tu-google-client-id.apps.googleusercontent.com
 ```
+
+El ejemplo apunta al backend local. Para otro entorno, configura la URL de su API.
+El backend debe permitir el origen del frontend en `CORS_ORIGIN`; con Vite en su
+puerto predeterminado es `http://localhost:5173`.
 
 ### 3. Servidor de Desarrollo
 Para iniciar la aplicación en modo desarrollo local con HMR (Hot Module Replacement):
@@ -96,7 +107,13 @@ Los archivos optimizados y minificados se generarán en la carpeta `dist/`.
 Para realizar análisis estático de código mediante ESLint:
 ```bash
 npm run lint
+npm audit
 ```
+
+El proyecto no tiene un script de pruebas unitarias configurado. Las verificaciones
+actuales del frontend son lint y build; las 37 pruebas unitarias corresponden al
+backend. La última auditoría reportó 0 vulnerabilidades; el resultado puede cambiar
+con la publicación de nuevos avisos.
 
 ---
 

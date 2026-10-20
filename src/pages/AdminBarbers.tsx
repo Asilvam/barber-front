@@ -61,7 +61,7 @@ import {
   type TimeSlot,
 } from '../api/barber'
 import { businessDate, businessNow } from '../utils/businessTime'
-import Swal from 'sweetalert2'
+import { appDialog as Swal } from '../utils/notifications'
 import { showNotice } from '../utils/notifications'
 
 dayjs.locale('es')
@@ -425,8 +425,6 @@ export default function AdminBarbers() {
       showCancelButton: true,
       confirmButtonText: 'Sí, eliminar',
       cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#b44747',
-      cancelButtonColor: '#5e5961',
       background: '#ffffff',
       color: '#1b191d',
     })
@@ -542,7 +540,7 @@ export default function AdminBarbers() {
             border: '1px solid',
             borderColor: 'divider',
             background:
-              'linear-gradient(135deg, rgba(47,107,95,0.12) 0%, rgba(239,245,243,0.85) 55%, rgba(255,255,255,1) 100%)',
+              'linear-gradient(135deg, rgba(201, 20, 112,0.12) 0%, rgba(245, 243, 244,0.85) 55%, rgba(255, 255, 255,1) 100%)',
           }}
         >
           <Box className="admin-barbers-hero-layout">
@@ -634,7 +632,7 @@ export default function AdminBarbers() {
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Editar Información del Barbero" arrow>
-                          <IconButton size="small" sx={{ color: '#2e7d32' }} onClick={() => handleOpenEditBarber(barber)}>
+                          <IconButton size="small" sx={{ color: '#23634c' }} onClick={() => handleOpenEditBarber(barber)}>
                             <EditIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
@@ -656,11 +654,11 @@ export default function AdminBarbers() {
                 }}
               >
                 <Table sx={{ minWidth: '100%', tableLayout: 'fixed' }} size="small">
-                  <TableHead sx={{ bgcolor: 'rgba(47,107,95,0.08)' }}>
+                  <TableHead sx={{ bgcolor: 'rgba(201, 20, 112,0.08)' }}>
                     <TableRow>
-                      <TableCell sx={{ width: { xs: '50%', sm: '55%' }, fontWeight: 600, color: '#333333', borderRight: '1px solid #dcdcdc', borderBottom: '2px solid #c0c0c0', py: 1, px: { xs: 1, sm: 1.5 } }}>Barbero</TableCell>
-                      <TableCell sx={{ width: { xs: '25%', sm: '25%' }, fontWeight: 600, color: '#333333', borderRight: '1px solid #dcdcdc', borderBottom: '2px solid #c0c0c0', py: 1, px: { xs: 1, sm: 1.5 } }}>Estado</TableCell>
-                      <TableCell align="center" sx={{ width: { xs: '25%', sm: '20%' }, fontWeight: 600, color: '#333333', borderBottom: '2px solid #c0c0c0', py: 1, px: { xs: 1, sm: 1.5 } }}>Acciones</TableCell>
+                      <TableCell sx={{ width: { xs: '50%', sm: '55%' }, fontWeight: 600, color: '#1b191d', borderRight: '1px solid #e3dce1', borderBottom: '2px solid #d8d2dc', py: 1, px: { xs: 1, sm: 1.5 } }}>Barbero</TableCell>
+                      <TableCell sx={{ width: { xs: '25%', sm: '25%' }, fontWeight: 600, color: '#1b191d', borderRight: '1px solid #e3dce1', borderBottom: '2px solid #d8d2dc', py: 1, px: { xs: 1, sm: 1.5 } }}>Estado</TableCell>
+                      <TableCell align="center" sx={{ width: { xs: '25%', sm: '20%' }, fontWeight: 600, color: '#1b191d', borderBottom: '2px solid #d8d2dc', py: 1, px: { xs: 1, sm: 1.5 } }}>Acciones</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -672,19 +670,19 @@ export default function AdminBarbers() {
                           sx={{
                             transition: 'background-color 0.15s ease',
                             '&:hover': {
-                              bgcolor: '#fafafa !important',
+                              bgcolor: '#f5f3f4 !important',
                             },
                           }}
                         >
-                          <TableCell sx={{ py: 1, px: { xs: 1, sm: 1.5 }, borderRight: '1px solid #e0e0e0', borderBottom: '1px solid #e0e0e0', overflow: 'hidden' }}>
+                          <TableCell sx={{ py: 1, px: { xs: 1, sm: 1.5 }, borderRight: '1px solid #e3dce1', borderBottom: '1px solid #e3dce1', overflow: 'hidden' }}>
                             <Box sx={{ minWidth: 0 }}>
-                              <Typography sx={{ fontWeight: 600, color: '#1a1a1a', fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              <Typography sx={{ fontWeight: 600, color: '#1b191d', fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 {barber.name}
                               </Typography>
                               <Typography
                                 sx={{
                                   fontSize: '0.75rem',
-                                  color: '#666666',
+                                  color: '#5e5961',
                                   overflow: 'hidden',
                                   textOverflow: 'ellipsis',
                                   whiteSpace: 'nowrap',
@@ -697,7 +695,7 @@ export default function AdminBarbers() {
                               </Typography>
                             </Box>
                           </TableCell>
-                          <TableCell sx={{ py: 1, px: { xs: 1, sm: 1.5 }, borderRight: '1px solid #e0e0e0', borderBottom: '1px solid #e0e0e0', overflow: 'hidden' }}>
+                          <TableCell sx={{ py: 1, px: { xs: 1, sm: 1.5 }, borderRight: '1px solid #e3dce1', borderBottom: '1px solid #e3dce1', overflow: 'hidden' }}>
                             <Chip
                               size="small"
                               label={barber.isActive ? 'Activo' : 'Inactivo'}
@@ -705,7 +703,7 @@ export default function AdminBarbers() {
                               sx={{ fontWeight: 700 }}
                             />
                           </TableCell>
-                          <TableCell align="center" sx={{ py: 0.5, px: { xs: 0.5, sm: 1 }, borderBottom: '1px solid #e0e0e0' }}>
+                          <TableCell align="center" sx={{ py: 0.5, px: { xs: 0.5, sm: 1 }, borderBottom: '1px solid #e3dce1' }}>
                             <Box sx={{ display: 'flex', justifyContent: 'center', gap: { xs: 0.5, sm: 1 } }}>
                               <Tooltip title="Ver Calendario y Horarios" arrow>
                                 <IconButton
@@ -726,9 +724,9 @@ export default function AdminBarbers() {
                                   size="small"
                                   onClick={() => handleOpenEditBarber(barber)}
                                   sx={{
-                                    color: '#2e7d32',
+                                    color: '#23634c',
                                     p: 0.5,
-                                    '&:hover': { bgcolor: 'rgba(46, 125, 50, 0.08)' },
+                                    '&:hover': { bgcolor: 'rgba(35, 99, 76, 0.08)' },
                                   }}
                                 >
                                   <EditIcon fontSize="small" />
@@ -759,7 +757,7 @@ export default function AdminBarbers() {
                 borderRadius: 1,
                 border: '1px solid',
                 borderColor: 'divider',
-                bgcolor: 'rgba(255,255,255,0.86)',
+                bgcolor: 'rgba(255, 255, 255,0.86)',
                 backdropFilter: 'blur(12px)',
               }}
             >
@@ -1000,8 +998,8 @@ export default function AdminBarbers() {
                                     label="Día Libre"
                                     size="small"
                                     sx={{
-                                      bgcolor: 'rgba(255,152,0,0.08)',
-                                      color: '#e65100',
+                                      bgcolor: 'rgba(138, 90, 18,0.08)',
+                                      color: '#8a5a12',
                                       fontWeight: 600,
                                       fontSize: 11,
                                     }}
@@ -1012,8 +1010,8 @@ export default function AdminBarbers() {
                                     label="Activo"
                                     size="small"
                                     sx={{
-                                      bgcolor: 'rgba(76,175,80,0.08)',
-                                      color: '#2e7d32',
+                                      bgcolor: 'rgba(35, 99, 76,0.08)',
+                                      color: '#23634c',
                                       fontWeight: 600,
                                       fontSize: 11,
                                     }}
@@ -1040,7 +1038,7 @@ export default function AdminBarbers() {
                                   variant="body2"
                                   sx={{
                                     fontWeight: 600,
-                                    color: selectedSchedule.isDayOff ? '#e65100' : '#2e7d32',
+                                    color: selectedSchedule.isDayOff ? '#8a5a12' : '#23634c',
                                   }}
                                 >
                                   {selectedSchedule.isDayOff ? 'No disponible' : 'Habilitado'}
@@ -1071,7 +1069,7 @@ export default function AdminBarbers() {
                                         size="small"
                                         variant="outlined"
                                         sx={{
-                                          borderColor: 'rgba(178,121,76,0.25)',
+                                          borderColor: 'rgba(201, 20, 112,0.25)',
                                           color: 'primary.dark',
                                           fontWeight: 600,
                                           fontSize: 11,
@@ -1111,8 +1109,8 @@ export default function AdminBarbers() {
                                         size="small"
                                         variant="outlined"
                                         sx={{
-                                          borderColor: 'rgba(255,152,0,0.25)',
-                                          color: '#e65100',
+                                          borderColor: 'rgba(138, 90, 18,0.25)',
+                                          color: '#8a5a12',
                                           fontWeight: 600,
                                           fontSize: 11,
                                           height: 22,
@@ -1380,7 +1378,7 @@ export default function AdminBarbers() {
               </Button>
 
               {/* Break times */}
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#e65100', mt: 1.5 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#8a5a12', mt: 1.5 }}>
                 Descansos (Colación)
               </Typography>
 
@@ -1430,9 +1428,9 @@ export default function AdminBarbers() {
                   textTransform: 'none',
                   alignSelf: 'flex-start',
                   fontWeight: 600,
-                  color: '#e65100',
+                  color: '#8a5a12',
                   '&:hover': {
-                    bgcolor: 'rgba(230,81,0,0.04)',
+                    bgcolor: 'rgba(138, 90, 18,0.04)',
                   }
                 }}
               >
@@ -1496,7 +1494,7 @@ export default function AdminBarbers() {
                 <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, display: 'block', mb: 0.5 }}>
                   Correo Electrónico (Sólo Lectura)
                 </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 500, color: 'text.primary', bgcolor: '#f5f5f5', px: 1.5, py: 1, borderRadius: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <Typography variant="body1" sx={{ fontWeight: 500, color: 'text.primary', bgcolor: '#f5f3f4', px: 1.5, py: 1, borderRadius: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {editingBarber.email}
                 </Typography>
               </Box>
@@ -1526,7 +1524,7 @@ export default function AdminBarbers() {
               </Box>
 
               {/* Estado (Editable) */}
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid #dcdcdc', p: 1.5, borderRadius: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid #e3dce1', p: 1.5, borderRadius: 1 }}>
                 <Box>
                   <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
                     Estado del Barbero
@@ -1628,7 +1626,7 @@ export default function AdminBarbers() {
           </Box>
 
           {/* Estado (Editable) */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid #dcdcdc', p: 1.5, borderRadius: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid #e3dce1', p: 1.5, borderRadius: 1 }}>
             <Box>
               <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
                 Estado Inicial

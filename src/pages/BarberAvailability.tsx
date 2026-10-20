@@ -22,7 +22,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import dayjs, { type Dayjs } from 'dayjs'
 import 'dayjs/locale/es'
-import Swal from 'sweetalert2'
+import { appDialog as Swal } from '../utils/notifications'
 import { showNotice } from '../utils/notifications'
 import '../styles/BarberAvailability.css'
 
@@ -47,7 +47,7 @@ type SelectedBookingSlot = {
 }
 
 const appointmentStatusLabel: Record<Appointment['status'], string> = {
-  pending: 'Pendiente',
+  pending: 'Pendiente de aprobación',
   confirmed: 'Confirmada',
   cancelled: 'Cancelada',
   completed: 'Completada',
@@ -108,13 +108,9 @@ export default function BarberAvailability() {
   const user = getAuthUser()
   const isAdmin = user?.role === 'admin'
   const today = useMemo(() => businessNow().startOf('day'), [])
-  const currentMonthEnd = useMemo(() => today.endOf('month'), [today])
   const adminMinDate = useMemo(() => today.subtract(3, 'month'), [today])
   const adminMaxDate = useMemo(() => today.add(3, 'month'), [today])
-  const clientMaxDate = useMemo(() => {
-    const oneWeekAhead = today.add(7, 'day')
-    return oneWeekAhead.isBefore(currentMonthEnd) ? oneWeekAhead : currentMonthEnd
-  }, [currentMonthEnd, today])
+  const clientMaxDate = useMemo(() => today.add(7, 'day'), [today])
   const minSelectableDate = isAdmin ? adminMinDate : today
   const maxSelectableDate = isAdmin ? adminMaxDate : clientMaxDate
 
@@ -284,10 +280,9 @@ export default function BarberAvailability() {
   const shouldDisableDate = useCallback((date: Dayjs) => {
     return (
       date.isBefore(minSelectableDate, 'day') ||
-      date.isAfter(maxSelectableDate, 'day') ||
-      (!isAdmin && !date.isSame(today, 'month'))
+      date.isAfter(maxSelectableDate, 'day')
     )
-  }, [isAdmin, maxSelectableDate, minSelectableDate, today])
+  }, [maxSelectableDate, minSelectableDate])
 
   const AvailabilityPickerDay = useCallback((dayProps: PickerDayProps) => {
     const dateKey = dayjs(dayProps.day).format('YYYY-MM-DD')
@@ -321,9 +316,8 @@ export default function BarberAvailability() {
     if (!isAdmin && activeAppointment) {
       await Swal.fire({
         title: 'Ya tienes una reserva activa',
-        text: 'Debes completar o cancelar tu cita actual antes de programar una nueva.',
+        text: 'Puedes reservar nuevamente cuando comience tu cita actual o si la cancelas con al menos 12 horas de anticipación.',
         icon: 'info',
-        confirmButtonColor: '#c91470',
         background: '#ffffff',
         color: '#1b191d',
       })
@@ -352,10 +346,9 @@ export default function BarberAvailability() {
       await createAppointment(id, selectedDate.format('YYYY-MM-DD'), selectedBookingSlot.start)
       
       await Swal.fire({
-        title: '¡Cita Agendada!',
-        text: 'Tu cita ha sido confirmada y agendada correctamente.',
+        title: 'Reserva solicitada',
+        text: 'Tu reserva quedó pendiente de aprobación por administración.',
         icon: 'success',
-        confirmButtonColor: '#c91470',
         background: '#ffffff',
         color: '#1b191d',
       })
@@ -374,7 +367,6 @@ export default function BarberAvailability() {
         title: bookingError.title,
         text: bookingError.message,
         icon: 'error',
-        confirmButtonColor: '#c91470',
         background: '#ffffff',
         color: '#1b191d',
       })
@@ -410,7 +402,7 @@ export default function BarberAvailability() {
               variant="outlined"
               size="small"
               sx={{
-                borderColor: 'rgba(178,121,76,0.35)',
+                borderColor: 'rgba(201, 20, 112,0.35)',
                 fontWeight: 600,
                 color: 'primary.dark',
                 fontSize: { xs: 11, sm: 13 },
@@ -444,7 +436,7 @@ export default function BarberAvailability() {
               border: '1px solid',
               borderColor: 'divider',
               backdropFilter: 'blur(12px)',
-              background: 'rgba(251,247,242,0.85)',
+              background: 'rgba(255, 255, 255,0.85)',
               mb: 4,
             }}
           >
@@ -482,7 +474,7 @@ export default function BarberAvailability() {
                   startIcon={<ArrowBackIcon />}
                   onClick={() => navigate('/dashboard')}
                   sx={{
-                    borderColor: 'rgba(47,107,95,0.35)',
+                    borderColor: 'rgba(201, 20, 112,0.35)',
                     color: 'primary.dark',
                     fontWeight: 600,
                     textTransform: 'none',
@@ -652,7 +644,7 @@ export default function BarberAvailability() {
                       </Typography>
                     </Box>
                   ) : slots.length === 0 ? (
-                    <Box sx={{ textAlign: 'center', py: 5, px: 2, bgcolor: 'rgba(47,107,95,0.05)', borderRadius: 1, border: '1px dashed rgba(47,107,95,0.22)' }}>
+                    <Box sx={{ textAlign: 'center', py: 5, px: 2, bgcolor: 'rgba(201, 20, 112,0.05)', borderRadius: 1, border: '1px dashed rgba(201, 20, 112,0.22)' }}>
                       <Typography variant="body1" sx={{ color: 'text.primary', fontWeight: 600, mb: 0.8 }}>
                         Sin bloques configurados para esta fecha
                       </Typography>
@@ -684,7 +676,7 @@ export default function BarberAvailability() {
                                 fontWeight: 600,
                                 fontSize: 14,
                                 py: 1.8,
-                                borderColor: 'rgba(47,107,95,0.32)',
+                                borderColor: 'rgba(201, 20, 112,0.32)',
                                 color: 'primary.dark',
                                 bgcolor: '#fff',
                                 textTransform: 'none',
@@ -693,7 +685,7 @@ export default function BarberAvailability() {
                                   bgcolor: 'primary.light',
                                   borderColor: 'primary.main',
                                   transform: 'translateY(-2px)',
-                                  boxShadow: '0 4px 12px rgba(30,74,67,0.18)',
+                                  boxShadow: '0 4px 12px rgba(148, 18, 81,0.18)',
                                 },
                               }}
                             >

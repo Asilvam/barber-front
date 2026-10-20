@@ -1,0 +1,16 @@
+export const palette = {
+  primary: '#c91470',
+  primaryDark: '#941251',
+  primaryLight: '#f9deeb',
+  charcoal: '#1b191d',
+  secondary: '#4a474e',
+  textSecondary: '#5e5961',
+  surface: '#f5f3f4',
+  panel: '#ffffff',
+  border: '#e3dce1',
+  pending: { main: '#8a5a12', background: '#fff3de' },
+  confirmed: { main: '#23634c', background: '#e6f3ec' },
+  cancelled: { main: '#a02f53', background: '#fce8ef' },
+  completed: { main: '#56515e', background: '#eeebf1' },
+  info: { main: '#62508c', background: '#f0eafa' },
+} as const

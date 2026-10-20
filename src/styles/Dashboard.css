@@ -51,7 +51,7 @@
   overflow: hidden;
   backdrop-filter: blur(12px);
   background: rgba(255, 255, 255, 0.86) !important;
-  box-shadow: 0 8px 32px rgba(24, 32, 29, 0.06) !important;
+  box-shadow: 0 8px 32px rgba(27, 25, 29, 0.06) !important;
   margin-bottom: 32px !important;
 }
 
@@ -68,8 +68,8 @@
   border: 1px solid rgba(201, 20, 112, 0.2) !important;
   background:
     linear-gradient(90deg, rgba(201, 20, 112, 0.16), transparent 4px),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(239, 245, 243, 0.78)) !important;
-  box-shadow: 0 12px 30px rgba(24, 32, 29, 0.08) !important;
+    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(245, 243, 244, 0.78)) !important;
+  box-shadow: 0 12px 30px rgba(27, 25, 29, 0.08) !important;
 }
 
 .active-appointment-main {
@@ -141,7 +141,7 @@
 }
 
 .active-appointment-detail span {
-  color: #8a7a70;
+  color: #5e5961;
   font-size: 0.67rem;
   font-weight: 850;
   letter-spacing: 0.06em;
@@ -166,23 +166,23 @@
 }
 
 .active-appointment-status-pending {
-  color: #9a5b12 !important;
-  background: #fff0d8 !important;
+  color: var(--status-pending) !important;
+  background: var(--status-pending-bg) !important;
 }
 
 .active-appointment-status-confirmed {
-  color: #256747 !important;
-  background: #dff2e6 !important;
+  color: var(--status-confirmed) !important;
+  background: var(--status-confirmed-bg) !important;
 }
 
 .active-appointment-status-completed {
-  color: #365f83 !important;
-  background: #e1eef8 !important;
+  color: var(--status-completed) !important;
+  background: var(--status-completed-bg) !important;
 }
 
 .active-appointment-status-cancelled {
-  color: #9b4545 !important;
-  background: #f8e2e2 !important;
+  color: var(--status-cancelled) !important;
+  background: var(--status-cancelled-bg) !important;
 }
 
 @media (max-width: 700px) {

@@ -18,10 +18,11 @@ import EmailIcon from '@mui/icons-material/Email'
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
 import dayjs from 'dayjs'
 import 'dayjs/locale/es'
-import Swal from 'sweetalert2'
+import { appDialog as Swal } from '../utils/notifications'
 import { showNotice } from '../utils/notifications'
 import type { AuthUser } from '../types/auth'
 import '../styles/Dashboard.css'
+import { businessAppointmentDateTime } from '../utils/businessTime'
 
 import {
   cancelMyAppointment,
@@ -47,7 +48,7 @@ function getAuthUser(): AuthUser | null {
 }
 
 const appointmentStatusLabel: Record<Appointment['status'], string> = {
-  pending: 'Pendiente',
+  pending: 'Pendiente de aprobación',
   confirmed: 'Confirmada',
   cancelled: 'Cancelada',
   completed: 'Completada',
@@ -207,13 +208,16 @@ export default function Dashboard() {
   const handleCancelAppointment = async () => {
     if (!activeAppointment) return
 
+    if (businessAppointmentDateTime(activeAppointment.date, activeAppointment.timeSlot).valueOf() - Date.now() < 12 * 60 * 60 * 1000) {
+      await showNotice('Solo puedes cancelar con al menos 12 horas de anticipación.', 'info', 'Plazo de cancelación vencido')
+      return
+    }
+
     const confirmation = await Swal.fire({
       title: '¿Cancelar tu reserva?',
-      text: 'El horario quedará disponible para otra persona.',
+      text: 'Puedes cancelar con al menos 12 horas de anticipación. El horario quedará disponible para otra persona.',
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#b44747',
-      cancelButtonColor: '#5e5961',
       confirmButtonText: 'Sí, cancelar reserva',
       cancelButtonText: 'Volver',
       background: '#ffffff',
@@ -237,7 +241,6 @@ export default function Dashboard() {
         title: 'Reserva cancelada',
         text: 'El horario fue liberado correctamente.',
         icon: 'success',
-        confirmButtonColor: '#c91470',
         background: '#ffffff',
         color: '#1b191d',
       })
@@ -253,7 +256,6 @@ export default function Dashboard() {
           response?.data?.message ??
           (err instanceof Error ? err.message : 'Ocurrió un error inesperado.'),
         icon: 'error',
-        confirmButtonColor: '#c91470',
         background: '#ffffff',
         color: '#1b191d',
       })
@@ -290,7 +292,7 @@ export default function Dashboard() {
               variant="outlined"
               size="small"
               sx={{
-                borderColor: 'rgba(178,121,76,0.35)',
+                borderColor: 'rgba(201, 20, 112,0.35)',
                 fontWeight: 600,
                 color: 'primary.dark',
                 fontSize: { xs: 11, sm: 13 },
@@ -371,6 +373,7 @@ export default function Dashboard() {
                   >
                     Cancelar reserva
                   </Button>
+                  <Typography variant="caption" color="text.secondary">Cancelación con al menos 12 horas de anticipación.</Typography>
                 </Box>
               </>
             ) : null}

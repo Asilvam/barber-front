@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
-import Swal from 'sweetalert2'
+import { appDialog as Swal } from '../utils/notifications'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
@@ -255,8 +255,6 @@ export default function AdminReserves() {
       showCancelButton: true,
       confirmButtonText: 'Sí, eliminar',
       cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#b44747',
-      cancelButtonColor: '#5e5961',
       background: '#ffffff',
       color: '#1b191d',
     })
@@ -310,7 +308,7 @@ export default function AdminReserves() {
             border: '1px solid',
             borderColor: 'divider',
             background:
-              'linear-gradient(135deg, rgba(47,107,95,0.12) 0%, rgba(239,245,243,0.85) 55%, rgba(255,255,255,1) 100%)',
+              'linear-gradient(135deg, rgba(201, 20, 112,0.12) 0%, rgba(245, 243, 244,0.85) 55%, rgba(255, 255, 255,1) 100%)',
           }}
         >
           <Box
@@ -383,7 +381,7 @@ export default function AdminReserves() {
             borderRadius: 1,
             p: 2,
             mb: 2,
-            bgcolor: 'rgba(255,255,255,0.86)',
+            bgcolor: 'rgba(255, 255, 255,0.86)',
             backdropFilter: 'blur(8px)',
           }}
         >
@@ -492,7 +490,7 @@ export default function AdminReserves() {
             sx={{ borderRadius: 1, border: '1px solid', borderColor: 'divider', overflow: 'hidden' }}
           >
             <Table size="small">
-              <TableHead sx={{ bgcolor: 'rgba(47,107,95,0.08)' }}>
+              <TableHead sx={{ bgcolor: 'rgba(201, 20, 112,0.08)' }}>
                 <TableRow>
                   <TableCell>
                     <TableSortLabel active={sortKey === 'date'} direction={sortDirection} onClick={() => handleSort('date')}>
@@ -535,7 +533,7 @@ export default function AdminReserves() {
                     const isCancelled = appointment.status === 'cancelled'
                     const statusDisabled = updatingId === appointment._id || isPast
                     return (
-                      <TableRow key={appointment._id} hover sx={{ '&:nth-of-type(odd)': { bgcolor: 'rgba(47,107,95,0.04)' } }}>
+                      <TableRow key={appointment._id} hover sx={{ '&:nth-of-type(odd)': { bgcolor: 'rgba(201, 20, 112,0.04)' } }}>
                         <TableCell>{dayjs(appointment.date).format('DD/MM/YYYY')}</TableCell>
                         <TableCell>{appointment.timeSlot}</TableCell>
                         <TableCell>{getBarberName(appointment.barberId)}</TableCell>

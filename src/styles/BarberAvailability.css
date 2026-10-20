@@ -41,7 +41,7 @@
   border: 1px solid rgba(0, 0, 0, 0.08) !important;
   backdrop-filter: blur(12px);
   background: rgba(255, 255, 255, 0.86) !important;
-  box-shadow: 0 8px 32px rgba(24, 32, 29, 0.08) !important;
+  box-shadow: 0 8px 32px rgba(27, 25, 29, 0.08) !important;
   padding: 24px !important;
   margin-bottom: 32px !important;
 }
@@ -179,7 +179,7 @@
 }
 
 .availability-confirmation-detail span {
-  color: #8a7a70;
+  color: #5e5961;
   font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -224,7 +224,7 @@
   border: 1px solid rgba(201, 20, 112, 0.2);
   background:
     linear-gradient(90deg, rgba(201, 20, 112, 0.16), transparent 4px),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(239, 245, 243, 0.78));
+    linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(245, 243, 244, 0.78));
 }
 
 .availability-active-main {
@@ -284,7 +284,7 @@
 }
 
 .availability-active-detail span {
-  color: #8a7a70;
+  color: #5e5961;
   font-size: 0.67rem;
   font-weight: 850;
   letter-spacing: 0.06em;
@@ -309,23 +309,23 @@
 }
 
 .availability-active-status-pending {
-  color: #9a5b12 !important;
-  background: #fff0d8 !important;
+  color: var(--status-pending) !important;
+  background: var(--status-pending-bg) !important;
 }
 
 .availability-active-status-confirmed {
-  color: #256747 !important;
-  background: #dff2e6 !important;
+  color: var(--status-confirmed) !important;
+  background: var(--status-confirmed-bg) !important;
 }
 
 .availability-active-status-completed {
-  color: #365f83 !important;
-  background: #e1eef8 !important;
+  color: var(--status-completed) !important;
+  background: var(--status-completed-bg) !important;
 }
 
 .availability-active-status-cancelled {
-  color: #9b4545 !important;
-  background: #f8e2e2 !important;
+  color: var(--status-cancelled) !important;
+  background: var(--status-cancelled-bg) !important;
 }
 
 .availability-booking-locked {
@@ -418,7 +418,7 @@
   width: 40px;
   height: 32px;
   margin: 0;
-  color: #7c6a60;
+  color: #5e5961;
   font-weight: 700;
 }
 
@@ -450,9 +450,9 @@
 }
 
 .availability-day-available:not(.Mui-disabled) {
-  background: rgba(46, 125, 50, 0.12) !important;
-  color: #1f6b34 !important;
-  border: 1px solid rgba(46, 125, 50, 0.32) !important;
+  background: rgba(35, 99, 76, 0.12) !important;
+  color: var(--status-confirmed) !important;
+  border: 1px solid rgba(35, 99, 76, 0.32) !important;
   font-weight: 800 !important;
 }
 
@@ -488,7 +488,7 @@
 }
 
 .legend-dot-available {
-  background: #2e7d32;
+  background: #23634c;
 }
 
 .calendar-loading-label {
@@ -532,7 +532,7 @@
 }
 
 .availability-slot-available .slot-status-label {
-  color: #2e7d32;
+  color: #23634c;
 }
 
 .availability-slot-occupied.Mui-disabled,
@@ -543,23 +543,23 @@
 }
 
 .availability-slot-occupied.Mui-disabled {
-  color: #9a2f2f !important;
-  border-color: rgba(198, 40, 40, 0.26) !important;
-  background: rgba(198, 40, 40, 0.08) !important;
+  color: var(--status-cancelled) !important;
+  border-color: rgba(160, 47, 83, 0.26) !important;
+  background: rgba(160, 47, 83, 0.08) !important;
 }
 
 .availability-slot-expired.Mui-disabled {
-  color: #76695f !important;
-  border-color: rgba(124, 105, 90, 0.2) !important;
-  background: rgba(124, 105, 90, 0.08) !important;
+  color: var(--status-completed) !important;
+  border-color: rgba(86, 81, 94, 0.2) !important;
+  background: rgba(86, 81, 94, 0.08) !important;
 }
 
 .availability-slot-occupied .slot-status-label {
-  color: #b32626;
+  color: #a02f53;
 }
 
 .availability-slot-expired .slot-status-label {
-  color: #76695f;
+  color: #56515e;
 }
 
 @media (max-width: 600px) {
@@ -612,7 +612,7 @@
   text-transform: none !important;
   padding: 12px 16px !important;
   transition: all 0.2s ease-in-out !important;
-  box-shadow: 0 2px 8px rgba(24, 32, 29, 0.1) !important;
+  box-shadow: 0 2px 8px rgba(27, 25, 29, 0.1) !important;
 }
 
 .slot-button:hover {

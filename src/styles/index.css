@@ -7,7 +7,15 @@
   --accent: #c91470;
   --accent-strong: #941251;
   --accent-soft: #f9deeb;
-  --accent-warm: #ed3c98;
+  --accent-warm: #d51a78;
+  --status-pending: #8a5a12;
+  --status-pending-bg: #fff3de;
+  --status-confirmed: #23634c;
+  --status-confirmed-bg: #e6f3ec;
+  --status-cancelled: #a02f53;
+  --status-cancelled-bg: #fce8ef;
+  --status-completed: #56515e;
+  --status-completed-bg: #eeebf1;
   --olive: #4a474e;
   --shadow: rgba(30, 20, 27, 0.12) 0 18px 30px -20px;
   --shadow-strong: rgba(30, 20, 27, 0.2) 0 24px 40px -24px;
@@ -58,4 +66,27 @@ p {
 
 code {
   font-family: var(--mono);
+}
+
+/* All SweetAlert dialogs share the Shalo palette, including destructive actions. */
+.shalo-dialog {
+  border: 1px solid var(--border);
+}
+.shalo-dialog .shalo-dialog-confirm {
+  background: var(--accent) !important;
+  color: #fff !important;
+}
+.shalo-dialog .shalo-dialog-confirm:hover {
+  background: var(--accent-strong) !important;
+}
+.shalo-dialog .shalo-dialog-cancel {
+  background: var(--olive) !important;
+  color: #fff !important;
+}
+.shalo-dialog .swal2-loader {
+  border-color: var(--accent) transparent var(--accent) transparent;
+}
+.shalo-dialog .swal2-styled:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
