@@ -1,3 +1,4 @@
+import EntityStatusBadge from '../components/EntityStatusBadge'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Box from '@mui/material/Box'
@@ -617,7 +618,7 @@ export default function AdminBarbers() {
                         <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                           {barber.name}
                         </Typography>
-                        <Chip size="small" label={barber.isActive ? 'Activo' : 'Inactivo'} color={barber.isActive ? 'success' : 'default'} sx={{ fontWeight: 700 }} />
+                        <EntityStatusBadge label={barber.isActive ? 'Activo' : 'Inactivo'} color={barber.isActive ? 'success' : 'default'} />
                       </Box>
                       <Typography variant="caption" color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>
                         {barber.email}
@@ -696,11 +697,9 @@ export default function AdminBarbers() {
                             </Box>
                           </TableCell>
                           <TableCell sx={{ py: 1, px: { xs: 1, sm: 1.5 }, borderRight: '1px solid #e3dce1', borderBottom: '1px solid #e3dce1', overflow: 'hidden' }}>
-                            <Chip
-                              size="small"
+                            <EntityStatusBadge
                               label={barber.isActive ? 'Activo' : 'Inactivo'}
                               color={barber.isActive ? 'success' : 'default'}
-                              sx={{ fontWeight: 700 }}
                             />
                           </TableCell>
                           <TableCell align="center" sx={{ py: 0.5, px: { xs: 0.5, sm: 1 }, borderBottom: '1px solid #e3dce1' }}>

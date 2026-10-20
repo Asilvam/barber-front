@@ -1,3 +1,4 @@
+import EntityStatusBadge from "../components/EntityStatusBadge";
 import { useEffect, useRef, useState } from "react";
 import {
   Alert,
@@ -204,8 +205,7 @@ export default function AdminClients() {
                           : "Sin registro"}
                       </TableCell>
                       <TableCell>
-                        <Chip
-                          size="small"
+                        <EntityStatusBadge
                           label={
                             client.isBookingBlocked ? "Bloqueado" : "Habilitado"
                           }
