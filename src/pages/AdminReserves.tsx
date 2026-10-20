@@ -564,7 +564,20 @@ export default function AdminReserves() {
                               label={getAppointmentStatusLabel(appointment)}
                               color={statusColor[appointment.status]}
                               size="small"
-                              sx={{ fontWeight: 600 }}
+                              icon={appointment.status === 'completed' ? <TaskAltIcon /> : undefined}
+                              sx={{
+                                fontWeight: 600,
+                                ...(appointment.status === 'completed' ? {
+                                  width: 138,
+                                  height: 36,
+                                  borderRadius: 1,
+                                  fontSize: 13,
+                                  border: '1px solid var(--border)',
+                                  bgcolor: 'var(--status-completed-bg)',
+                                  color: 'var(--status-completed)',
+                                  '& .MuiChip-icon': { color: 'inherit', fontSize: 18 },
+                                } : {}),
+                              }}
                             />
                           ) : (
                             <FormControl size="small" sx={{ minWidth: 138 }}>
