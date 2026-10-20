@@ -1,0 +1,66 @@
+.admin-clients {
+  padding-top: 24px;
+  padding-bottom: 32px;
+  display: grid !important;
+  gap: 16px;
+}
+.admin-clients-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 20px;
+  align-items: start;
+}
+.admin-client-card {
+  padding: 18px;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.admin-client-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.admin-client-event {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+@media (max-width: 700px) {
+  .admin-clients-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.admin-client-list,
+.admin-client-identity {
+  min-width: 0;
+}
+.admin-client-list-card {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 14px 16px;
+}
+.admin-client-list-card .MuiChip-root {
+  justify-self: start;
+  max-width: 100%;
+}
+.admin-client-list-card .admin-client-actions {
+  grid-column: 1 / -1;
+}
+.admin-client-selected {
+  border-color: var(--accent) !important;
+  background: var(--accent-soft) !important;
+}
+.admin-client-empty {
+  min-height: 160px;
+  align-content: center;
+  text-align: center;
+  border-style: dashed !important;
+}
+@media (max-width: 1023px) {
+  .admin-client-list-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

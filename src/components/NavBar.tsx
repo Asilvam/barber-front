@@ -94,6 +94,8 @@ function NavBar() {
                 </NavLink>
               )}
 
+              {isAdmin && <NavLink to="/admin/clients" className="nav-hover-link">Clientes</NavLink>}
+
               <button type="button" onClick={handleLogout} className="navbar-ghost-button">
                 <LogoutIcon sx={{ fontSize: 17 }} />
                 Salir
@@ -223,6 +225,12 @@ function NavBar() {
                         primary="Admin Reservas"
                         sx={{ '& .MuiListItemText-primary': { fontWeight: 600, fontSize: '0.9rem' } }}
                       />
+                    </ListItemButton>
+                  </ListItem>
+                  <ListItem disablePadding>
+                    <ListItemButton component={NavLink} to="/admin/clients" onClick={() => setMobileOpen(false)} className="navbar-drawer-list-item-btn">
+                      <ListItemIcon sx={{ minWidth: 35, color: 'inherit' }}><AdminPanelSettingsIcon sx={{ fontSize: 20 }} /></ListItemIcon>
+                      <ListItemText primary="Clientes" />
                     </ListItemButton>
                   </ListItem>
                 </>

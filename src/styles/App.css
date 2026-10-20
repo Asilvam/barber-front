@@ -904,7 +904,7 @@
   padding: 8px !important;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .navbar-desktop-menu {
     display: flex !important;
   }

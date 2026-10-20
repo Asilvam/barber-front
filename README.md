@@ -130,3 +130,9 @@ src/
 ├── index.css     # Estilos globales y variables css
 └── main.tsx      # Punto de entrada de la aplicación
 ```
+
+## Gestión de clientes (administración)
+
+La ruta `/admin/clients`, accesible desde el menú **Clientes**, permite buscar clientes por nombre o correo, consultar sus reservas e historial de acceso y bloquear o desbloquear nuevas reservas. El bloqueo exige un motivo interno y confirmación; no cancela las reservas vigentes. El desbloqueo conserva el historial. Los motivos se muestran únicamente a administración.
+
+Requiere los endpoints administrativos `GET /clients` y `PATCH /clients/:id/booking-access` del backend. La validación del bloqueo se realiza en el servidor incluso con sesiones abiertas; el cliente recibe un mensaje para contactar con la barbería si intenta reservar. Al pasar una reserva pendiente a confirmada, el backend solicita el envío del correo de confirmación.

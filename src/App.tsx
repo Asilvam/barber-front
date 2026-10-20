@@ -10,6 +10,7 @@ const Login = lazy(() => import('./pages/Login'))
 const Register = lazy(() => import('./pages/Register'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const AdminBarbers = lazy(() => import('./pages/AdminBarbers'))
+const AdminClients = lazy(() => import('./pages/AdminClients'))
 const AdminReserves = lazy(() => import('./pages/AdminReserves'))
 const BarberAvailability = lazy(() => import('./pages/BarberAvailability'))
 
@@ -39,6 +40,7 @@ function App() {
           </Route>
           <Route element={<ProtectedRoute requiredRole="admin" />}>
             <Route path="/admin/barbers" element={<AdminBarbers />} />
+            <Route path="/admin/clients" element={<AdminClients />} />
             <Route path="/admin/reserves" element={<AdminReserves />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
