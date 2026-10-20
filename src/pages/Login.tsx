@@ -47,6 +47,10 @@ declare global {
   }
 }
 
+// Google keeps its configuration for the page lifetime, beyond a Login mount.
+let googleInitialization: Promise<void> | null = null
+let googleResponseHandler: ((response: unknown) => void | Promise<void>) | null = null
+
 function getAccessErrorMessage(error: unknown, fallback: string): string {
   const requestError = error as { code?: string; response?: { data?: { message?: string } } }
   if (requestError?.code === 'ECONNABORTED' || requestError?.code === 'ETIMEDOUT') {
@@ -143,6 +147,23 @@ function Login() {
     }
   }, [email, password, saveAuth])
 
+  useEffect(() => {
+    const handleResponse = async (response: unknown) => {
+      const resp = response as { credential?: string } | null
+      if (!resp?.credential) {
+        googleSelectingRef.current = false
+        setGoogleSelecting(false)
+        void showNotice('No se pudo obtener la credencial de Google.', 'error', 'No se pudo iniciar sesión')
+        return
+      }
+      await handleGoogleLogin(resp.credential)
+    }
+    googleResponseHandler = handleResponse
+    return () => {
+      if (googleResponseHandler === handleResponse) googleResponseHandler = null
+    }
+  }, [handleGoogleLogin])
+
   const renderGoogleButton = useCallback(() => {
     const element = googleButtonRef.current
     if (!element || !window.google?.accounts.id) return
@@ -197,34 +218,24 @@ function Login() {
         tick()
       })
 
-    try {
-      console.debug('Waiting for window.google.accounts.id to be available...')
-      await waitForGoogleAccounts(4000, 250)
-    } catch (err) {
-      console.error('Google accounts.id not available:', err)
-      throw err
+    if (!googleInitialization) {
+      googleInitialization = (async () => {
+        await waitForGoogleAccounts(4000, 250)
+        const googleApi = window.google
+        if (!googleApi?.accounts.id) throw new Error('No se pudo cargar el acceso con Google')
+        googleApi.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: (response: unknown) => googleResponseHandler?.(response),
+        })
+      })().catch((error: unknown) => {
+        googleInitialization = null
+        throw error
+      })
     }
 
-    const googleApi = window.google
     try {
-      console.debug('Initializing google.accounts.id', googleApi?.accounts?.id)
-      googleApi?.accounts.id.initialize({
-        client_id: googleClientId,
-        callback: async (response: unknown) => {
-          const resp = response as { credential?: string } | null
-          if (!resp || !resp.credential) {
-            googleSelectingRef.current = false
-            setGoogleSelecting(false)
-            void showNotice(
-              'No se pudo obtener la credencial de Google.',
-              'error',
-              'No se pudo iniciar sesión',
-            )
-            return
-          }
-          await handleGoogleLogin(resp.credential)
-        },
-      })
+      await googleInitialization
+      if (!googleButtonRef.current) return
       renderGoogleButton()
       console.debug('Google button render attempted')
       googleRenderedRef.current = true
@@ -233,11 +244,7 @@ function Login() {
       console.error('Error initializing Google Identity:', err)
       throw err
     }
-  }, [googleClientId, handleGoogleLogin, renderGoogleButton])
-
-  const initializeGoogleCb = useCallback(async () => {
-    return initializeGoogle()
-  }, [initializeGoogle])
+  }, [googleClientId, renderGoogleButton])
 
   useEffect(() => {
     if (!googleClientId) {
@@ -248,7 +255,7 @@ function Login() {
     const existingScript = document.getElementById(scriptId) as HTMLScriptElement | null
     if (existingScript) {
       // script already present: try to initialize
-      initializeGoogleCb().catch((err) => setGoogleError(String(err)))
+      initializeGoogle().catch((err) => setGoogleError(String(err)))
       return
     }
 
@@ -260,7 +267,7 @@ function Login() {
     script.onload = () => {
       console.debug('Google Identity script loaded')
       // Give the library a short moment to attach to window.google.accounts.id
-      initializeGoogleCb().catch((err) => {
+      initializeGoogle().catch((err) => {
         console.error('initializeGoogle failed after script load:', err)
         setGoogleError(String(err))
       })
@@ -273,7 +280,7 @@ function Login() {
       script.onload = null
       script.onerror = null
     }
-  }, [googleClientId, initializeGoogleCb])
+  }, [googleClientId, initializeGoogle])
 
   // The Google account chooser is controlled by Google; it does not always
   // notify the app when dismissed. Clear the waiting indicator on return to
