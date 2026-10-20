@@ -2,7 +2,7 @@ import { apiClient } from './client'
 import type { AuthResponse } from '../types/auth'
 
 export async function login(email: string, password: string): Promise<AuthResponse> {
-  const { data } = await apiClient.post<AuthResponse>('/auth/login', { email, password })
+  const { data } = await apiClient.post<AuthResponse>('/auth/login', { email, password }, { timeout: 30_000 })
   return data
 }
 
@@ -12,6 +12,6 @@ export async function register(name: string, email: string, password: string): P
 }
 
 export async function loginWithGoogle(credential: string): Promise<AuthResponse> {
-  const { data } = await apiClient.post<AuthResponse>('/auth/google', { credential })
+  const { data } = await apiClient.post<AuthResponse>('/auth/google', { credential }, { timeout: 30_000 })
   return data
 }

@@ -47,11 +47,20 @@ declare global {
   }
 }
 
+function getAccessErrorMessage(error: unknown, fallback: string): string {
+  const requestError = error as { code?: string; response?: { data?: { message?: string } } }
+  if (requestError?.code === 'ECONNABORTED' || requestError?.code === 'ETIMEDOUT') {
+    return 'La validación tardó más de 30 segundos. Intenta ingresar nuevamente.'
+  }
+  return requestError?.response?.data?.message ?? (error instanceof Error ? error.message : fallback)
+}
+
 function Login() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const accessPendingRef = useRef(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [googleSelecting, setGoogleSelecting] = useState(false)
   const googleSelectingRef = useRef(false)
@@ -93,21 +102,21 @@ function Login() {
   const handleGoogleLogin = useCallback(async (credential: string) => {
     googleSelectingRef.current = false
     setGoogleSelecting(false)
+    if (accessPendingRef.current) return
+    accessPendingRef.current = true
     setGoogleLoading(true)
     setLoading(true)
     try {
       const payload = await loginWithGoogle(credential)
       saveAuth(payload)
     } catch (err) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
       void showNotice(
-        msg ?? (err instanceof Error
-          ? err.message
-          : 'No se pudo validar Google. Intenta nuevamente.'),
+        getAccessErrorMessage(err, 'No se pudo validar Google. Intenta nuevamente.'),
         'error',
         'No se pudo iniciar sesión',
       )
     } finally {
+      accessPendingRef.current = false
       setGoogleLoading(false)
       setLoading(false)
     }
@@ -115,20 +124,20 @@ function Login() {
 
   const handleManualLogin = useCallback(async (event: React.FormEvent) => {
     event.preventDefault()
+    if (accessPendingRef.current || googleSelectingRef.current) return
+    accessPendingRef.current = true
     setLoading(true)
     try {
       const payload = await login(email, password)
       saveAuth(payload)
     } catch (err) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
       void showNotice(
-        msg ?? (err instanceof Error
-          ? err.message
-          : 'No se pudo iniciar sesion. Revisa tus datos.'),
+        getAccessErrorMessage(err, 'No se pudo iniciar sesión. Revisa tus datos.'),
         'error',
         'No se pudo iniciar sesión',
       )
     } finally {
+      accessPendingRef.current = false
       setLoading(false)
     }
   }, [email, password, saveAuth])
@@ -194,7 +203,7 @@ function Login() {
         text: 'signin_with',
         width: 320,
         click_listener: () => {
-          if (googleSelectingRef.current) return
+          if (accessPendingRef.current || googleSelectingRef.current) return
           googleSelectingRef.current = true
           setGoogleSelecting(true)
         },
@@ -296,7 +305,7 @@ function Login() {
         aria-live="polite"
       >
         <CircularProgress color="inherit" aria-label="Autenticación con Google en curso" />
-        <Typography variant="body1" fontWeight={600}>
+        <Typography variant="body1" sx={{ fontWeight: 600 }}>
           {googleLoading ? 'Validando tu cuenta con Google…' : 'Abriendo Google…'}
         </Typography>
         <Typography variant="body2" sx={{ opacity: 0.85, textAlign: 'center', px: 2 }}>
@@ -342,17 +351,20 @@ function Login() {
               type="submit"
               variant="contained"
               color="primary"
-              disabled={loading}
+              disabled={loading || googleSelecting}
+              startIcon={loading && !googleLoading ? <CircularProgress size={18} color="inherit" aria-label="Validando acceso" /> : undefined}
               className="auth-submit-btn"
             >
-              {loading ? 'Ingresando...' : 'Entrar'}
+              {loading ? 'Validando acceso…' : 'Entrar'}
             </Button>
           </Box>
           <Divider className="auth-divider">o</Divider>
           <Box className="auth-google-container">
             {googleClientId ? (
               <>
-                <Box ref={googleButtonRef} data-google-button="true" component="div" sx={{ width: 320, minHeight: 44 }} />
+                <Box inert={loading || googleSelecting} aria-disabled={loading || googleSelecting} sx={{ opacity: loading ? 0.5 : 1 }}>
+                  <Box ref={googleButtonRef} data-google-button="true" component="div" sx={{ width: 320, minHeight: 44 }} />
+                </Box>
                 {!googleEnabled && !googleError ? (
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
                     Cargando inicio de sesión con Google…
