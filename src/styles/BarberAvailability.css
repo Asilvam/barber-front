@@ -390,6 +390,19 @@
   margin: 0 auto;
 }
 
+/* Keep vertical gestures on the page instead of nested calendar scroll areas. */
+.availability-calendar-card .MuiDateCalendar-root {
+  touch-action: pan-y pinch-zoom;
+}
+
+@supports (overflow: clip) {
+  .availability-calendar-card .MuiDateCalendar-root,
+  .availability-calendar-card .MuiPickersSlideTransition-root,
+  .availability-calendar-card .MuiDayCalendar-monthContainer {
+    overflow: clip;
+  }
+}
+
 .availability-calendar-card .MuiDayCalendar-monthContainer,
 .availability-calendar-card .MuiDayCalendar-weekContainer {
   width: 100%;
