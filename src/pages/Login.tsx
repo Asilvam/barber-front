@@ -13,6 +13,7 @@ import TextField from '@mui/material/TextField'
 import Divider from '@mui/material/Divider'
 import MuiLink from '@mui/material/Link'
 import CircularProgress from '@mui/material/CircularProgress'
+import Backdrop from '@mui/material/Backdrop'
 
 interface GoogleAccountsId {
   initialize(config: {
@@ -27,6 +28,7 @@ interface GoogleAccountsId {
       shape?: string;
       text?: string;
       width?: number;
+      click_listener?: () => void;
     }
   ): void;
 }
@@ -50,6 +52,9 @@ function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [googleSelecting, setGoogleSelecting] = useState(false)
+  const googleSelectingRef = useRef(false)
   const [token, setToken] = useState<string | null>(() => getAuthToken())
   const businessName =
     import.meta.env.VITE_BUSINESS_NAME?.trim() || 'Shalo Barber'
@@ -86,6 +91,9 @@ function Login() {
   }, [token, navigate])
 
   const handleGoogleLogin = useCallback(async (credential: string) => {
+    googleSelectingRef.current = false
+    setGoogleSelecting(false)
+    setGoogleLoading(true)
     setLoading(true)
     try {
       const payload = await loginWithGoogle(credential)
@@ -100,6 +108,7 @@ function Login() {
         'No se pudo iniciar sesión',
       )
     } finally {
+      setGoogleLoading(false)
       setLoading(false)
     }
   }, [saveAuth])
@@ -166,6 +175,8 @@ function Login() {
         callback: async (response: unknown) => {
           const resp = response as { credential?: string } | null
           if (!resp || !resp.credential) {
+            googleSelectingRef.current = false
+            setGoogleSelecting(false)
             void showNotice(
               'No se pudo obtener la credencial de Google.',
               'error',
@@ -182,6 +193,11 @@ function Login() {
         shape: 'pill',
         text: 'signin_with',
         width: 320,
+        click_listener: () => {
+          if (googleSelectingRef.current) return
+          googleSelectingRef.current = true
+          setGoogleSelecting(true)
+        },
       })
       console.debug('Google button render attempted')
       googleRenderedRef.current = true
@@ -232,6 +248,25 @@ function Login() {
     }
   }, [googleClientId, initializeGoogleCb])
 
+  // The Google account chooser is controlled by Google; it does not always
+  // notify the app when dismissed. Clear the waiting indicator on return to
+  // the page or after a bounded timeout, without interrupting Google itself.
+  useEffect(() => {
+    if (!googleSelecting) return
+    const clearSelection = () => {
+      if (!googleSelectingRef.current) return
+      googleSelectingRef.current = false
+      setGoogleSelecting(false)
+    }
+    const onFocus = () => window.setTimeout(clearSelection, 1200)
+    window.addEventListener('focus', onFocus)
+    const timeout = window.setTimeout(clearSelection, 45000)
+    return () => {
+      window.removeEventListener('focus', onFocus)
+      window.clearTimeout(timeout)
+    }
+  }, [googleSelecting])
+
   if (token) {
     return (
       <Box
@@ -254,6 +289,20 @@ function Login() {
 
   return (
     <Box className="auth-layout">
+      <Backdrop
+        open={googleLoading || googleSelecting}
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 1, color: '#fff', flexDirection: 'column', gap: 2 }}
+        role="status"
+        aria-live="polite"
+      >
+        <CircularProgress color="inherit" aria-label="Autenticación con Google en curso" />
+        <Typography variant="body1" fontWeight={600}>
+          {googleLoading ? 'Validando tu cuenta con Google…' : 'Abriendo Google…'}
+        </Typography>
+        <Typography variant="body2" sx={{ opacity: 0.85, textAlign: 'center', px: 2 }}>
+          {googleLoading ? 'Espera un momento, estamos verificando tu acceso.' : 'Selecciona tu cuenta en la ventana de Google.'}
+        </Typography>
+      </Backdrop>
       <Container maxWidth="xs" className="auth-container">
         <Box className="auth-card">
           <Box className="auth-header">
