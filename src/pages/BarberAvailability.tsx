@@ -458,6 +458,7 @@ export default function BarberAvailability() {
                 </Typography>
                 <Chip
                   label={barber.name}
+                  title={barber.name}
                   color="primary"
                   sx={{
                     fontWeight: 700,

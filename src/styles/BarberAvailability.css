@@ -8,15 +8,14 @@
 }
 
 .availability-top-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 40%);
+  align-items: start;
   width: calc(100% - 24px);
   max-width: var(--shell-max-width);
   margin-left: auto;
   margin-right: auto;
   padding: 16px;
-  flex-wrap: wrap;
   gap: 12px;
 }
 
@@ -67,17 +66,39 @@
 }
 
 .availability-header-label {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 4px 12px;
   padding-bottom: 16px;
   margin-bottom: 24px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
+.availability-header-label > .MuiTypography-root {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.availability-header-label .MuiChip-root {
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: start;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.availability-header-label .MuiChip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .availability-back-button {
-  margin-left: auto !important;
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: end;
+  white-space: nowrap;
 }
 
 .availability-stepper {
@@ -86,15 +107,12 @@
 
 @media (max-width: 600px) {
   .availability-header-label {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 8px;
+    gap: 4px 8px;
     padding-bottom: 12px;
     margin-bottom: 18px;
   }
 
   .availability-header-label > .MuiTypography-root {
-    grid-column: 1 / -1;
     font-size: 0.72rem;
   }
 
@@ -109,9 +127,9 @@
 
   .availability-back-button {
     margin-left: 0 !important;
-    justify-self: start;
-    max-width: 100%;
-    white-space: normal;
+    padding: 5px 8px;
+    font-size: 0.72rem;
+    min-width: 0;
   }
 
   .availability-stepper {
@@ -644,7 +662,10 @@
   min-width: 0;
   max-width: 100%;
 }
-.availability-top-bar > :first-child { flex: 1 1 240px; }
+.availability-top-bar > :first-child { align-items: flex-start; }
+.availability-top-bar > :first-child > svg { margin-top: 3px; }
+.availability-top-bar > :last-child { justify-content: flex-end; }
+.availability-top-bar .MuiChip-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .availability-top-bar .MuiChip-root { max-width: 100%; }
 .availability-step-instruction { overflow-wrap: anywhere; }
 .availability-top-bar > :first-child > svg { flex-shrink: 0; }
