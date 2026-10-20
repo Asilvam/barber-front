@@ -1,66 +1,239 @@
+.admin-clients-bg {
+  min-height: 100svh;
+  background: radial-gradient(
+    circle at top left,
+    #ffffff 0%,
+    #f5f3f4 45%,
+    #eee9ed 100%
+  );
+}
 .admin-clients {
-  padding-top: 24px;
-  padding-bottom: 32px;
+  max-width: var(--shell-max-width) !important;
+  padding: 32px !important;
   display: grid !important;
   gap: 16px;
 }
+.admin-clients-hero {
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: 8px !important;
+  background: linear-gradient(
+    135deg,
+    rgba(201, 20, 112, 0.12) 0%,
+    rgba(245, 243, 244, 0.85) 55%,
+    #fff 100%
+  ) !important;
+}
+.admin-clients-filters {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.86) !important;
+  backdrop-filter: blur(8px);
+}
 .admin-clients-grid {
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
   align-items: start;
 }
-.admin-client-card {
-  padding: 18px;
-  display: grid;
-  gap: 12px;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
 .admin-client-actions {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
 }
 .admin-client-event {
   border-top: 1px solid var(--border);
   padding-top: 12px;
 }
-@media (max-width: 700px) {
-  .admin-clients-grid {
-    grid-template-columns: minmax(0, 1fr);
+
+.admin-client-history {
+  border-radius: 8px !important;
+}
+.admin-client-history .MuiDialogTitle-root {
+  color: var(--accent-strong);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.admin-client-history-content {
+  display: grid;
+  gap: 12px;
+  overflow-wrap: anywhere;
+}
+.admin-client-history-content > h2 {
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.admin-clients > .MuiCircularProgress-root {
+  justify-self: center;
+  margin: 32px 0;
+}
+@media (max-width: 600px) {
+  .admin-clients {
+    padding: 16px !important;
+  }
+  .admin-clients-hero {
+    padding: 16px;
   }
 }
 
-.admin-client-list,
-.admin-client-identity {
+.admin-clients-table-container {
+  min-width: 0;
+  border-radius: 8px !important;
+  border-color: var(--border) !important;
+  background: rgba(255, 255, 255, 0.86) !important;
+  overflow-x: auto;
+}
+.admin-clients-table {
+  min-width: 680px;
+}
+.admin-clients-table .MuiTableCell-root {
+  overflow-wrap: anywhere;
+  padding: 12px;
+}
+.admin-clients-table .MuiTableHead-root {
+  background: var(--surface);
+}
+.admin-clients-table .MuiTableHead-root .MuiTableCell-root {
+  font-weight: 700;
+}
+.admin-clients-table .MuiTableRow-root.Mui-selected,
+.admin-clients-table .MuiTableRow-root.Mui-selected:hover {
+  background: var(--accent-soft);
+}
+
+.admin-client-booking-group {
+  display: grid;
+  gap: 10px;
   min-width: 0;
 }
-.admin-client-list-card {
-  grid-template-columns: minmax(0, 1fr) auto;
+.admin-client-booking-heading {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 8px 12px;
-  padding: 14px 16px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
-.admin-client-list-card .MuiChip-root {
-  justify-self: start;
-  max-width: 100%;
+
+.admin-client-mobile-label {
+  display: none;
 }
-.admin-client-list-card .admin-client-actions {
-  grid-column: 1 / -1;
-}
-.admin-client-selected {
-  border-color: var(--accent) !important;
-  background: var(--accent-soft) !important;
-}
-.admin-client-empty {
-  min-height: 160px;
-  align-content: center;
-  text-align: center;
-  border-style: dashed !important;
-}
-@media (max-width: 1023px) {
-  .admin-client-list-card {
-    grid-template-columns: minmax(0, 1fr);
+@media (max-width: 600px) {
+  .admin-clients {
+    padding: 12px !important;
+    gap: 12px;
+  }
+  .admin-clients-hero {
+    padding: 16px;
+  }
+  .admin-clients-hero h1 {
+    font-size: 1.25rem;
+  }
+  .admin-clients-filters {
+    padding: 12px;
+  }
+  .admin-clients-table,
+  .admin-clients-table .MuiTableBody-root {
+    display: block;
+    min-width: 0;
+    width: 100%;
+  }
+  .admin-clients-table .MuiTableHead-root {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .admin-clients-table .MuiTableBody-root .MuiTableRow-root {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 10px;
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .admin-clients-table .MuiTableBody-root .MuiTableRow-root:last-child {
+    border-bottom: 0;
+  }
+  .admin-clients-table .MuiTableBody-root .MuiTableCell-root {
+    display: block;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+  }
+  .admin-clients-table .MuiTableCell-root:nth-child(1) {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .admin-clients-table .MuiTableCell-root:nth-child(2) {
+    grid-column: 1;
+    grid-row: 2;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+  .admin-clients-table .MuiTableCell-root:nth-child(3) {
+    grid-column: 1;
+    grid-row: 3;
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+  }
+  .admin-clients-table .MuiTableCell-root:nth-child(4) {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+  .admin-clients-table .MuiTableCell-root:nth-child(5) {
+    grid-column: 2;
+    grid-row: 2 / 4;
+    align-self: center;
+  }
+  .admin-clients-table .MuiTableCell-root[colspan] {
+    grid-column: 1 / -1;
+  }
+  .admin-client-mobile-label {
+    display: inline;
+  }
+  .admin-client-actions .MuiIconButton-root {
+    min-width: 40px;
+    min-height: 40px;
+  }
+  .admin-client-history {
+    width: calc(100% - 24px) !important;
+    margin: 12px !important;
+    max-height: calc(100svh - 24px) !important;
+  }
+  .admin-client-history .MuiDialogTitle-root {
+    padding: 16px;
+    font-size: 1.1rem;
+    line-height: 1.35;
+  }
+  .admin-client-history-content {
+    padding: 16px;
+    gap: 16px;
+    min-width: 0;
+  }
+  .admin-client-history .MuiDialogActions-root {
+    padding: 8px 12px;
+  }
+  .admin-client-history .MuiDialogActions-root .MuiButton-root {
+    min-height: 40px;
+  }
+  .admin-client-booking-heading {
+    align-items: flex-start;
+  }
+  .admin-client-booking-heading .MuiChip-root {
+    max-width: 100%;
+    height: auto;
+    min-height: 24px;
+  }
+  .admin-client-booking-heading .MuiChip-label {
+    white-space: normal;
+    padding-top: 3px;
+    padding-bottom: 3px;
   }
 }

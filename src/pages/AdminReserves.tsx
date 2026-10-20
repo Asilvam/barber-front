@@ -93,11 +93,27 @@ function isPastAppointment(appointment: AdminAppointment): boolean {
   return appointmentDateTime.isBefore(businessNow())
 }
 
+function allowedStatusChanges(appointment: AdminAppointment, now: ReturnType<typeof businessNow>): AppointmentStatus[] {
+  if (appointment.status === 'pending') return ['confirmed', 'cancelled']
+  if (appointment.status === 'confirmed') {
+    return businessAppointmentDateTime(appointment.date, appointment.timeSlot).isAfter(now)
+      ? ['cancelled']
+      : ['completed', 'cancelled']
+  }
+  return []
+}
+
 export default function AdminReserves() {
   const navigate = useNavigate()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [appointments, setAppointments] = useState<AdminAppointment[]>([])
+  const [currentTime, setCurrentTime] = useState(businessNow)
+  useEffect(() => {
+    const timer = window.setInterval(() => setCurrentTime(businessNow()), 30_000)
+    return () => window.clearInterval(timer)
+  }, [])
+
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<'all' | AppointmentStatus>('all')
   const [barberFilter, setBarberFilter] = useState<'all' | string>('all')
@@ -203,12 +219,9 @@ export default function AdminReserves() {
 
   const handleStatusChange = async (appointmentId: string, status: AppointmentStatus) => {
     const current = appointments.find((item) => item._id === appointmentId)
-    if (current?.status === 'cancelled') {
-      void showNotice('Una reserva cancelada es definitiva y no puede modificarse.', 'warning')
-      return
-    }
-    if (current && isPastAppointment(current)) {
-      void showNotice('No puedes editar una reserva pasada o vencida.', 'warning')
+    if (!current || current.status === status) return
+    if (!allowedStatusChanges(current, businessNow()).includes(status)) {
+      void showNotice('Ese cambio no está permitido. Solo puedes completar reservas confirmadas desde su hora de inicio.', 'warning')
       return
     }
 
@@ -226,8 +239,8 @@ export default function AdminReserves() {
   }
 
   const openEditStatus = (appointment: AdminAppointment) => {
-    if (appointment.status === 'cancelled') {
-      void showNotice('Una reserva cancelada es definitiva y no puede modificarse.', 'warning')
+    if (appointment.status === 'cancelled' || appointment.status === 'completed') {
+      void showNotice('Una reserva cancelada o completada es definitiva y no puede modificarse.', 'warning')
       return
     }
     setEditingAppointment(appointment)
@@ -432,13 +445,9 @@ export default function AdminReserves() {
             ) : (
               filteredAndSorted.map((appointment) => {
                 const isPast = isPastAppointment(appointment)
-                const isCancelled = appointment.status === 'cancelled'
-                const editDisabled = updatingId === appointment._id || isPast || isCancelled
-                const editTooltip = isCancelled
-                  ? 'Una reserva cancelada no puede cambiar de estado'
-                  : isPast
-                    ? 'Reserva pasada no editable'
-                    : 'Editar estado'
+                const isFinal = appointment.status === 'cancelled' || appointment.status === 'completed'
+                const editDisabled = updatingId === appointment._id || allowedStatusChanges(appointment, currentTime).length === 0
+                const editTooltip = isFinal ? 'Una reserva cancelada o completada no puede cambiar de estado' : 'Editar estado'
                 return (
                   <Paper key={appointment._id} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1.5 }}>
                     <Stack spacing={0.8}>
@@ -530,8 +539,8 @@ export default function AdminReserves() {
                 ) : (
                   filteredAndSorted.map((appointment) => {
                     const isPast = isPastAppointment(appointment)
-                    const isCancelled = appointment.status === 'cancelled'
-                    const statusDisabled = updatingId === appointment._id || isPast
+                    const isFinal = appointment.status === 'cancelled' || appointment.status === 'completed'
+                    const statusDisabled = updatingId === appointment._id || allowedStatusChanges(appointment, currentTime).length === 0
                     return (
                       <TableRow key={appointment._id} hover sx={{ '&:nth-of-type(odd)': { bgcolor: 'rgba(201, 20, 112,0.04)' } }}>
                         <TableCell>{dayjs(appointment.date).format('DD/MM/YYYY')}</TableCell>
@@ -550,10 +559,10 @@ export default function AdminReserves() {
                           </Box>
                         </TableCell>
                         <TableCell>
-                          {isCancelled ? (
+                          {isFinal ? (
                             <Chip
                               label={getAppointmentStatusLabel(appointment)}
-                              color={statusColor.cancelled}
+                              color={statusColor[appointment.status]}
                               size="small"
                               sx={{ fontWeight: 600 }}
                             />
@@ -571,10 +580,9 @@ export default function AdminReserves() {
                                 inputProps={{ 'aria-label': 'Cambiar estado de reserva' }}
                                 sx={{ fontSize: 13, fontWeight: 600 }}
                               >
-                                <MenuItem value="pending">Pendiente</MenuItem>
-                                <MenuItem value="confirmed">Confirmada</MenuItem>
-                                <MenuItem value="cancelled">Cancelada</MenuItem>
-                                <MenuItem value="completed">Completada</MenuItem>
+                                {[appointment.status, ...allowedStatusChanges(appointment, currentTime)].map((status) => (
+                                  <MenuItem key={status} value={status}>{statusLabel[status]}</MenuItem>
+                                ))}
                               </Select>
                             </FormControl>
                           )}
@@ -609,10 +617,9 @@ export default function AdminReserves() {
                 value={statusDraft}
                 onChange={(e) => setStatusDraft(e.target.value as AppointmentStatus)}
               >
-                <MenuItem value="pending">Pendiente</MenuItem>
-                <MenuItem value="confirmed">Confirmada</MenuItem>
-                <MenuItem value="cancelled">Cancelada</MenuItem>
-                <MenuItem value="completed">Completada</MenuItem>
+                {editingAppointment && [editingAppointment.status, ...allowedStatusChanges(editingAppointment, currentTime)].map((status) => (
+                  <MenuItem key={status} value={status}>{statusLabel[status]}</MenuItem>
+                ))}
               </Select>
             </FormControl>
           </DialogContent>

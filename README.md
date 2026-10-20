@@ -136,3 +136,7 @@ src/
 La ruta `/admin/clients`, accesible desde el menú **Clientes**, permite buscar clientes por nombre o correo, consultar sus reservas e historial de acceso y bloquear o desbloquear nuevas reservas. El bloqueo exige un motivo interno y confirmación; no cancela las reservas vigentes. El desbloqueo conserva el historial. Los motivos se muestran únicamente a administración.
 
 Requiere los endpoints administrativos `GET /clients` y `PATCH /clients/:id/booking-access` del backend. La validación del bloqueo se realiza en el servidor incluso con sesiones abiertas; el cliente recibe un mensaje para contactar con la barbería si intenta reservar. Al pasar una reserva pendiente a confirmada, el backend solicita el envío del correo de confirmación.
+
+## Cierre de atenciones
+
+En **Admin → Reservas**, una reserva pendiente puede confirmarse o cancelarse. Una confirmada puede completarse desde su hora de inicio (America/Santiago), incluso si es pasada, o cancelarse. En escritorio se utiliza el selector de estado; en móvil, el icono de edición y **Guardar**. Las canceladas y completadas son definitivas. No hay completado automático. El backend valida las mismas transiciones y devuelve 409 si otra solicitud cambió el estado antes de guardar.

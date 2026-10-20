@@ -10,6 +10,7 @@ export interface Client {
   _id: string;
   name: string;
   email: string;
+  createdAt?: string;
   isBookingBlocked?: boolean;
   bookingAccessHistory?: BookingAccessEvent[];
 }
