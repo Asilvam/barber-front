@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import AppBar from '@mui/material/AppBar'
 import Box from '@mui/material/Box'
 import Toolbar from '@mui/material/Toolbar'
@@ -42,11 +42,21 @@ function NavBar() {
   const isAdmin = user?.role === 'admin'
 
   const [mobileOpen, setMobileOpen] = useState(false)
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null)
+  const mobileDrawerRef = useRef<HTMLDivElement>(null)
+
+  const closeMobileMenu = () => {
+    const focused = document.activeElement
+    if (focused instanceof HTMLElement && mobileDrawerRef.current?.contains(focused)) {
+      focused.blur()
+    }
+    setMobileOpen(false)
+  }
 
   const handleLogout = () => {
     localStorage.removeItem('auth_token')
     localStorage.removeItem('auth_user')
-    setMobileOpen(false)
+    closeMobileMenu()
     navigate('/')
   }
 
@@ -112,8 +122,14 @@ function NavBar() {
         {/* Mobile Burger Icon */}
         <IconButton
           color="primary"
-          aria-label="open menu"
-          onClick={() => setMobileOpen(true)}
+          ref={mobileMenuButtonRef}
+          aria-label="Abrir menú"
+          aria-expanded={mobileOpen}
+          aria-controls={mobileOpen ? 'mobile-navigation' : undefined}
+          onClick={(event) => {
+            event.currentTarget.blur()
+            setMobileOpen(true)
+          }}
           className="navbar-mobile-burger"
         >
           <MenuIcon />
@@ -124,11 +140,20 @@ function NavBar() {
       <Drawer
         anchor="right"
         open={mobileOpen}
-        onClose={() => setMobileOpen(false)}
+        onClose={() => closeMobileMenu()}
         slotProps={{
           paper: {
-            className: "navbar-drawer-paper"
-          }
+            className: "navbar-drawer-paper",
+            id: 'mobile-navigation',
+            ref: mobileDrawerRef,
+          },
+          transition: {
+            onExited: () => {
+              if (mobileMenuButtonRef.current?.getClientRects().length) {
+                mobileMenuButtonRef.current.focus()
+              }
+            },
+          },
         }}
       >
         <Box className="navbar-drawer-header">
@@ -136,7 +161,7 @@ function NavBar() {
             to="/"
             className="navbar-brand-link"
             aria-label="Ir al inicio"
-            onClick={() => setMobileOpen(false)}
+            onClick={() => closeMobileMenu()}
           >
             <Box className="navbar-logo-monogram navbar-drawer-logo" sx={{ width: 32, height: 32, fontSize: '0.8rem' }}>
               <img src={shaloBarberLogo} alt="Shalo Barber" className="navbar-logo-icon" />
@@ -149,7 +174,7 @@ function NavBar() {
               {businessName}
             </Typography>
           </NavLink>
-          <IconButton onClick={() => setMobileOpen(false)} color="primary">
+          <IconButton aria-label="Cerrar menú" onClick={closeMobileMenu} color="primary">
             <CloseIcon />
           </IconButton>
         </Box>
@@ -161,7 +186,7 @@ function NavBar() {
             <ListItemButton
               component={NavLink}
               to="/"
-              onClick={() => setMobileOpen(false)}
+              onClick={() => closeMobileMenu()}
               className="navbar-drawer-list-item-btn"
             >
               <ListItemIcon sx={{ minWidth: 35, color: 'inherit' }}>
@@ -180,7 +205,7 @@ function NavBar() {
                 <ListItemButton
                   component={NavLink}
                   to="/dashboard"
-                  onClick={() => setMobileOpen(false)}
+                  onClick={() => closeMobileMenu()}
                   className="navbar-drawer-list-item-btn"
                 >
                   <ListItemIcon sx={{ minWidth: 35, color: 'inherit' }}>
@@ -199,7 +224,7 @@ function NavBar() {
                     <ListItemButton
                       component={NavLink}
                       to="/admin/barbers"
-                      onClick={() => setMobileOpen(false)}
+                      onClick={() => closeMobileMenu()}
                       className="navbar-drawer-list-item-btn"
                     >
                       <ListItemIcon sx={{ minWidth: 35, color: 'inherit' }}>
@@ -215,7 +240,7 @@ function NavBar() {
                     <ListItemButton
                       component={NavLink}
                       to="/admin/reserves"
-                      onClick={() => setMobileOpen(false)}
+                      onClick={() => closeMobileMenu()}
                       className="navbar-drawer-list-item-btn"
                     >
                       <ListItemIcon sx={{ minWidth: 35, color: 'inherit' }}>
@@ -228,7 +253,7 @@ function NavBar() {
                     </ListItemButton>
                   </ListItem>
                   <ListItem disablePadding>
-                    <ListItemButton component={NavLink} to="/admin/clients" onClick={() => setMobileOpen(false)} className="navbar-drawer-list-item-btn">
+                    <ListItemButton component={NavLink} to="/admin/clients" onClick={() => closeMobileMenu()} className="navbar-drawer-list-item-btn">
                       <ListItemIcon sx={{ minWidth: 35, color: 'inherit' }}><AdminPanelSettingsIcon sx={{ fontSize: 20 }} /></ListItemIcon>
                       <ListItemText primary="Clientes" />
                     </ListItemButton>
@@ -257,7 +282,7 @@ function NavBar() {
               <ListItemButton
                 component={NavLink}
                 to="/login"
-                onClick={() => setMobileOpen(false)}
+                onClick={() => closeMobileMenu()}
                 className="navbar-drawer-list-item-btn"
               >
                 <ListItemIcon sx={{ minWidth: 35, color: 'inherit' }}>
