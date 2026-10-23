@@ -140,3 +140,11 @@ Requiere los endpoints administrativos `GET /clients` y `PATCH /clients/:id/book
 ## Cierre de atenciones
 
 En **Admin → Reservas**, una reserva pendiente puede confirmarse o cancelarse. Una confirmada puede completarse desde su hora de inicio (America/Santiago), incluso si es pasada, o cancelarse. En escritorio se utiliza el selector de estado; en móvil, el icono de edición y **Guardar**. Las canceladas y completadas son definitivas. No hay completado automático. El backend valida las mismas transiciones y devuelve 409 si otra solicitud cambió el estado antes de guardar.
+
+### Operación diaria de reservas
+
+Reservas abre en **Hoy**, ordenadas por hora ascendente. **Todas** permite consultar otras fechas; **Por cerrar** reúne las confirmadas cuya hora de inicio ya pasó, para completarlas o cancelarlas manualmente. Los filtros y contadores corresponden a la vista elegida.
+
+Cancelar solicita confirmación, libera el horario y envía un correo que distingue si canceló el cliente o administración. El cliente recibe también una confirmación en pantalla. **Archivar** está disponible únicamente para canceladas o completadas, sin límite por fecha: las oculta del listado, conserva su historial en Clientes y no envía otro correo. Requiere desplegar el backend con soporte de archivado antes del frontend.
+
+Si falla la consulta del calendario o de horarios, se muestra un error con **Reintentar**; no se presenta como un día sin agenda.

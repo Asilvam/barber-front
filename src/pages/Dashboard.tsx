@@ -239,7 +239,7 @@ export default function Dashboard() {
       await cancelMyAppointment(activeAppointment._id)
       await Swal.fire({
         title: 'Reserva cancelada',
-        text: 'El horario fue liberado correctamente.',
+        text: 'Tu reserva fue cancelada. El horario quedó disponible para otra persona.',
         icon: 'success',
         background: '#ffffff',
         color: '#1b191d',

@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
@@ -120,6 +121,9 @@ export default function BarberAvailability() {
 
   const [selectedDate, setSelectedDate] = useState<Dayjs>(() => businessNow())
   const [slots, setSlots] = useState<AvailabilitySlot[]>([])
+  const slotsRequest = useRef(0)
+  const [slotsLoadError, setSlotsLoadError] = useState(false)
+  const [calendarLoadError, setCalendarLoadError] = useState(false)
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [loadingCalendar, setLoadingCalendar] = useState(false)
   const [activeAppointment, setActiveAppointment] = useState<Appointment | null>(null)
@@ -209,16 +213,21 @@ export default function BarberAvailability() {
   // ── slots fetch handler ──
   const loadSlotsForDate = useCallback(async (date: Dayjs) => {
     if (!id) return
+    const request = ++slotsRequest.current
     await Promise.resolve()
     setLoadingSlots(true)
+    setSlotsLoadError(false)
     try {
       const resp = await fetchAvailableSlots(id, date.format('YYYY-MM-DD'))
+      if (request !== slotsRequest.current) return
       setSlots(resp.slots ?? resp.availableSlots.map((time) => ({ time, status: 'available' })))
     } catch (err) {
+      if (request !== slotsRequest.current) return
       console.error('Error fetching availability:', err)
+      setSlotsLoadError(true)
       setSlots([])
     } finally {
-      setLoadingSlots(false)
+      if (request === slotsRequest.current) setLoadingSlots(false)
     }
   }, [id])
 
@@ -226,6 +235,7 @@ export default function BarberAvailability() {
     if (!id) return
 
     setLoadingCalendar(true)
+    setCalendarLoadError(false)
     try {
       const schedules = await fetchBarberSchedules()
       const datesWithSchedule = schedules
@@ -247,6 +257,7 @@ export default function BarberAvailability() {
 
       setScheduledDates(new Set(datesWithSchedule))
     } catch (err) {
+      setCalendarLoadError(true)
       console.error('Error loading calendar overview:', err)
       setScheduledDates(new Set())
     } finally {
@@ -618,8 +629,9 @@ export default function BarberAvailability() {
                       />
                     </LocalizationProvider>
 
+                    {calendarLoadError && <Alert severity="error" action={<Button color="inherit" size="small" onClick={() => void loadCalendarOverview()}>Reintentar</Button>}>No pudimos cargar los días con agenda.</Alert>}
                     <Box className="availability-calendar-legend">
-                      <span><i className="legend-dot legend-dot-available" />Con agenda disponible</span>
+                      {!calendarLoadError && <span><i className="legend-dot legend-dot-available" />Con agenda disponible</span>}
                       {loadingCalendar && (
                         <span className="calendar-loading-label">
                           <CircularProgress size={12} />
@@ -644,6 +656,8 @@ export default function BarberAvailability() {
                         Consultando disponibilidad...
                       </Typography>
                     </Box>
+                  ) : slotsLoadError ? (
+                    <Alert severity="error" action={<Button color="inherit" size="small" onClick={() => void loadSlotsForDate(selectedDate)}>Reintentar</Button>}>No pudimos consultar los horarios. Inténtalo nuevamente.</Alert>
                   ) : slots.length === 0 ? (
                     <Box sx={{ textAlign: 'center', py: 5, px: 2, bgcolor: 'rgba(201, 20, 112,0.05)', borderRadius: 1, border: '1px dashed rgba(201, 20, 112,0.22)' }}>
                       <Typography variant="body1" sx={{ color: 'text.primary', fontWeight: 600, mb: 0.8 }}>

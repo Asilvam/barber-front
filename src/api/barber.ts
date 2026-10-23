@@ -164,9 +164,9 @@ export async function cancelMyAppointment(appointmentId: string): Promise<Appoin
 }
 
 /** List appointments. Backend restricts this endpoint to admin users. */
-export async function fetchAppointments(): Promise<Appointment[]> {
-  return getCached('appointments:all', APPOINTMENTS_TTL_MS, async () => {
-    const { data } = await apiClient.get<Appointment[]>('/appointments')
+export async function fetchAppointments(includeArchived = false): Promise<Appointment[]> {
+  return getCached(`appointments:all:${includeArchived}`, APPOINTMENTS_TTL_MS, async () => {
+    const { data } = await apiClient.get<Appointment[]>('/appointments', includeArchived ? { params: { includeArchived: true } } : undefined)
     return data
   })
 }

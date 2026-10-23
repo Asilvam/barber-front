@@ -61,7 +61,7 @@ import {
   type BarberSchedule,
   type TimeSlot,
 } from '../api/barber'
-import { businessDate, businessNow } from '../utils/businessTime'
+import { businessAppointmentDateTime, businessDate, businessNow } from '../utils/businessTime'
 import { appDialog as Swal } from '../utils/notifications'
 import { showNotice } from '../utils/notifications'
 
@@ -150,6 +150,11 @@ export default function AdminBarbers() {
   const [schedules, setSchedules] = useState<BarberSchedule[]>([])
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
+  const [currentTime, setCurrentTime] = useState(businessNow)
+  useEffect(() => {
+    const timer = window.setInterval(() => setCurrentTime(businessNow()), 30_000)
+    return () => window.clearInterval(timer)
+  }, [])
   const [selectedBarberId, setSelectedBarberId] = useState<string>('')
 
   // form dialog states
@@ -204,7 +209,7 @@ export default function AdminBarbers() {
   // ── load data ──
   const loadData = useCallback(() => {
     setLoading(true)
-    Promise.all([fetchBarbers(), fetchBarberSchedules(), fetchAppointments()])
+    Promise.all([fetchBarbers(), fetchBarberSchedules(), fetchAppointments(true)])
       .then(([b, s, a]) => {
         setBarbers(b)
         setSchedules(s)
@@ -222,7 +227,7 @@ export default function AdminBarbers() {
 
   useEffect(() => {
     const ac = new AbortController()
-    Promise.all([fetchBarbers(), fetchBarberSchedules(), fetchAppointments()])
+    Promise.all([fetchBarbers(), fetchBarberSchedules(), fetchAppointments(true)])
       .then(([b, s, a]) => {
         if (!ac.signal.aborted) {
           setBarbers(b)
@@ -925,21 +930,30 @@ export default function AdminBarbers() {
 	                        const selectedSchedule = scheduleMap[selectedDateStr]
 	                        const selectedDateAppointments = appointmentsByDate[selectedDateStr] ?? []
 
-	                        // Helper function to calculate net working hours
-	                        const getNetHours = (sch: BarberSchedule) => {
+	                        // Count work intervals once and subtract only overlapping breaks.
+                        const getNetHours = (sch: BarberSchedule) => {
                           if (sch.isDayOff) return 0
-                          let totalMinutes = 0
-                          sch.workingHours.forEach((wh) => {
-                            const start = dayjs(`2000-01-01T${wh.start}`)
-                            const end = dayjs(`2000-01-01T${wh.end}`)
-                            totalMinutes += end.diff(start, 'minute')
-                          })
-                          sch.breakTimes.forEach((bt) => {
-                            const start = dayjs(`2000-01-01T${bt.start}`)
-                            const end = dayjs(`2000-01-01T${bt.end}`)
-                            totalMinutes -= end.diff(start, 'minute')
-                          })
-                          return Math.max(0, totalMinutes / 60)
+                          const mergeIntervals = (ranges: BarberSchedule['workingHours']) => {
+                            const intervals = ranges.map(({ start, end }) => [
+                              dayjs(`2000-01-01T${start}`).valueOf(),
+                              dayjs(`2000-01-01T${end}`).valueOf(),
+                            ]).filter(([start, end]) => end > start).sort((a, b) => a[0] - b[0])
+                            const merged: number[][] = []
+                            for (const [start, end] of intervals) {
+                              const previous = merged[merged.length - 1]
+                              if (previous && start <= previous[1]) previous[1] = Math.max(previous[1], end)
+                              else merged.push([start, end])
+                            }
+                            return merged
+                          }
+                          const work = mergeIntervals(sch.workingHours)
+                          const breaks = mergeIntervals(sch.breakTimes)
+                          const netMilliseconds = work.reduce((total, [start, end]) => {
+                            const resting = breaks.reduce((sum, [breakStart, breakEnd]) =>
+                              sum + Math.max(0, Math.min(end, breakEnd) - Math.max(start, breakStart)), 0)
+                            return total + end - start - resting
+                          }, 0)
+                          return netMilliseconds / 3_600_000
                         }
 
                         return (
@@ -1045,7 +1059,7 @@ export default function AdminBarbers() {
                               </Box>
 
                               {/* Fila 2 - Columna 1: Horario de Trabajo */}
-                              <Box>
+                              <Box sx={{ minWidth: 0 }}>
                                 <Typography
                                   variant="caption"
                                   sx={{
@@ -1059,29 +1073,60 @@ export default function AdminBarbers() {
                                 >
                                   Horario
                                 </Typography>
-                                <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 88px), 1fr))', gap: 0.5, alignItems: 'start' }}>
                                   {!selectedSchedule.isDayOff && selectedSchedule.workingHours.length > 0 ? (
-                                    selectedSchedule.workingHours.map((wh, idx) => (
-                                      <Chip
-                                        key={idx}
-                                        label={`${wh.start} – ${wh.end}`}
-                                        size="small"
-                                        variant="outlined"
-                                        sx={{
-                                          borderColor: 'rgba(201, 20, 112,0.25)',
-                                          color: 'primary.dark',
-                                          fontWeight: 600,
-                                          fontSize: 11,
-                                          height: 22,
-                                        }}
-                                      />
-                                    ))
+                                    [...selectedSchedule.workingHours]
+                                      .sort((a, b) => a.start.localeCompare(b.start))
+                                      .map((wh) => {
+                                        const start = businessAppointmentDateTime(selectedDateStr, wh.start)
+                                        const end = businessAppointmentDateTime(selectedDateStr, wh.end)
+                                        const expired = !start.isAfter(currentTime)
+                                        const occupied = selectedDateAppointments.some((appointment) => {
+                                          if (appointment.status === 'cancelled') return false
+                                          const appointmentStart = businessAppointmentDateTime(selectedDateStr, appointment.timeSlot)
+                                          return appointmentStart.isBefore(end) && appointmentStart.add(60, 'minute').isAfter(start)
+                                        })
+                                        const status = occupied ? 'Ocupado' : expired ? 'Quedó libre' : 'Disponible'
+                                        const colors = occupied
+                                          ? expired
+                                            ? { background: '#fbeaec', border: '#edc5cb', text: '#87414b' }
+                                            : { background: '#f8cdd3', border: '#ca6574', text: '#8e2235' }
+                                          : expired
+                                            ? { background: '#edf6ef', border: '#cce0d0', text: '#466c50' }
+                                            : { background: '#d1ebd8', border: '#68a779', text: '#205d32' }
+                                        return (
+                                          <Tooltip key={`${wh.start}-${wh.end}`} title={`${status}${expired ? ' · Horario vencido' : ''}`} arrow>
+                                            <Chip
+                                              label={`${wh.start} – ${wh.end}`}
+                                              aria-label={`${wh.start} a ${wh.end}: ${status}${expired ? ', horario vencido' : ''}`}
+                                              size="small"
+                                              variant="outlined"
+                                              sx={{
+                                                borderColor: colors.border,
+                                                bgcolor: colors.background,
+                                                color: colors.text,
+                                                fontWeight: 600,
+                                                fontSize: 11,
+                                                height: 24,
+                                                width: '100%',
+                                                minWidth: 0,
+                                                '& .MuiChip-label': { px: 0.5, textAlign: 'center' },
+                                              }}
+                                            />
+                                          </Tooltip>
+                                        )
+                                      })
                                   ) : (
                                     <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
                                       —
                                     </Typography>
                                   )}
                                 </Box>
+                                {!selectedSchedule.isDayOff && (
+                                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.75, fontSize: 10 }}>
+                                    Rojo: ocupado · Verde: libre. Tonos pastel: vencidos.
+                                  </Typography>
+                                )}
                               </Box>
 
                               {/* Fila 2 - Columna 2: Descansos */}
@@ -1101,7 +1146,7 @@ export default function AdminBarbers() {
                                 </Typography>
                                 <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
                                   {!selectedSchedule.isDayOff && selectedSchedule.breakTimes.length > 0 ? (
-                                    selectedSchedule.breakTimes.map((bt, idx) => (
+                                    [...selectedSchedule.breakTimes].sort((a, b) => a.start.localeCompare(b.start)).map((bt, idx) => (
                                       <Chip
                                         key={idx}
                                         label={`${bt.start} – ${bt.end}`}

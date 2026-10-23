@@ -37,10 +37,11 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import CancelIcon from '@mui/icons-material/Cancel'
 import TaskAltIcon from '@mui/icons-material/TaskAlt'
 import EditIcon from '@mui/icons-material/Edit'
-import DeleteIcon from '@mui/icons-material/Delete'
+import ArchiveOutlinedIcon from '@mui/icons-material/ArchiveOutlined'
+import ButtonGroup from '@mui/material/ButtonGroup'
 import type { Barber } from '../api/barber'
 import {
-  deleteAppointment,
+  archiveAppointment,
   fetchAdminAppointments,
   updateAppointmentStatus,
   type AdminAppointment,
@@ -88,11 +89,6 @@ function getClientEmail(clientId: AdminAppointment['clientId']): string {
   return clientId.email
 }
 
-function isPastAppointment(appointment: AdminAppointment): boolean {
-  const appointmentDateTime = businessAppointmentDateTime(appointment.date, appointment.timeSlot)
-  return appointmentDateTime.isBefore(businessNow())
-}
-
 function allowedStatusChanges(appointment: AdminAppointment, now: ReturnType<typeof businessNow>): AppointmentStatus[] {
   if (appointment.status === 'pending') return ['confirmed', 'cancelled']
   if (appointment.status === 'confirmed') {
@@ -115,11 +111,12 @@ export default function AdminReserves() {
   }, [])
 
   const [loading, setLoading] = useState(true)
+  const [agendaView, setAgendaView] = useState<'today' | 'all' | 'closing'>('today')
   const [statusFilter, setStatusFilter] = useState<'all' | AppointmentStatus>('all')
   const [barberFilter, setBarberFilter] = useState<'all' | string>('all')
   const [clientQuery, setClientQuery] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('date')
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [editingAppointment, setEditingAppointment] = useState<AdminAppointment | null>(null)
   const [statusDraft, setStatusDraft] = useState<AppointmentStatus>('pending')
@@ -155,10 +152,17 @@ export default function AdminReserves() {
     return names
   }, [appointments])
 
+  const closingCount = useMemo(() => appointments.filter((appointment) => appointment.status === 'confirmed' && !businessAppointmentDateTime(appointment.date, appointment.timeSlot).isAfter(currentTime)).length, [appointments, currentTime])
+  const agendaAppointments = useMemo(() => appointments.filter((appointment) => {
+    if (agendaView === 'today') return appointment.date === currentTime.format('YYYY-MM-DD')
+    if (agendaView === 'closing') return appointment.status === 'confirmed' && !businessAppointmentDateTime(appointment.date, appointment.timeSlot).isAfter(currentTime)
+    return true
+  }), [appointments, agendaView, currentTime])
+
   const filteredAndSorted = useMemo(() => {
     const normalizedQuery = clientQuery.trim().toLowerCase()
 
-    const filtered = appointments.filter((appointment) => {
+    const filtered = agendaAppointments.filter((appointment) => {
       if (statusFilter !== 'all' && appointment.status !== statusFilter) {
         return false
       }
@@ -205,7 +209,7 @@ export default function AdminReserves() {
       const dateCmp = aDateTime.localeCompare(bDateTime)
       return sortDirection === 'asc' ? dateCmp : -dateCmp
     })
-  }, [appointments, statusFilter, barberFilter, clientQuery, sortKey, sortDirection])
+  }, [agendaAppointments, statusFilter, barberFilter, clientQuery, sortKey, sortDirection])
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -223,6 +227,15 @@ export default function AdminReserves() {
     if (!allowedStatusChanges(current, businessNow()).includes(status)) {
       void showNotice('Ese cambio no está permitido. Solo puedes completar reservas confirmadas desde su hora de inicio.', 'warning')
       return
+    }
+
+    if (status === 'cancelled') {
+      const confirmation = await Swal.fire({
+        title: '¿Cancelar reserva?',
+        text: 'Se liberará el horario y se enviará un correo al cliente. La cancelación es definitiva.',
+        icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, cancelar reserva', cancelButtonText: 'Volver',
+      })
+      if (!confirmation.isConfirmed) return
     }
 
     setUpdatingId(appointmentId)
@@ -255,18 +268,18 @@ export default function AdminReserves() {
     await handleStatusChange(appointmentId, statusDraft)
   }
 
-  const handleDeleteAppointment = async (appointment: AdminAppointment) => {
-    if (isPastAppointment(appointment)) {
-      void showNotice('No puedes eliminar una reserva pasada o vencida.', 'warning')
+  const handleArchiveAppointment = async (appointment: AdminAppointment) => {
+    if (!['cancelled', 'completed'].includes(appointment.status)) {
+      void showNotice('Solo puedes archivar reservas canceladas o completadas.', 'warning')
       return
     }
 
     const confirmation = await Swal.fire({
-      title: '¿Eliminar reserva?',
-      text: 'Esta acción eliminará la reserva seleccionada de forma permanente.',
+      title: '¿Archivar reserva?',
+      text: 'Se quitará del listado de reservas y se conservará en el historial del cliente.',
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Sí, eliminar',
+      confirmButtonText: 'Sí, archivar',
       cancelButtonText: 'Cancelar',
       background: '#ffffff',
       color: '#1b191d',
@@ -276,19 +289,19 @@ export default function AdminReserves() {
     const appointmentId = appointment._id
     setUpdatingId(appointmentId)
     try {
-      await deleteAppointment(appointmentId)
+      await archiveAppointment(appointmentId)
       setAppointments((prev) => prev.filter((item) => item._id !== appointmentId))
-      void showNotice('Reserva eliminada correctamente.', 'success')
+      void showNotice('Reserva archivada. Se conservó en el historial del cliente.', 'success')
     } catch (err) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-      void showNotice(msg ?? 'No se pudo eliminar la reserva.', 'error')
+      void showNotice(msg ?? 'No se pudo archivar la reserva.', 'error')
     } finally {
       setUpdatingId(null)
     }
   }
 
   const statusTotals = useMemo(() => {
-    return appointments.reduce(
+    return agendaAppointments.reduce(
       (acc, item) => {
         acc[item.status] += 1
         return acc
@@ -300,7 +313,7 @@ export default function AdminReserves() {
         completed: 0,
       } as Record<AppointmentStatus, number>,
     )
-  }, [appointments])
+  }, [agendaAppointments])
 
   return (
     <Box className="admin-bg">
@@ -354,7 +367,7 @@ export default function AdminReserves() {
             >
               <Chip
                 icon={<EventNoteIcon />}
-                label={`${appointments.length} reservas`}
+                label={`${agendaAppointments.length} ${agendaAppointments.length === 1 ? 'reserva' : 'reservas'}`}
                 color="primary"
                 variant="filled"
                 sx={{ fontWeight: 700, borderRadius: 1 }}
@@ -376,6 +389,12 @@ export default function AdminReserves() {
             </Box>
           </Box>
         </Paper>
+
+        <ButtonGroup aria-label="Vista de agenda" size="small" sx={{ mb: 2, flexWrap: 'wrap' }}>
+          <Button variant={agendaView === 'today' ? 'contained' : 'outlined'} onClick={() => setAgendaView('today')}>Hoy</Button>
+          <Button variant={agendaView === 'all' ? 'contained' : 'outlined'} onClick={() => setAgendaView('all')}>Todas</Button>
+          <Button variant={agendaView === 'closing' ? 'contained' : 'outlined'} onClick={() => setAgendaView('closing')}>Por cerrar ({closingCount})</Button>
+        </ButtonGroup>
 
         <Box sx={{ mb: 2.2 }}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
@@ -444,7 +463,6 @@ export default function AdminReserves() {
               </Paper>
             ) : (
               filteredAndSorted.map((appointment) => {
-                const isPast = isPastAppointment(appointment)
                 const isFinal = appointment.status === 'cancelled' || appointment.status === 'completed'
                 const editDisabled = updatingId === appointment._id || allowedStatusChanges(appointment, currentTime).length === 0
                 const editTooltip = isFinal ? 'Una reserva cancelada o completada no puede cambiar de estado' : 'Editar estado'
@@ -478,10 +496,10 @@ export default function AdminReserves() {
                             </IconButton>
                           </span>
                         </Tooltip>
-                        <Tooltip title={isPast ? 'Reserva pasada no editable' : 'Eliminar reserva'} arrow>
+                        <Tooltip title={isFinal ? 'Archivar reserva' : 'Primero cancela o completa la reserva'} arrow>
                           <span>
-                            <IconButton size="small" color="error" onClick={() => void handleDeleteAppointment(appointment)} disabled={updatingId === appointment._id || isPast}>
-                              <DeleteIcon fontSize="small" />
+                            <IconButton size="small" color="primary" aria-label="Archivar reserva" onClick={() => void handleArchiveAppointment(appointment)} disabled={updatingId === appointment._id || !isFinal}>
+                              <ArchiveOutlinedIcon fontSize="small" />
                             </IconButton>
                           </span>
                         </Tooltip>
@@ -538,8 +556,7 @@ export default function AdminReserves() {
                   </TableRow>
                 ) : (
                   filteredAndSorted.map((appointment) => {
-                    const isPast = isPastAppointment(appointment)
-                    const isFinal = appointment.status === 'cancelled' || appointment.status === 'completed'
+                        const isFinal = appointment.status === 'cancelled' || appointment.status === 'completed'
                     const statusDisabled = updatingId === appointment._id || allowedStatusChanges(appointment, currentTime).length === 0
                     return (
                       <TableRow key={appointment._id} hover sx={{ '&:nth-of-type(odd)': { bgcolor: 'rgba(201, 20, 112,0.04)' } }}>
@@ -602,10 +619,10 @@ export default function AdminReserves() {
                         </TableCell>
                         <TableCell align="right">
                           <Stack direction="row" spacing={0.4} sx={{ justifyContent: 'flex-end' }}>
-                            <Tooltip title={isPast ? 'Reserva pasada no editable' : 'Eliminar reserva'} arrow>
+                            <Tooltip title={isFinal ? 'Archivar reserva' : 'Primero cancela o completa la reserva'} arrow>
                               <span>
-                                <IconButton size="small" color="error" onClick={() => void handleDeleteAppointment(appointment)} disabled={updatingId === appointment._id || isPast}>
-                                  <DeleteIcon fontSize="small" />
+                                <IconButton size="small" color="primary" aria-label="Archivar reserva" onClick={() => void handleArchiveAppointment(appointment)} disabled={updatingId === appointment._id || !isFinal}>
+                                  <ArchiveOutlinedIcon fontSize="small" />
                                 </IconButton>
                               </span>
                             </Tooltip>

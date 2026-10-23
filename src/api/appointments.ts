@@ -18,12 +18,14 @@ export interface AdminAppointment {
   status: AppointmentStatus
   cancelledBy?: AppointmentCancellationActor
   cancelledAt?: string
+  archivedAt?: string
+  archivedBy?: string
   barberId: string | Barber
   clientId: string | AppointmentUser
 }
 
-export async function fetchAdminAppointments(): Promise<AdminAppointment[]> {
-  const { data } = await apiClient.get<AdminAppointment[]>('/appointments')
+export async function fetchAdminAppointments(includeArchived = false): Promise<AdminAppointment[]> {
+  const { data } = await apiClient.get<AdminAppointment[]>('/appointments', includeArchived ? { params: { includeArchived: true } } : undefined)
   return data
 }
 
@@ -37,6 +39,6 @@ export async function updateAppointmentStatus(
   return data
 }
 
-export async function deleteAppointment(appointmentId: string): Promise<void> {
+export async function archiveAppointment(appointmentId: string): Promise<void> {
   await apiClient.delete(`/appointments/${appointmentId}`)
 }

@@ -59,7 +59,7 @@ export default function AdminClients() {
   const [error, setError] = useState("");
   useEffect(() => {
     let active = true;
-    Promise.all([fetchClients(), fetchAdminAppointments()])
+    Promise.all([fetchClients(), fetchAdminAppointments(true)])
       .then(([users, bookings]) => {
         if (active) {
           setClients(users);
@@ -379,6 +379,7 @@ export default function AdminClients() {
                                     ? "Barbero"
                                     : appointment.barberId?.name}
                                 </Typography>
+                                {appointment.archivedAt && <Typography variant="caption" color="text.secondary">Archivada del listado · {new Date(appointment.archivedAt).toLocaleDateString("es-CL", { timeZone: "America/Santiago" })}</Typography>}
                               </Box>
                             ))}
                           </Box>
