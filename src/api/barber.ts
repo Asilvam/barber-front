@@ -224,6 +224,14 @@ export async function updateBarberSchedule(
   return data
 }
 
+/** Remove one free future work interval without deleting the day. */
+export async function removeBarberScheduleBlock(id: string, block: TimeSlot): Promise<BarberSchedule> {
+  const { data } = await apiClient.patch<BarberSchedule>(`/barber-schedules/${id}/remove-block`, block)
+  invalidateCache([SCHEDULES_CACHE_KEY])
+  invalidateAvailability()
+  return data
+}
+
 /** Delete a barber schedule */
 export async function deleteBarberSchedule(id: string): Promise<void> {
   await apiClient.delete(`/barber-schedules/${id}`)

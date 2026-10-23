@@ -54,6 +54,7 @@ import {
   fetchBarberSchedules,
   createBarberSchedule,
   deleteBarberSchedule,
+  removeBarberScheduleBlock,
   updateBarber,
   createBarber,
   type Appointment,
@@ -155,6 +156,7 @@ export default function AdminBarbers() {
     const timer = window.setInterval(() => setCurrentTime(businessNow()), 30_000)
     return () => window.clearInterval(timer)
   }, [])
+  const [removingBlock, setRemovingBlock] = useState(false)
   const [selectedBarberId, setSelectedBarberId] = useState<string>('')
 
   // form dialog states
@@ -420,6 +422,29 @@ export default function AdminBarbers() {
       void showNotice(msg, 'error', 'No se pudieron crear los horarios')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  const handleRemoveBlock = async (schedule: BarberSchedule, block: TimeSlot) => {
+    const confirmation = await Swal.fire({
+      title: '¿Quitar este horario?',
+      text: `${getBarberName(schedule.barberId)} · ${businessDate(schedule.date).format('D [de] MMMM [de] YYYY')} · ${block.start}–${block.end}. Los demás horarios y las reservas se conservarán.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, quitar horario',
+      cancelButtonText: 'Volver',
+    })
+    if (!confirmation.isConfirmed) return
+    setRemovingBlock(true)
+    try {
+      await removeBarberScheduleBlock(schedule._id, block)
+      await showNotice('Horario quitado de la agenda.', 'success')
+      loadData()
+    } catch (error) {
+      const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message
+      void showNotice(message || 'No se pudo quitar el horario. Actualiza la agenda e inténtalo nuevamente.', 'error')
+    } finally {
+      setRemovingBlock(false)
     }
   }
 
@@ -1073,7 +1098,7 @@ export default function AdminBarbers() {
                                 >
                                   Horario
                                 </Typography>
-                                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 88px), 1fr))', gap: 0.5, alignItems: 'start' }}>
+                                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 112px), 1fr))', gap: 0.5, alignItems: 'start' }}>
                                   {!selectedSchedule.isDayOff && selectedSchedule.workingHours.length > 0 ? (
                                     [...selectedSchedule.workingHours]
                                       .sort((a, b) => a.start.localeCompare(b.start))
@@ -1100,6 +1125,7 @@ export default function AdminBarbers() {
                                               label={`${wh.start} – ${wh.end}`}
                                               aria-label={`${wh.start} a ${wh.end}: ${status}${expired ? ', horario vencido' : ''}`}
                                               size="small"
+                                              onDelete={!expired && !occupied && !removingBlock ? () => void handleRemoveBlock(selectedSchedule, wh) : undefined}
                                               variant="outlined"
                                               sx={{
                                                 borderColor: colors.border,
@@ -1111,6 +1137,7 @@ export default function AdminBarbers() {
                                                 width: '100%',
                                                 minWidth: 0,
                                                 '& .MuiChip-label': { px: 0.5, textAlign: 'center' },
+                                                '& .MuiChip-deleteIcon': { color: 'inherit', fontSize: 17, mr: 0.5 },
                                               }}
                                             />
                                           </Tooltip>

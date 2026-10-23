@@ -148,3 +148,5 @@ Reservas abre en **Hoy**, ordenadas por hora ascendente. **Todas** permite consu
 Cancelar solicita confirmación, libera el horario y envía un correo que distingue si canceló el cliente o administración. El cliente recibe también una confirmación en pantalla. **Archivar** está disponible únicamente para canceladas o completadas, sin límite por fecha: las oculta del listado, conserva su historial en Clientes y no envía otro correo. Requiere desplegar el backend con soporte de archivado antes del frontend.
 
 Si falla la consulta del calendario o de horarios, se muestra un error con **Reintentar**; no se presenta como un día sin agenda.
+
+En **Barberos → Calendario → Horario**, la **×** de cada bloque permite quitar solo ese intervalo si aún es futuro y libre. Se confirma la fecha y el rango antes de guardar. Las reservas canceladas se conservan en el historial; los bloques ocupados o vencidos no ofrecen la acción. La papelera de la cabecera mantiene su acción sobre la agenda completa del día. Desplegar primero el backend con `/barber-schedules/:id/remove-block`.
