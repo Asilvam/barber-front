@@ -39,6 +39,8 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import ScheduleIcon from '@mui/icons-material/Schedule'
 import EventBusyIcon from '@mui/icons-material/EventBusy'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import CheckIcon from '@mui/icons-material/Check'
+import CloseIcon from '@mui/icons-material/Close'
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
@@ -428,10 +430,10 @@ export default function AdminBarbers() {
   const handleRemoveBlock = async (schedule: BarberSchedule, block: TimeSlot) => {
     const confirmation = await Swal.fire({
       title: '¿Quitar este horario?',
-      text: `${getBarberName(schedule.barberId)} · ${businessDate(schedule.date).format('D [de] MMMM [de] YYYY')} · ${block.start}–${block.end}. Los demás horarios y las reservas se conservarán.`,
+      text: `${getBarberName(schedule.barberId)} · ${businessDate(schedule.date).format('D [de] MMMM [de] YYYY')} · ${block.start}–${block.end}. Las reservas pendientes o confirmadas de este bloque se cancelarán y se enviará un correo a cada cliente. Los demás horarios y el historial se conservarán.`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Sí, quitar horario',
+      confirmButtonText: 'Sí, cancelar reservas y quitar',
       cancelButtonText: 'Volver',
     })
     if (!confirmation.isConfirmed) return
@@ -451,10 +453,10 @@ export default function AdminBarbers() {
   const handleDelete = async (schedule: BarberSchedule) => {
     const confirmation = await Swal.fire({
       title: '¿Eliminar horario?',
-      text: `Se eliminará el horario de ${getBarberName(schedule.barberId)} del día ${dayjs(schedule.date).format('D [de] MMM, YYYY')}.`,
+      text: `Se quitará la agenda de ${getBarberName(schedule.barberId)} del ${dayjs(schedule.date).format('D [de] MMM, YYYY')}. Las reservas pendientes o confirmadas se cancelarán y se enviará un correo a cada cliente. El historial se conservará.`,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonText: 'Sí, eliminar',
+      confirmButtonText: 'Sí, cancelar reservas y quitar agenda',
       cancelButtonText: 'Cancelar',
       background: '#ffffff',
       color: '#1b191d',
@@ -462,7 +464,7 @@ export default function AdminBarbers() {
     if (!confirmation.isConfirmed) return
 
     try {
-      await deleteBarberSchedule(schedule._id)
+      await deleteBarberSchedule(schedule._id, true)
       void showNotice('Horario eliminado.', 'success')
       loadData()
     } catch (err) {
@@ -992,6 +994,8 @@ export default function AdminBarbers() {
 	                                <IconButton
 	                                  size="small"
 	                                  onClick={() => void handleDelete(selectedSchedule)}
+                                      disabled={businessDate(selectedSchedule.date).isBefore(currentTime.startOf('day')) || selectedSchedule.workingHours.some((block) => !businessAppointmentDateTime(selectedSchedule.date, block.start).isAfter(currentTime))}
+                                      aria-label="Eliminar agenda del día"
 	                                  sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}
 	                                >
 	                                  <DeleteIcon fontSize="small" />
@@ -1009,9 +1013,8 @@ export default function AdminBarbers() {
 	                              <Box
 	                                sx={{
 	                                  display: 'grid',
-	                                  gridTemplateColumns: '1fr 1fr',
-	                                  gridTemplateRows: 'auto auto auto',
-	                                  rowGap: 2.5,
+	                                  gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+	                                  rowGap: { xs: 2, sm: 2.5 },
 	                                  columnGap: 2,
 	                                }}
 	                              >
@@ -1084,7 +1087,7 @@ export default function AdminBarbers() {
                               </Box>
 
                               {/* Fila 2 - Columna 1: Horario de Trabajo */}
-                              <Box sx={{ minWidth: 0 }}>
+                              <Box sx={{ minWidth: 0, gridColumn: { xs: '1 / -1', sm: 'auto' } }}>
                                 <Typography
                                   variant="caption"
                                   sx={{
@@ -1098,7 +1101,7 @@ export default function AdminBarbers() {
                                 >
                                   Horario
                                 </Typography>
-                                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 112px), 1fr))', gap: 0.5, alignItems: 'start' }}>
+                                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(auto-fill, minmax(min(100%, 112px), 1fr))' }, gap: 0.5, alignItems: 'start' }}>
                                   {!selectedSchedule.isDayOff && selectedSchedule.workingHours.length > 0 ? (
                                     [...selectedSchedule.workingHours]
                                       .sort((a, b) => a.start.localeCompare(b.start))
@@ -1125,7 +1128,7 @@ export default function AdminBarbers() {
                                               label={`${wh.start} – ${wh.end}`}
                                               aria-label={`${wh.start} a ${wh.end}: ${status}${expired ? ', horario vencido' : ''}`}
                                               size="small"
-                                              onDelete={!expired && !occupied && !removingBlock ? () => void handleRemoveBlock(selectedSchedule, wh) : undefined}
+                                              onDelete={!expired && !removingBlock ? () => void handleRemoveBlock(selectedSchedule, wh) : undefined}
                                               variant="outlined"
                                               sx={{
                                                 borderColor: colors.border,
@@ -1133,7 +1136,7 @@ export default function AdminBarbers() {
                                                 color: colors.text,
                                                 fontWeight: 600,
                                                 fontSize: 11,
-                                                height: 24,
+                                                height: { xs: 30, sm: 24 },
                                                 width: '100%',
                                                 minWidth: 0,
                                                 position: 'relative',
@@ -1158,7 +1161,7 @@ export default function AdminBarbers() {
                               </Box>
 
                               {/* Fila 2 - Columna 2: Descansos */}
-                              <Box>
+                              <Box sx={{ minWidth: 0, gridColumn: { xs: '1 / -1', sm: 'auto' } }}>
                                 <Typography
                                   variant="caption"
                                   sx={{
@@ -1293,11 +1296,19 @@ export default function AdminBarbers() {
 	                                          </Typography>
 	                                        )}
 	                                      </Box>
-	                                      <Chip
-	                                        label={getAppointmentStatusLabel(appointment)}
-	                                        size="small"
-	                                        className={`appointment-status-chip appointment-status-${appointment.status}`}
-	                                      />
+                                          {isMobile && ['confirmed', 'completed', 'cancelled'].includes(appointment.status) ? (
+                                            <Tooltip title={getAppointmentStatusLabel(appointment)} arrow>
+                                              <Box component="span" role="img" aria-label={getAppointmentStatusLabel(appointment)} className={`appointment-status-symbol appointment-status-symbol-${appointment.status}`}>
+                                                {appointment.status === 'cancelled' ? <CloseIcon fontSize="small" /> : <CheckIcon fontSize="small" />}
+                                              </Box>
+                                            </Tooltip>
+                                          ) : (
+                                            <Chip
+                                              label={getAppointmentStatusLabel(appointment)}
+                                              size="small"
+                                              className={`appointment-status-chip appointment-status-${appointment.status}`}
+                                            />
+                                          )}
 	                                    </Box>
 	                                  ))}
 	                                </Box>

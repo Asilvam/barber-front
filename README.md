@@ -149,4 +149,6 @@ Cancelar solicita confirmación, libera el horario y envía un correo que distin
 
 Si falla la consulta del calendario o de horarios, se muestra un error con **Reintentar**; no se presenta como un día sin agenda.
 
-En **Barberos → Calendario → Horario**, la **×** de cada bloque permite quitar solo ese intervalo si aún es futuro y libre. Se confirma la fecha y el rango antes de guardar. Las reservas canceladas se conservan en el historial; los bloques ocupados o vencidos no ofrecen la acción. La papelera de la cabecera mantiene su acción sobre la agenda completa del día. Desplegar primero el backend con `/barber-schedules/:id/remove-block`.
+En **Barberos → Calendario → Horario**, la **×** de cada bloque permite quitar solo ese intervalo si aún es futuro. Si tiene reservas pendientes o confirmadas, la misma confirmación permite cancelarlas y enviar el correo antes de quitarlo. Se confirma la fecha y el rango antes de guardar. Las reservas canceladas se conservan en el historial; los bloques vencidos no ofrecen la acción. La papelera de la cabecera actúa sobre la agenda completa: se bloquea si algún horario ya venció; para una jornada futura, confirma la cancelación y el aviso de sus reservas antes de quitarla. Desplegar primero el backend con `/barber-schedules/:id/remove-block`.
+
+En las citas del calendario móvil, una completada se representa con ✓ verde y una cancelada con ✕ roja, ambas con etiqueta accesible y descripción emergente.

@@ -696,3 +696,32 @@
     opacity: 0.9;
   }
 }
+
+@media (max-width: 599.95px) {
+  .appointment-row-confirmed,
+  .appointment-row-completed,
+  .appointment-row-cancelled {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .appointment-status-symbol {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+  }
+  .appointment-status-symbol-confirmed {
+    color: #40834e;
+    background: #edf7ef;
+  }
+  .appointment-status-symbol-completed {
+    color: #164c35;
+    background: #d7e9dd;
+    border: 1px solid #164c35;
+  }
+  .appointment-status-symbol-cancelled {
+    color: #8e2235;
+    background: #fbeaec;
+  }
+}
