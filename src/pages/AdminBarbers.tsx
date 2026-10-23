@@ -1136,8 +1136,9 @@ export default function AdminBarbers() {
                                                 height: 24,
                                                 width: '100%',
                                                 minWidth: 0,
-                                                '& .MuiChip-label': { px: 0.5, textAlign: 'center' },
-                                                '& .MuiChip-deleteIcon': { color: 'inherit', fontSize: 17, mr: 0.5 },
+                                                position: 'relative',
+                                                '& .MuiChip-label': { px: '20px', width: '100%', textAlign: 'center' },
+                                                '& .MuiChip-deleteIcon': { position: 'absolute', right: 5, top: '50%', transform: 'translateY(-50%)', color: 'inherit', fontSize: 17, m: 0 },
                                               }}
                                             />
                                           </Tooltip>
