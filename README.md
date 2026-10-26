@@ -143,7 +143,7 @@ En **Admin → Reservas**, una reserva pendiente puede confirmarse o cancelarse.
 
 ### Operación diaria de reservas
 
-Reservas abre en **Hoy y pendientes**, que incluye las reservas de hoy y todas las pendientes de confirmar, aunque sean de otra fecha. Las pendientes aparecen primero; dentro de cada grupo se respeta el orden seleccionado (fecha y hora ascendente al abrir). **Todas** permite consultar otras fechas; **Por cerrar** reúne las confirmadas cuya hora de inicio ya pasó, para completarlas o cancelarlas manualmente. Los filtros y contadores corresponden a la vista elegida.
+Reservas abre en **Hoy y pendientes**, que incluye las reservas de hoy y todas las pendientes de confirmar, aunque sean de otra fecha. El orden por estado es: pendientes, confirmadas, completadas, No asistió y canceladas; dentro de cada grupo se respeta el orden seleccionado (fecha y hora ascendente al abrir). **Todas** permite consultar otras fechas; **Por cerrar** reúne las confirmadas cuya hora de inicio ya pasó, para completarlas o cancelarlas manualmente. Los filtros y contadores corresponden a la vista elegida.
 
 Cancelar solicita confirmación, libera el horario y envía un correo que distingue si canceló el cliente o administración. El cliente recibe también una confirmación en pantalla. **Archivar** está disponible únicamente para canceladas, completadas o marcadas como No asistió, sin límite por fecha: las oculta del listado, conserva su historial en Clientes y no envía otro correo. Requiere desplegar el backend con soporte de archivado antes del frontend.
 

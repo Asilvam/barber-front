@@ -61,6 +61,14 @@ const statusLabel: Record<AppointmentStatus, string> = {
   no_show: 'No asistió',
 }
 
+const statusPriority: Record<AppointmentStatus, number> = {
+  pending: 0,
+  confirmed: 1,
+  completed: 2,
+  no_show: 3,
+  cancelled: 4,
+}
+
 const statusColor: Record<AppointmentStatus, 'warning' | 'success' | 'default' | 'error'> = {
   pending: 'warning',
   confirmed: 'success',
@@ -184,8 +192,8 @@ export default function AdminReserves() {
     })
 
     return filtered.sort((a, b) => {
-      const pendingPriority = Number(b.status === 'pending') - Number(a.status === 'pending')
-      if (pendingPriority !== 0) return pendingPriority
+      const priority = statusPriority[a.status] - statusPriority[b.status]
+      if (priority !== 0) return priority
       const aDateTime = `${a.date} ${a.timeSlot}`
       const bDateTime = `${b.date} ${b.timeSlot}`
 
