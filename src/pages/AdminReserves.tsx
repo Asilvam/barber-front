@@ -154,7 +154,7 @@ export default function AdminReserves() {
 
   const closingCount = useMemo(() => appointments.filter((appointment) => appointment.status === 'confirmed' && !businessAppointmentDateTime(appointment.date, appointment.timeSlot).isAfter(currentTime)).length, [appointments, currentTime])
   const agendaAppointments = useMemo(() => appointments.filter((appointment) => {
-    if (agendaView === 'today') return appointment.date === currentTime.format('YYYY-MM-DD')
+    if (agendaView === 'today') return appointment.status === 'pending' || appointment.date === currentTime.format('YYYY-MM-DD')
     if (agendaView === 'closing') return appointment.status === 'confirmed' && !businessAppointmentDateTime(appointment.date, appointment.timeSlot).isAfter(currentTime)
     return true
   }), [appointments, agendaView, currentTime])
@@ -182,6 +182,8 @@ export default function AdminReserves() {
     })
 
     return filtered.sort((a, b) => {
+      const pendingPriority = Number(b.status === 'pending') - Number(a.status === 'pending')
+      if (pendingPriority !== 0) return pendingPriority
       const aDateTime = `${a.date} ${a.timeSlot}`
       const bDateTime = `${b.date} ${b.timeSlot}`
 
@@ -391,7 +393,7 @@ export default function AdminReserves() {
         </Paper>
 
         <ButtonGroup aria-label="Vista de agenda" size="small" sx={{ mb: 2, flexWrap: 'wrap' }}>
-          <Button variant={agendaView === 'today' ? 'contained' : 'outlined'} onClick={() => setAgendaView('today')}>Hoy</Button>
+          <Button variant={agendaView === 'today' ? 'contained' : 'outlined'} onClick={() => setAgendaView('today')}>Hoy y pendientes</Button>
           <Button variant={agendaView === 'all' ? 'contained' : 'outlined'} onClick={() => setAgendaView('all')}>Todas</Button>
           <Button variant={agendaView === 'closing' ? 'contained' : 'outlined'} onClick={() => setAgendaView('closing')}>Por cerrar ({closingCount})</Button>
         </ButtonGroup>
