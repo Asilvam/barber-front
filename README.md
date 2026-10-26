@@ -139,16 +139,18 @@ Requiere los endpoints administrativos `GET /clients` y `PATCH /clients/:id/book
 
 ## Cierre de atenciones
 
-En **Admin → Reservas**, una reserva pendiente puede confirmarse o cancelarse. Una confirmada puede completarse desde su hora de inicio (America/Santiago), incluso si es pasada, o cancelarse. En escritorio se utiliza el selector de estado; en móvil, el icono de edición y **Guardar**. Las canceladas y completadas son definitivas. No hay completado automático. El backend valida las mismas transiciones y devuelve 409 si otra solicitud cambió el estado antes de guardar.
+En **Admin → Reservas**, una reserva pendiente puede confirmarse o cancelarse. Una confirmada puede completarse desde su hora de inicio (America/Santiago), incluso si es pasada, o cancelarse. En escritorio se utiliza el selector de estado; en móvil, el icono de edición y **Guardar**. Las canceladas, completadas y marcadas como No asistió son definitivas. El backend completa automáticamente solo las confirmadas al cumplirse 24 horas desde el inicio de la cita; revisa cada minuto y al arrancar. Las pendientes y canceladas no cambian. El backend valida las mismas transiciones y devuelve 409 si otra solicitud cambió el estado antes de guardar.
 
 ### Operación diaria de reservas
 
 Reservas abre en **Hoy y pendientes**, que incluye las reservas de hoy y todas las pendientes de confirmar, aunque sean de otra fecha. Las pendientes aparecen primero; dentro de cada grupo se respeta el orden seleccionado (fecha y hora ascendente al abrir). **Todas** permite consultar otras fechas; **Por cerrar** reúne las confirmadas cuya hora de inicio ya pasó, para completarlas o cancelarlas manualmente. Los filtros y contadores corresponden a la vista elegida.
 
-Cancelar solicita confirmación, libera el horario y envía un correo que distingue si canceló el cliente o administración. El cliente recibe también una confirmación en pantalla. **Archivar** está disponible únicamente para canceladas o completadas, sin límite por fecha: las oculta del listado, conserva su historial en Clientes y no envía otro correo. Requiere desplegar el backend con soporte de archivado antes del frontend.
+Cancelar solicita confirmación, libera el horario y envía un correo que distingue si canceló el cliente o administración. El cliente recibe también una confirmación en pantalla. **Archivar** está disponible únicamente para canceladas, completadas o marcadas como No asistió, sin límite por fecha: las oculta del listado, conserva su historial en Clientes y no envía otro correo. Requiere desplegar el backend con soporte de archivado antes del frontend.
 
 Si falla la consulta del calendario o de horarios, se muestra un error con **Reintentar**; no se presenta como un día sin agenda.
 
 En **Barberos → Calendario → Horario**, la **×** de cada bloque permite quitar solo ese intervalo si aún es futuro. Si tiene reservas pendientes o confirmadas, la misma confirmación permite cancelarlas y enviar el correo antes de quitarlo. Se confirma la fecha y el rango antes de guardar. Las reservas canceladas se conservan en el historial; los bloques vencidos no ofrecen la acción. La papelera de la cabecera actúa sobre la agenda completa: se bloquea si algún horario ya venció; para una jornada futura, confirma la cancelación y el aviso de sus reservas antes de quitarla. Desplegar primero el backend con `/barber-schedules/:id/remove-block`.
 
 En las citas del calendario móvil, una completada se representa con ✓ verde y una cancelada con ✕ roja, ambas con etiqueta accesible y descripción emergente.
+
+**No asistió:** en Admin → Reservas, una confirmada puede marcarse como No asistió desde su hora de inicio. Requiere confirmación, queda como estado definitivo y aparece en el historial del cliente en su propio grupo. No se completa automáticamente ni envía notificaciones adicionales. Puede archivarse conservando su historial.

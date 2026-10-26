@@ -725,3 +725,9 @@
     background: #fbeaec;
   }
 }
+
+.appointment-status-no_show { background: #fff2dc !important; color: #8a5a12 !important; }
+@media (max-width: 599.95px) {
+  .appointment-row-no_show { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .appointment-status-symbol-no_show { background: #fff2dc; color: #8a5a12; }
+}

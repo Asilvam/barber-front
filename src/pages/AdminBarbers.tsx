@@ -106,6 +106,7 @@ const appointmentStatusLabel: Record<Appointment['status'], string> = {
   confirmed: 'Confirmada',
   cancelled: 'Cancelada',
   completed: 'Completada',
+  no_show: 'No asistió',
 }
 
 function getAppointmentStatusLabel(appointment: Appointment) {
@@ -1296,10 +1297,10 @@ export default function AdminBarbers() {
 	                                          </Typography>
 	                                        )}
 	                                      </Box>
-                                          {isMobile && ['confirmed', 'completed', 'cancelled'].includes(appointment.status) ? (
+                                          {isMobile && ['confirmed', 'completed', 'cancelled', 'no_show'].includes(appointment.status) ? (
                                             <Tooltip title={getAppointmentStatusLabel(appointment)} arrow>
                                               <Box component="span" role="img" aria-label={getAppointmentStatusLabel(appointment)} className={`appointment-status-symbol appointment-status-symbol-${appointment.status}`}>
-                                                {appointment.status === 'cancelled' ? <CloseIcon fontSize="small" /> : <CheckIcon fontSize="small" />}
+                                                {appointment.status === 'no_show' ? <EventBusyIcon fontSize="small" /> : appointment.status === 'cancelled' ? <CloseIcon fontSize="small" /> : <CheckIcon fontSize="small" />}
                                               </Box>
                                             </Tooltip>
                                           ) : (

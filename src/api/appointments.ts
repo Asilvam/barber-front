@@ -1,7 +1,7 @@
 import { apiClient } from './client'
 import type { Barber } from './barber'
 
-export type AppointmentStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed'
+export type AppointmentStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show'
 export type AppointmentCancellationActor = 'user' | 'admin'
 
 export type AppointmentUser = {

@@ -95,7 +95,7 @@ export interface Appointment {
   barberId: string | Barber
   date: string
   timeSlot: string
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed'
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show'
   cancelledBy?: 'user' | 'admin'
   cancelledAt?: string
 }

@@ -38,12 +38,14 @@ const bookingGroups: { title: string; statuses: AppointmentStatus[] }[] = [
   { title: "Agendadas", statuses: ["pending", "confirmed"] },
   { title: "Canceladas", statuses: ["cancelled"] },
   { title: "Completadas", statuses: ["completed"] },
+  { title: "No asistió", statuses: ["no_show"] },
 ];
 const labels = {
   pending: "Pendiente de aprobación",
   confirmed: "Confirmada",
   cancelled: "Cancelada",
   completed: "Completada",
+  no_show: "No asistió",
 };
 const errorMessage = (error: unknown) =>
   (error as { response?: { data?: { message?: string } } })?.response?.data
@@ -361,7 +363,7 @@ export default function AdminClients() {
                                     size="small"
                                     label={labels[appointment.status]}
                                     color={
-                                      appointment.status === "pending"
+                                      (appointment.status === "pending" || appointment.status === "no_show")
                                         ? "warning"
                                         : appointment.status === "confirmed"
                                           ? "success"

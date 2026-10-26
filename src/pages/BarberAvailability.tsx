@@ -52,6 +52,7 @@ const appointmentStatusLabel: Record<Appointment['status'], string> = {
   confirmed: 'Confirmada',
   cancelled: 'Cancelada',
   completed: 'Completada',
+  no_show: 'No asistió',
 }
 
 function getAppointmentBarberName(appointment: Appointment) {

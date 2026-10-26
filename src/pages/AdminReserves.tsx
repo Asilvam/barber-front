@@ -58,6 +58,7 @@ const statusLabel: Record<AppointmentStatus, string> = {
   confirmed: 'Confirmada',
   cancelled: 'Cancelada',
   completed: 'Completada',
+  no_show: 'No asistió',
 }
 
 const statusColor: Record<AppointmentStatus, 'warning' | 'success' | 'default' | 'error'> = {
@@ -65,6 +66,7 @@ const statusColor: Record<AppointmentStatus, 'warning' | 'success' | 'default' |
   confirmed: 'success',
   cancelled: 'error',
   completed: 'default',
+  no_show: 'warning',
 }
 
 function getAppointmentStatusLabel(appointment: AdminAppointment): string {
@@ -94,7 +96,7 @@ function allowedStatusChanges(appointment: AdminAppointment, now: ReturnType<typ
   if (appointment.status === 'confirmed') {
     return businessAppointmentDateTime(appointment.date, appointment.timeSlot).isAfter(now)
       ? ['cancelled']
-      : ['completed', 'cancelled']
+      : ['completed', 'cancelled', 'no_show']
   }
   return []
 }
@@ -227,7 +229,7 @@ export default function AdminReserves() {
     const current = appointments.find((item) => item._id === appointmentId)
     if (!current || current.status === status) return
     if (!allowedStatusChanges(current, businessNow()).includes(status)) {
-      void showNotice('Ese cambio no está permitido. Solo puedes completar reservas confirmadas desde su hora de inicio.', 'warning')
+      void showNotice('Ese cambio no está permitido. Solo puedes completar o marcar No asistió desde el inicio de una reserva confirmada.', 'warning')
       return
     }
 
@@ -237,6 +239,11 @@ export default function AdminReserves() {
         text: 'Se liberará el horario y se enviará un correo al cliente. La cancelación es definitiva.',
         icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, cancelar reserva', cancelButtonText: 'Volver',
       })
+      if (!confirmation.isConfirmed) return
+    }
+
+    if (status === 'no_show') {
+      const confirmation = await Swal.fire({ title: '¿Marcar como No asistió?', text: 'Quedará registrado en el historial del cliente. Este estado es definitivo.', icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, no asistió', cancelButtonText: 'Volver' })
       if (!confirmation.isConfirmed) return
     }
 
@@ -254,8 +261,8 @@ export default function AdminReserves() {
   }
 
   const openEditStatus = (appointment: AdminAppointment) => {
-    if (appointment.status === 'cancelled' || appointment.status === 'completed') {
-      void showNotice('Una reserva cancelada o completada es definitiva y no puede modificarse.', 'warning')
+    if (['cancelled', 'completed', 'no_show'].includes(appointment.status)) {
+      void showNotice('Una reserva cancelada, completada o marcada como No asistió es definitiva y no puede modificarse.', 'warning')
       return
     }
     setEditingAppointment(appointment)
@@ -271,8 +278,8 @@ export default function AdminReserves() {
   }
 
   const handleArchiveAppointment = async (appointment: AdminAppointment) => {
-    if (!['cancelled', 'completed'].includes(appointment.status)) {
-      void showNotice('Solo puedes archivar reservas canceladas o completadas.', 'warning')
+    if (!['cancelled', 'completed', 'no_show'].includes(appointment.status)) {
+      void showNotice('Solo puedes archivar reservas canceladas, completadas o marcadas como No asistió.', 'warning')
       return
     }
 
@@ -313,6 +320,7 @@ export default function AdminReserves() {
         confirmed: 0,
         cancelled: 0,
         completed: 0,
+        no_show: 0,
       } as Record<AppointmentStatus, number>,
     )
   }, [agendaAppointments])
@@ -404,6 +412,7 @@ export default function AdminReserves() {
             <Chip icon={<CheckCircleIcon />} label={`Confirmadas: ${statusTotals.confirmed}`} color="success" />
             <Chip icon={<CancelIcon />} label={`Canceladas: ${statusTotals.cancelled}`} color="error" />
             <Chip icon={<TaskAltIcon />} label={`Completadas: ${statusTotals.completed}`} color="default" />
+            <Chip label={`No asistieron: ${statusTotals.no_show}`} color="warning" />
           </Stack>
         </Box>
 
@@ -428,6 +437,7 @@ export default function AdminReserves() {
                 <MenuItem value="confirmed">Confirmada</MenuItem>
                 <MenuItem value="cancelled">Cancelada</MenuItem>
                 <MenuItem value="completed">Completada</MenuItem>
+                <MenuItem value="no_show">No asistió</MenuItem>
               </Select>
             </FormControl>
 
@@ -465,9 +475,9 @@ export default function AdminReserves() {
               </Paper>
             ) : (
               filteredAndSorted.map((appointment) => {
-                const isFinal = appointment.status === 'cancelled' || appointment.status === 'completed'
+                const isFinal = ['cancelled', 'completed', 'no_show'].includes(appointment.status)
                 const editDisabled = updatingId === appointment._id || allowedStatusChanges(appointment, currentTime).length === 0
-                const editTooltip = isFinal ? 'Una reserva cancelada o completada no puede cambiar de estado' : 'Editar estado'
+                const editTooltip = isFinal ? 'Una reserva cancelada, completada o marcada como No asistió no puede cambiar de estado' : 'Editar estado'
                 return (
                   <Paper key={appointment._id} elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1.5 }}>
                     <Stack spacing={0.8}>
@@ -498,7 +508,7 @@ export default function AdminReserves() {
                             </IconButton>
                           </span>
                         </Tooltip>
-                        <Tooltip title={isFinal ? 'Archivar reserva' : 'Primero cancela o completa la reserva'} arrow>
+                        <Tooltip title={isFinal ? 'Archivar reserva' : 'Primero resuelve el estado de la reserva'} arrow>
                           <span>
                             <IconButton size="small" color="primary" aria-label="Archivar reserva" onClick={() => void handleArchiveAppointment(appointment)} disabled={updatingId === appointment._id || !isFinal}>
                               <ArchiveOutlinedIcon fontSize="small" />
@@ -558,7 +568,7 @@ export default function AdminReserves() {
                   </TableRow>
                 ) : (
                   filteredAndSorted.map((appointment) => {
-                        const isFinal = appointment.status === 'cancelled' || appointment.status === 'completed'
+                        const isFinal = ['cancelled', 'completed', 'no_show'].includes(appointment.status)
                     const statusDisabled = updatingId === appointment._id || allowedStatusChanges(appointment, currentTime).length === 0
                     return (
                       <TableRow key={appointment._id} hover sx={{ '&:nth-of-type(odd)': { bgcolor: 'rgba(201, 20, 112,0.04)' } }}>
@@ -621,7 +631,7 @@ export default function AdminReserves() {
                         </TableCell>
                         <TableCell align="right">
                           <Stack direction="row" spacing={0.4} sx={{ justifyContent: 'flex-end' }}>
-                            <Tooltip title={isFinal ? 'Archivar reserva' : 'Primero cancela o completa la reserva'} arrow>
+                            <Tooltip title={isFinal ? 'Archivar reserva' : 'Primero resuelve el estado de la reserva'} arrow>
                               <span>
                                 <IconButton size="small" color="primary" aria-label="Archivar reserva" onClick={() => void handleArchiveAppointment(appointment)} disabled={updatingId === appointment._id || !isFinal}>
                                   <ArchiveOutlinedIcon fontSize="small" />
