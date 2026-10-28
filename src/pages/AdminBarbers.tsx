@@ -1,5 +1,5 @@
 import EntityStatusBadge from '../components/EntityStatusBadge'
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Box from '@mui/material/Box'
 import Container from '@mui/material/Container'
@@ -57,6 +57,7 @@ import {
   createBarberSchedule,
   deleteBarberSchedule,
   removeBarberScheduleBlock,
+  addBarberScheduleBlock,
   updateBarber,
   createBarber,
   type Appointment,
@@ -159,6 +160,11 @@ export default function AdminBarbers() {
     const timer = window.setInterval(() => setCurrentTime(businessNow()), 30_000)
     return () => window.clearInterval(timer)
   }, [])
+  const [addingToSchedule, setAddingToSchedule] = useState<BarberSchedule | null>(null)
+  const [newBlockStart, setNewBlockStart] = useState('09:00')
+  const [newBlockEnd, setNewBlockEnd] = useState('10:00')
+  const [savingBlock, setSavingBlock] = useState(false)
+  const blockAddedNotice = useRef(false)
   const [removingBlock, setRemovingBlock] = useState(false)
   const [selectedBarberId, setSelectedBarberId] = useState<string>('')
 
@@ -426,6 +432,35 @@ export default function AdminBarbers() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const openAddBlock = (schedule: BarberSchedule) => {
+    const lastEnd = [...schedule.workingHours].sort((a, b) => a.end.localeCompare(b.end)).at(-1)?.end
+    const start = lastEnd && lastEnd < '23:00' ? lastEnd : '09:00'
+    setNewBlockStart(start)
+    setNewBlockEnd(dayjs(`2000-01-01T${start}`).add(1, 'hour').format('HH:mm'))
+    setAddingToSchedule(schedule)
+  }
+
+  const handleAddBlock = async () => {
+    if (!addingToSchedule || savingBlock) return
+    const duration = dayjs(`2000-01-01T${newBlockEnd}`).diff(dayjs(`2000-01-01T${newBlockStart}`), 'minute')
+    let error = ''
+    if (duration < 60) error = 'El bloque debe durar al menos 60 minutos dentro del mismo día.'
+    else if (!businessAppointmentDateTime(addingToSchedule.date, newBlockStart).isAfter(businessNow())) error = 'Solo puedes agregar bloques futuros.'
+    else if (addingToSchedule.workingHours.some((range) => newBlockStart < range.end && newBlockEnd > range.start)) error = 'El bloque se cruza con un horario existente.'
+    else if (addingToSchedule.breakTimes.some((range) => newBlockStart < range.end && newBlockEnd > range.start)) error = 'El bloque se cruza con un descanso.'
+    if (error) { void showNotice(error, 'warning', 'Revisa el bloque'); return }
+    setSavingBlock(true)
+    try {
+      await addBarberScheduleBlock(addingToSchedule._id, { start: newBlockStart, end: newBlockEnd })
+      blockAddedNotice.current = true
+      setAddingToSchedule(null)
+      loadData()
+    } catch (error) {
+      const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message
+      void showNotice(message || 'No se pudo agregar el bloque. Actualiza la agenda e inténtalo nuevamente.', 'error')
+    } finally { setSavingBlock(false) }
   }
 
   const handleRemoveBlock = async (schedule: BarberSchedule, block: TimeSlot) => {
@@ -1089,19 +1124,10 @@ export default function AdminBarbers() {
 
                               {/* Fila 2 - Columna 1: Horario de Trabajo */}
                               <Box sx={{ minWidth: 0, gridColumn: { xs: '1 / -1', sm: 'auto' } }}>
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    fontWeight: 700,
-                                    color: 'text.secondary',
-                                    textTransform: 'uppercase',
-                                    display: 'block',
-                                    mb: 0.5,
-                                    letterSpacing: 0.5,
-                                  }}
-                                >
-                                  Horario
-                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 0.5, mb: 0.75 }}>
+                                  <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.5 }}>Horario</Typography>
+                                  <Button size="small" startIcon={<AddIcon />} onClick={() => openAddBlock(selectedSchedule)} disabled={selectedSchedule.isDayOff || businessDate(selectedSchedule.date).isBefore(currentTime.startOf('day'))} sx={{ minWidth: 0, px: 0.5, py: 0.25, fontSize: 11, whiteSpace: 'nowrap', '& .MuiButton-startIcon': { mr: 0.25 } }}>Agregar bloque</Button>
+                                </Box>
                                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(auto-fill, minmax(min(100%, 112px), 1fr))' }, gap: 0.5, alignItems: 'start' }}>
                                   {!selectedSchedule.isDayOff && selectedSchedule.workingHours.length > 0 ? (
                                     [...selectedSchedule.workingHours]
@@ -1332,6 +1358,21 @@ export default function AdminBarbers() {
           </Box>
         )}
       </Container>
+
+      <Dialog open={!!addingToSchedule} onClose={() => { if (!savingBlock) setAddingToSchedule(null) }} fullWidth maxWidth="xs" aria-labelledby="add-block-title" slotProps={{ transition: { onExited: () => { if (blockAddedNotice.current) { blockAddedNotice.current = false; void showNotice('Bloque agregado a la jornada.', 'success') } } } }}>
+        <DialogTitle id="add-block-title">Agregar bloque</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{addingToSchedule ? businessDate(addingToSchedule.date).format('dddd D [de] MMMM') : ''}</Typography>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, pt: 0.5 }}>
+            <TextField select label="Inicio" value={newBlockStart} disabled={savingBlock} onChange={(event) => setNewBlockStart(event.target.value)} fullWidth>{HOUR_OPTIONS.map((hour) => <MenuItem key={hour} value={hour}>{hour}</MenuItem>)}</TextField>
+            <TextField select label="Fin" value={newBlockEnd} disabled={savingBlock} onChange={(event) => setNewBlockEnd(event.target.value)} fullWidth>{HOUR_OPTIONS.map((hour) => <MenuItem key={hour} value={hour}>{hour}</MenuItem>)}</TextField>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button disabled={savingBlock} onClick={() => setAddingToSchedule(null)}>Volver</Button>
+          <Button variant="contained" disabled={savingBlock} onClick={() => void handleAddBlock()} startIcon={savingBlock ? <CircularProgress size={16} color="inherit" /> : <AddIcon />}>{savingBlock ? 'Agregando…' : 'Agregar'}</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* ── Create Dialog ── */}
       <Dialog

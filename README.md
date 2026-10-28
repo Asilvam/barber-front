@@ -154,3 +154,5 @@ En **Barberos → Calendario → Horario**, la **×** de cada bloque permite qui
 En las citas del calendario móvil, una completada se representa con ✓ verde y una cancelada con ✕ roja, ambas con etiqueta accesible y descripción emergente.
 
 **No asistió:** en Admin → Reservas, una confirmada puede marcarse como No asistió desde su hora de inicio. Requiere confirmación, queda como estado definitivo y aparece en el historial del cliente en su propio grupo. No se completa automáticamente ni envía notificaciones adicionales. Puede archivarse conservando su historial.
+
+**Agregar bloque:** en el detalle de una jornada existente, el botón a la derecha de «Horario» abre un formulario de inicio y fin. Agrega un intervalo futuro de al menos 60 minutos sin cruzarse con horarios ni descansos. Conserva las reservas y el resto de la jornada; está deshabilitado en días pasados o libres. La cabecera y los bloques se adaptan a móvil. Requiere desplegar primero el backend con `PATCH /barber-schedules/:id/add-block`.

@@ -224,6 +224,14 @@ export async function updateBarberSchedule(
   return data
 }
 
+/** Add one interval to an existing workday without replacing its schedule. */
+export async function addBarberScheduleBlock(id: string, block: TimeSlot): Promise<BarberSchedule> {
+  const { data } = await apiClient.patch<BarberSchedule>(`/barber-schedules/${id}/add-block`, block)
+  invalidateCache([SCHEDULES_CACHE_KEY])
+  invalidateAvailability()
+  return data
+}
+
 /** Remove one free future work interval without deleting the day. */
 export async function removeBarberScheduleBlock(id: string, block: TimeSlot): Promise<BarberSchedule> {
   const { data } = await apiClient.patch<BarberSchedule>(`/barber-schedules/${id}/remove-block`, { ...block, cancelReservations: true })
